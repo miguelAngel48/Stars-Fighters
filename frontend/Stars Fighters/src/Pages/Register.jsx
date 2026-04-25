@@ -2,118 +2,52 @@ import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 
 export default function Register() {
-
-    const [formData, setFormData] = useState({
-        username: "",
-        email: "",
-        password: ""
-    });
-
-
+    const [formData, setFormData] = useState({ username: "", email: "", password: "" });
     const [error, setError] = useState("");
     const [success, setSuccess] = useState("");
-
-
     const navigate = useNavigate();
 
-
     const handleChange = (e) => {
-        const { name, value } = e.target;
-        setFormData({
-            ...formData,
-            [name]: value
-        });
+        setFormData({ ...formData, [e.target.name]: e.target.value });
     };
-
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setError("");
-        setSuccess("");
+        setError(""); setSuccess("");
 
         try {
-
             const response = await fetch("http://localhost:8080/api/auth/register", {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(formData),
             });
 
             if (response.ok) {
-
                 const responseText = await response.text();
                 setSuccess(responseText);
-
-
-                setTimeout(() => {
-                    navigate("/login");
-                }, 2000);
+                setTimeout(() => navigate("/login"), 2000);
             } else {
-
                 const errorText = await response.text();
-                setError(errorText || "Error al registrar el usuario.");
+                setError(errorText || "Error al registrar");
             }
         } catch (err) {
-
-            setError("Error de conexión con el servidor.");
+            setError("Error de conexión");
         }
     };
 
     return (
-        <div style={{ maxWidth: "400px", margin: "0 auto", padding: "20px" }}>
+        <div>
             <h1>Registro</h1>
+            {error && <p className="error">{error}</p>}
+            {success && <p className="success">{success}</p>}
 
-
-            {error && <p style={{ color: "red" }}>{error}</p>}
-            {success && <p style={{ color: "green" }}>{success}</p>}
-
-            <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "15px" }}>
-                <div>
-                    <label>Usuario:</label>
-                    <input
-                        type="text"
-                        name="username"
-                        value={formData.username}
-                        onChange={handleChange}
-                        required
-                        style={{ width: "100%", padding: "8px" }}
-                    />
-                </div>
-
-                <div>
-                    <label>Email:</label>
-                    <input
-                        type="email"
-                        name="email"
-                        value={formData.email}
-                        onChange={handleChange}
-                        required
-                        style={{ width: "100%", padding: "8px" }}
-                    />
-                </div>
-
-                <div>
-                    <label>Contraseña:</label>
-                    <input
-                        type="password"
-                        name="password"
-                        value={formData.password}
-                        onChange={handleChange}
-                        required
-                        style={{ width: "100%", padding: "8px" }}
-                    />
-                </div>
-
-                <button type="submit" style={{ padding: "10px", backgroundColor: "#007BFF", color: "white", border: "none", cursor: "pointer" }}>
-                    Crear cuenta
-                </button>
+            <form onSubmit={handleSubmit}>
+                <input type="text" name="username" placeholder="Usuario" value={formData.username} onChange={handleChange} required />
+                <input type="email" name="email" placeholder="Email" value={formData.email} onChange={handleChange} required />
+                <input type="password" name="password" placeholder="Contraseña" value={formData.password} onChange={handleChange} required />
+                <button type="submit">Crear cuenta</button>
             </form>
-
-            <p style={{ marginTop: "15px" }}>
-                ¿Ya tienes una cuenta? <Link to="/login">Inicia sesión aquí</Link>
-            </p>
+            <Link to="/login">¿Ya tienes una cuenta? Inicia sesión</Link>
         </div>
     );
 }

@@ -1,19 +1,12 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './Styles/App.css'
 import { Link } from 'react-router-dom'
-import Register from './Pages/Register'
-import Login from './Pages/Login'
 
 function App() {
-  const [count, setCount] = useState(0)
-
-  return (<>
-    <Link to="/Login" id='StartMenu'>Press to start  </Link>
-  </>)
-
+  return (
+    <div>
+      <h1>Stars Fighters</h1>
+      <Link to="/login">Entrar al juego</Link>
+      <Link to="/register">Crear cuenta</Link>
+    </div>
+  )
 }
-
 export default App
