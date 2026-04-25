@@ -18,6 +18,9 @@ public class User {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     private List<Friendship> friendships = new ArrayList<>();
 
+    public User (){
+        this.sinceCreated = LocalDateTime.now();
+    }
     public Long getId() {
         return id;
     }
