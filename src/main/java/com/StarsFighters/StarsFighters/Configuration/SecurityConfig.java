@@ -14,10 +14,10 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/", "/error").permitAll() // Rutas públicas
-                        .anyRequest().authenticated()               // Todo lo demás requiere login
+                        .requestMatchers("/", "/error").permitAll()
+                        .anyRequest().authenticated()
                 )
-                .oauth2Login(withDefaults()); // Habilita el login con Google
+                .oauth2Login(withDefaults());
 
         return http.build();
     }
