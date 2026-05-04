@@ -3,10 +3,12 @@ package com.StarsFighters.StarsFighters.Controllers;
 import com.StarsFighters.StarsFighters.Models.DAOs.CreateUser;
 import com.StarsFighters.StarsFighters.Models.DAOs.LoginUser;
 import com.StarsFighters.StarsFighters.Models.Entities.User;
+import com.StarsFighters.StarsFighters.Services.JwtService;
 import com.StarsFighters.StarsFighters.Services.UserService;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.core.user.OAuth2User;
@@ -17,7 +19,8 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/auth")
 public class PerfilController {
-
+    @Autowired
+    JwtService jwtService;
     @Autowired
     UserService userService;
 
@@ -37,24 +40,17 @@ public class PerfilController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody LoginUser loginData, HttpServletResponse response){
-        try{
+    public ResponseEntity<?> login(@RequestBody LoginUser loginData) {
+        try {
             User user = userService.loginUser(loginData);
-
-            Cookie cookie = new Cookie("user_session", user.getId().toString());
-            cookie.setHttpOnly(true);
-            cookie.setSecure(false);
-            cookie.setPath("/");
-            cookie.setMaxAge(7 * 24 * 60 * 60);
-
-            response.addCookie(cookie);
-
+            String token = jwtService.generateToken(user);
             return ResponseEntity.ok(Map.of(
+                    "token", token,
                     "username", user.getUsername(),
                     "email", user.getEmail()
             ));
-        } catch (Exception e){
-            return ResponseEntity.status(401).body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
         }
     }
 

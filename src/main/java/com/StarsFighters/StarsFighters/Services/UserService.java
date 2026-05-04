@@ -37,4 +37,16 @@ public class UserService {
 
         return user;
     }
+
+    public User processOAuthPostLogin(String email, String nombre) {
+        User existUser = userRepo.findByEmail(email).orElse(null);
+
+        if (existUser == null) {
+            User newUser = new User();
+            newUser.setEmail(email);
+            newUser.setUsername(nombre.replace(" ", ""));
+            return userRepo.save(newUser);
+        }
+        return existUser;
+    }
 }
