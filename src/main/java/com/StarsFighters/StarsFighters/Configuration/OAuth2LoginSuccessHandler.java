@@ -1,8 +1,8 @@
 package com.StarsFighters.StarsFighters.Configuration;
 
 import com.StarsFighters.StarsFighters.Models.Entities.User;
-import com.StarsFighters.StarsFighters.Services.JwtService; // Ajusta este import a tu paquete real
-import com.StarsFighters.StarsFighters.Services.UserService; // Ajusta este import a tu paquete real
+import com.StarsFighters.StarsFighters.Services.JwtService;
+import com.StarsFighters.StarsFighters.Services.UserService;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -28,10 +28,8 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
                                         Authentication authentication) throws IOException, ServletException {
 
-        // 1. Obtenemos el perfil del usuario que nos manda Google
         OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();
 
-        // 2. Extraemos los datos clave que necesitamos (email y nombre)
         String email = oAuth2User.getAttribute("email");
         String nombre = oAuth2User.getAttribute("name");
 

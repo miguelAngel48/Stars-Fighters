@@ -1,5 +1,6 @@
 package com.StarsFighters.StarsFighters.Models.Entities;
 
+import com.StarsFighters.StarsFighters.Models.Entities.Enums.FriendshipStatus;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
@@ -20,9 +21,11 @@ public class Friendship {
 
     private LocalDateTime createdAt;
 
-    @Enumerated(EnumType.STRING) // Guarda el texto "PENDING" en la base de datos
+    @Enumerated(EnumType.STRING)
     private FriendshipStatus status;
 
+    public Friendship() {
+    }
 
     public Friendship(User sender, User reciever, FriendshipStatus status) {
         this.createdAt = LocalDateTime.now();

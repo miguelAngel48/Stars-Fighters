@@ -1,7 +1,8 @@
 package com.StarsFighters.StarsFighters.Controllers;
 
-import com.StarsFighters.StarsFighters.Models.DAOs.CreateUser;
-import com.StarsFighters.StarsFighters.Models.DAOs.LoginUser;
+import com.StarsFighters.StarsFighters.Models.Dto.CreateUser;
+import com.StarsFighters.StarsFighters.Models.Dto.LoginUser;
+import com.StarsFighters.StarsFighters.Models.Dto.UserProfileDto;
 import com.StarsFighters.StarsFighters.Models.Entities.User;
 import com.StarsFighters.StarsFighters.Services.JwtService;
 import com.StarsFighters.StarsFighters.Services.UserService;
@@ -14,6 +15,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.web.bind.annotation.*;
 
+import java.security.Principal;
 import java.util.Map;
 
 @RestController
@@ -54,13 +56,23 @@ public class PerfilController {
         }
     }
 
-    @GetMapping("/me")
-    public ResponseEntity<?> checkSession(@CookieValue(value = "user_session", required = false) String sessionCookie) {
-        if (sessionCookie == null) {
-            return ResponseEntity.status(401).body("No autenticado");
+
+
+    @GetMapping("/profile")
+    public ResponseEntity<?> getUserProfile(@RequestHeader("Authorization") String authHeader) {
+        try {
+            String token = authHeader.substring(7);
+            Long userId = jwtService.extractId(token);
+            UserProfileDto profile = userService.getUserProfileById(userId);
+
+            return ResponseEntity.ok(profile);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.badRequest().body("Error al cargar el perfil: " + e.getMessage());
         }
-        return ResponseEntity.ok("Sesión activa");
     }
+
 
     @PostMapping("/logout")
     public ResponseEntity<?> logout(HttpServletResponse response) {

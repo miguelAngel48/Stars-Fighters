@@ -1,18 +1,21 @@
 package com.StarsFighters.StarsFighters.Services;
 
-import com.StarsFighters.StarsFighters.Models.DAOs.CreateUser;
-import com.StarsFighters.StarsFighters.Models.DAOs.LoginUser;
+import com.StarsFighters.StarsFighters.Models.Dto.CreateUser;
+import com.StarsFighters.StarsFighters.Models.Dto.LoginUser;
+import com.StarsFighters.StarsFighters.Models.Dto.UserProfileDto;
 import com.StarsFighters.StarsFighters.Models.Entities.User;
 import com.StarsFighters.StarsFighters.Repositories.UserRepo;
+import com.StarsFighters.StarsFighters.Utils.FriendCodeGenerator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import static com.StarsFighters.StarsFighters.Utils.FriendCodeGenerator.generateCode;
 
 @Service
 public class UserService {
     @Autowired
     UserRepo userRepo;
-
     @Autowired
     PasswordEncoder passwordEncoder;
 
@@ -24,6 +27,8 @@ public class UserService {
         user.setEmail(newUser.email());
         user.setUsername(newUser.username());
         user.setPassword(passwordEncoder.encode(newUser.password()));
+        user.setFriendCode(generateCode());
+        user.setLevel(1);
         userRepo.save(user);
     }
 
@@ -48,5 +53,20 @@ public class UserService {
             return userRepo.save(newUser);
         }
         return existUser;
+    }
+
+
+
+    public UserProfileDto getUserProfileById(Long userId) {
+        User user = userRepo.findById(userId)
+                .orElseThrow(() -> new RuntimeException("This user does not exist"));
+
+        return new UserProfileDto(
+                user.getUsername(),
+                user.getEmail(),
+                user.getFriendCode(),
+                user.getLevel(),
+                user.getSinceCreated()
+        );
     }
 }

@@ -15,9 +15,38 @@ public class User {
     private String username;
     private String password;
     private LocalDateTime sinceCreated;
+    private int Level;
+
+
+    @Column(unique = true, length = 10)
+    private String friendCode;
+
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     private List<Friendship> friendships = new ArrayList<>();
 
+
+    public int getLevel() {
+        return Level;
+    }
+
+    public void setLevel(int level) {
+        Level = level;
+    }
+    public String getFriendCode() {
+        return friendCode;
+    }
+
+    public void setFriendCode(String friendCode) {
+        this.friendCode = friendCode;
+    }
+
+    public LocalDateTime getSinceCreated() {
+        return sinceCreated;
+    }
+
+    public void setSinceCreated(LocalDateTime sinceCreated) {
+        this.sinceCreated = sinceCreated;
+    }
     public User (){
         this.sinceCreated = LocalDateTime.now();
     }

@@ -2,6 +2,8 @@ import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
 import googleIcon from '../assets/google.svg';
+import "../Styles/Auth.css";
+
 export default function Login() {
     const [formData, setFormData] = useState({ email: "", password: "" });
     const [error, setError] = useState("");
@@ -41,36 +43,47 @@ export default function Login() {
     };
 
     return (
-        <div>
-            <h1>Iniciar Sesión</h1>
-            {error && <p className="error">{error}</p>}
+        <div className="auth-screen">
 
-            <form onSubmit={handleSubmit}>
-                <input
-                    type="email"
-                    name="email"
-                    placeholder="Email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    required
-                />
-                <input
-                    type="password"
-                    name="password"
-                    placeholder="Contraseña"
-                    value={formData.password}
-                    onChange={handleChange}
-                    required
-                />
-                <button type="submit">Entrar</button>
-                <div className="divider">O</div>
+            <div className="auth-box">
+                <h1>Iniciar Sesión</h1>
 
-                <button onClick={handleGoogleLogin} className="btn-google">
-                    <img src={googleIcon} alt="Logo de Google" className="google-icon" />
-                    Continuar con Google
-                </button>
-            </form>
-            <Link to="/register">¿No tienes cuenta? Regístrate</Link>
+                {error && <p className="error-message">{error}</p>}
+
+                <form onSubmit={handleSubmit} className="login-form">
+                    <input
+                        type="email"
+                        name="email"
+                        placeholder="Email"
+                        value={formData.email}
+                        onChange={handleChange}
+                        className="login-input"
+                        required
+                    />
+                    <input
+                        type="password"
+                        name="password"
+                        placeholder="Contraseña"
+                        value={formData.password}
+                        onChange={handleChange}
+                        className="login-input"
+                        required
+                    />
+
+                    <button type="submit" className="btn-submit">Entrar</button>
+
+                    <div className="divider">O</div>
+
+                    <button type="button" onClick={handleGoogleLogin} className="btn-google">
+                        <img src={googleIcon} alt="Logo de Google" className="google-icon" />
+                        Continuar con Google
+                    </button>
+                </form>
+
+                <Link to="/register" className="register-link">
+                    ¿No tienes cuenta? Regístrate
+                </Link>
+            </div>
         </div>
     );
 }

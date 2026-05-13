@@ -1,4 +1,4 @@
-package com.StarsFighters.StarsFighters.Models.DAOs;
+package com.StarsFighters.StarsFighters.Models.Dto;
 
 public record LoginUser(
         String email,

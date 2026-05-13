@@ -1,12 +1,27 @@
-import { Link } from 'react-router-dom'
+import React from 'react';
+import { Link } from 'react-router-dom';
+import "./Styles/Auth.css"; // Importamos los estilos compartidos
 
 function App() {
   return (
-    <div>
-      <h1>Stars Fighters</h1>
-      <Link to="/login">Entrar al juego</Link>
-      <Link to="/register">Crear cuenta</Link>
+    <div className="auth-screen">
+      <div className="auth-box main-menu">
+        <h1 className="game-title">STARS FIGHTERS</h1>
+
+        <div className="menu-options">
+          <Link to="/login" className="btn-submit">
+            Entrar al juego
+          </Link>
+
+          <Link to="/register" className="btn-secondary">
+            Crear cuenta
+          </Link>
+        </div>
+
+        <p className="footer-text">V. 1.0.0 - 2026</p>
+      </div>
     </div>
   )
 }
-export default App
+
+export default App;
