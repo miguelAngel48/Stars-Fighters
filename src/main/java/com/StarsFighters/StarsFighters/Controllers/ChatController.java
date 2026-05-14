@@ -18,7 +18,7 @@ public class ChatController {
         // Enviar al destino: /user/{recipient}/queue/messages
         // Nota: "recipient" debe ser el mismo valor (ej. email) que extrajiste en el Principal del Interceptor
         messagingTemplate.convertAndSendToUser(
-                message.getRecipient(),
+                message.getContent(),
                 "/queue/messages",
                 message
         );
