@@ -29,35 +29,26 @@ public class FriendshipService {
     @Autowired
     private SimpMessagingTemplate messagingTemplate;
 
-    // --- EL NUEVO MÉTODO PARA AÑADIR POR CÓDIGO ---
     @Transactional
     public void sendFriendRequestByCode(String senderUsername, String receiverFriendCode) {
-        // 1. Buscar a los usuarios en la base de datos
         User sender = userRepo.findByUsername(senderUsername)
                 .orElseThrow(() -> new RuntimeException("Usuario remitente no encontrado"));
 
         User receiver = userRepo.findByFriendCode(receiverFriendCode)
                 .orElseThrow(() -> new RuntimeException("Jugador no encontrado con el código: " + receiverFriendCode));
 
-        // 2. Validar que no se intente añadir a sí mismo
         if (sender.getId().equals(receiver.getId())) {
             throw new RuntimeException("No puedes enviarte una solicitud de amistad a ti mismo.");
         }
 
-        // TODO (Opcional): Aquí podrías validar si ya existe una solicitud previa entre ellos
-        // para no duplicarlas en la base de datos.
-
-        // 3. Se almacena la petición en la base de datos
         Friendship request = new Friendship(sender, receiver, FriendshipStatus.PENDING);
         friendshipRepo.save(request);
 
-        // 4. Se crea la alerta de petición de amistad
         Map<String, Object> alert = new HashMap<>();
         alert.put("type", "NEW_REQUEST");
         alert.put("friendshipId", request.getId());
         alert.put("senderName", sender.getUsername());
 
-        // 5. Se envía por WebSockets
         messagingTemplate.convertAndSendToUser(
                 receiver.getUsername(),
                 "/queue/notifications",
@@ -65,18 +56,14 @@ public class FriendshipService {
         );
     }
 
-    // --- MANTENEMOS TUS MÉTODOS ANTERIORES POR SI LOS NECESITAS ---
-
     @Transactional
     public void sendFriendRequest(Long senderId, Long receiverId) {
         User sender = userRepo.findById(senderId).orElseThrow();
         User receiver = userRepo.findById(receiverId).orElseThrow();
 
-        //se almacena la petición en la base de datos
         Friendship request = new Friendship(sender,receiver,FriendshipStatus.PENDING);
         friendshipRepo.save(request);
 
-        // se Crea la alerta de petición de amistad
         Map<String, Object> alert = new HashMap<>();
         alert.put("type", "NEW_REQUEST");
         alert.put("friendshipId", request.getId());
@@ -92,14 +79,12 @@ public class FriendshipService {
     @Transactional
     public void respondToRequest(Long requestId, boolean isAccepted) {
         Friendship request = friendshipRepo.findById(requestId).orElseThrow();
-        User originalSender = request.getUser(); // El que envió la solicitud original
+        User originalSender = request.getUser();
 
         if (isAccepted) {
-            // Actualizamos la base de datos el estado de la petición
             request.setStatus(FriendshipStatus.ACCEPTED);
             friendshipRepo.save(request);
 
-            // Notificación de la petición
             Map<String, Object> alert = new HashMap<>();
             alert.put("type", "REQUEST_ACCEPTED");
             alert.put("friendName", request.getFriend().getUsername());
@@ -110,23 +95,18 @@ public class FriendshipService {
                     alert
             );
         } else {
-            // se borra en BD en el caso de rechazar
             friendshipRepo.delete(request);
         }
     }
-
-
 
     public List<FriendDto> getAcceptedFriends(String username) {
         User currentUser = userRepo.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
-        // Usamos la nueva Query que busca en ambas direcciones
         List<Friendship> friendships = friendshipRepo.findAcceptedFriendships(currentUser, FriendshipStatus.ACCEPTED);
 
         return friendships.stream()
                 .map(friendship -> {
-
                     User theOtherPlayer;
                     if (friendship.getUser().getId().equals(currentUser.getId())) {
                         theOtherPlayer = friendship.getFriend();
@@ -137,7 +117,8 @@ public class FriendshipService {
                     return new FriendDto(
                             theOtherPlayer.getId(),
                             theOtherPlayer.getUsername(),
-                            theOtherPlayer.getFriendCode()
+                            theOtherPlayer.getFriendCode(),
+                            friendship.getId()
                     );
                 })
                 .collect(Collectors.toList());
@@ -147,13 +128,12 @@ public class FriendshipService {
         User currentUser = userRepo.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
-        // Buscamos en la BD las amistades donde el "friend" (recibidor) soy yo y están PENDING
         List<Friendship> pending = friendshipRepo.findByFriendAndStatus(currentUser, FriendshipStatus.PENDING);
 
         return pending.stream()
                 .map(f -> new FriendRequestDto(
                         f.getId(),
-                        f.getUser().getUsername() // El nombre del que envió la solicitud
+                        f.getUser().getUsername()
                 ))
                 .collect(Collectors.toList());
     }

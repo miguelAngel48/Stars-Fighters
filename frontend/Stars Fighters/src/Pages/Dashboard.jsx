@@ -16,11 +16,14 @@ export default function Dashboard() {
     const [addFriendMessage, setAddFriendMessage] = useState("");
 
     const [incomingRequests, setIncomingRequests] = useState([]);
+    const [messages, setMessages] = useState([]);
+    const [newMessage, setNewMessage] = useState("");
+
     const stompClientRef = useRef(null);
+    const messagesEndRef = useRef(null);
 
     useEffect(() => {
         const token = localStorage.getItem("token");
-
         if (!token) {
             navigate("/login");
             return;
@@ -31,7 +34,6 @@ export default function Dashboard() {
             const currentTime = Date.now() / 1000;
 
             if (decoded.exp < currentTime) {
-                console.warn("El token ha expirado");
                 handleLogout();
                 return;
             }
@@ -48,7 +50,6 @@ export default function Dashboard() {
             connectWebSocket(token);
 
         } catch (error) {
-            console.error("Error al decodificar el token:", error);
             handleLogout();
         }
 
@@ -58,6 +59,10 @@ export default function Dashboard() {
             }
         };
     }, [navigate]);
+
+    useEffect(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, [messages]);
 
     const handleLogout = () => {
         localStorage.removeItem("token");
@@ -69,12 +74,9 @@ export default function Dashboard() {
             webSocketFactory: () => new SockJS('http://localhost:8080/ws-stars'),
             connectHeaders: { Authorization: `Bearer ${token}` },
             onConnect: () => {
-                console.log('STOMP Conectado para notificaciones');
-
                 client.subscribe('/user/queue/notifications', (message) => {
                     if (message.body) {
                         const notification = JSON.parse(message.body);
-
                         if (notification.type === 'NEW_REQUEST') {
                             setIncomingRequests(prev => [...prev, notification]);
                         } else if (notification.type === 'REQUEST_ACCEPTED') {
@@ -82,8 +84,14 @@ export default function Dashboard() {
                         }
                     }
                 });
-            },
-            onStompError: (frame) => console.error('Error STOMP: ' + frame.headers['message'])
+
+                client.subscribe('/user/queue/messages', (message) => {
+                    if (message.body) {
+                        const newMsg = JSON.parse(message.body);
+                        setMessages(prev => [...prev, newMsg]);
+                    }
+                });
+            }
         });
 
         client.activate();
@@ -104,9 +112,7 @@ export default function Dashboard() {
                 const data = await response.json();
                 setIncomingRequests(data);
             }
-        } catch (error) {
-            console.error("Error al cargar peticiones pendientes:", error);
-        }
+        } catch (error) {}
     };
 
     const fetchFriends = async (token) => {
@@ -122,17 +128,12 @@ export default function Dashboard() {
             if (response.ok) {
                 const data = await response.json();
                 setFriends(data);
-            } else {
-                console.error("Error al cargar amistades");
             }
-        } catch (error) {
-            console.error("Error de conexión:", error);
-        }
+        } catch (error) {}
     };
 
     const handleAddFriend = async () => {
         if (!newFriendIdentifier.trim()) return;
-
         const token = localStorage.getItem("token");
 
         try {
@@ -148,17 +149,15 @@ export default function Dashboard() {
             if (response.ok) {
                 setAddFriendMessage("¡Solicitud enviada con éxito!");
                 setNewFriendIdentifier("");
-
                 setTimeout(() => {
                     setIsModalOpen(false);
                     setAddFriendMessage("");
                 }, 1500);
             } else {
                 const errorData = await response.text();
-                setAddFriendMessage(errorData || "Error al enviar la solicitud. ¿Existe ese código?");
+                setAddFriendMessage(errorData || "Error al enviar la solicitud.");
             }
         } catch (error) {
-            console.error("Error de conexión:", error);
             setAddFriendMessage("Error de conexión con el servidor.");
         }
     };
@@ -177,8 +176,46 @@ export default function Dashboard() {
                     fetchFriends(token);
                 }
             }
-        } catch (error) {
-            console.error("Error al responder a la solicitud:", error);
+        } catch (error) {}
+    };
+
+    const handleFriendClick = async (friend) => {
+        setActiveChat(friend);
+        const token = localStorage.getItem("token");
+        try {
+            const response = await fetch(`http://localhost:8080/api/chat/${friend.friendshipId}`, {
+                headers: { "Authorization": `Bearer ${token}` }
+            });
+            if (response.ok) {
+                const data = await response.json();
+                setMessages(prev => {
+                    const filtered = prev.filter(m => m.friendshipId !== friend.friendshipId);
+                    return [...filtered, ...data];
+                });
+            }
+        } catch (error) {}
+    };
+
+    const sendMessage = () => {
+        if (!newMessage.trim() || !activeChat || !stompClientRef.current) return;
+
+        const messagePayload = {
+            friendshipId: activeChat.friendshipId,
+            receiverUsername: activeChat.username || activeChat.name,
+            content: newMessage
+        };
+
+        stompClientRef.current.publish({
+            destination: "/app/chat.private",
+            body: JSON.stringify(messagePayload)
+        });
+
+        setNewMessage("");
+    };
+
+    const handleKeyDown = (e) => {
+        if (e.key === 'Enter') {
+            sendMessage();
         }
     };
 
@@ -218,7 +255,6 @@ export default function Dashboard() {
                     </div>
                 </main>
 
-                {/* BARRA LATERAL DE AMISTADES */}
                 <aside className="friends-sidebar">
                     <div className="sidebar-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <h3 className="sidebar-title">Amistades</h3>
@@ -235,7 +271,7 @@ export default function Dashboard() {
                             <li className="no-friends" style={{ padding: '10px', color: '#888' }}>No tienes amistades aún.</li>
                         ) : (
                             friends.map((friend) => (
-                                <li key={friend.id} className="friend-item" onClick={() => setActiveChat(friend)}>
+                                <li key={friend.id} className="friend-item" onClick={() => handleFriendClick(friend)}>
                                     <div className={`status-dot ${friend.status || 'offline'}`}></div>
                                     <span>{friend.username || friend.name}</span>
                                 </li>
@@ -245,7 +281,6 @@ export default function Dashboard() {
                 </aside>
             </div>
 
-            {/* CONTENEDOR DE NOTIFICACIONES TOAST */}
             <div className="toast-container">
                 {incomingRequests.map((request) => (
                     <div key={request.friendshipId} className="toast">
@@ -263,7 +298,6 @@ export default function Dashboard() {
                 ))}
             </div>
 
-            {/* MODAL PARA AÑADIR AMIGOS */}
             {isModalOpen && (
                 <div className="modal-overlay">
                     <div className="modal-content">
@@ -296,7 +330,6 @@ export default function Dashboard() {
                 </div>
             )}
 
-            {/* VENTANA DE CHAT */}
             {activeChat && (
                 <div className="chat-window">
                     <div className="chat-header">
@@ -304,11 +337,30 @@ export default function Dashboard() {
                         <button className="close-chat-btn" onClick={() => setActiveChat(null)}>✖</button>
                     </div>
                     <div className="chat-body">
-                        <p className="chat-placeholder">Inicia una conversación con {activeChat.username || activeChat.name}...</p>
+                        {messages.filter(m => m.friendshipId === activeChat.friendshipId).length === 0 ? (
+                            <p className="chat-placeholder">Inicia una conversación con {activeChat.username || activeChat.name}...</p>
+                        ) : (
+                            <div className="messages-container">
+                                {messages
+                                    .filter(m => m.friendshipId === activeChat.friendshipId)
+                                    .map((msg, idx) => (
+                                        <div key={idx} className={`message ${msg.senderUsername === user.username ? 'sent' : 'received'}`}>
+                                            {msg.content}
+                                        </div>
+                                ))}
+                                <div ref={messagesEndRef} />
+                            </div>
+                        )}
                     </div>
                     <div className="chat-input">
-                        <input type="text" placeholder="Escribe un mensaje..." />
-                        <button>Enviar</button>
+                        <input 
+                            type="text" 
+                            placeholder="Escribe un mensaje..." 
+                            value={newMessage}
+                            onChange={(e) => setNewMessage(e.target.value)}
+                            onKeyDown={handleKeyDown}
+                        />
+                        <button onClick={sendMessage}>Enviar</button>
                     </div>
                 </div>
             )}

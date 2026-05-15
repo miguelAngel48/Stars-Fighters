@@ -313,12 +313,14 @@ input {
 
 .chat-input input {
     flex: 1;
+    min-width: 0;
     padding: 8px;
     border: 1px solid var(--color-border);
     border-radius: 4px;
 }
 
 .chat-input button {
+    flex-shrink: 0;
     background-color: var(--color-primary);
     color: white;
     border: none;
@@ -645,4 +647,30 @@ input {
     color: var(--color-danger);
     font-weight: bold;
     margin-top: 5px;
+}
+
+.messages-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.message {
+    padding: 8px 12px;
+    border-radius: 8px;
+    max-width: 80%;
+    font-size: 14px;
+    word-wrap: break-word;
+}
+
+.message.sent {
+    background-color: var(--color-primary);
+    color: white;
+    align-self: flex-end;
+}
+
+.message.received {
+    background-color: #e4e6eb;
+    color: var(--text-main);
+    align-self: flex-start;
 }
