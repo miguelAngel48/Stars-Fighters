@@ -50,6 +50,8 @@ public class UserService {
             User newUser = new User();
             newUser.setEmail(email);
             newUser.setUsername(nombre.replace(" ", ""));
+            newUser.setLevel(1);
+            newUser.setFriendCode(FriendCodeGenerator.generateCode());
             return userRepo.save(newUser);
         }
         return existUser;

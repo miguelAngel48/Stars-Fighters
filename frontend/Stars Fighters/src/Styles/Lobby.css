@@ -1,0 +1,256 @@
+.lobby-container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    background-color: #1e1e24;
+    /* Fondo más oscuro para el lobby */
+    color: white;
+}
+
+.lobby-body {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+}
+
+/* =========================================
+   ZONA PRINCIPAL (MESA DE JUEGO)
+   ========================================= */
+.lobby-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+}
+
+.game-table {
+    display: flex;
+    align-items: center;
+    gap: 40px;
+    background: #2a2d35;
+    padding: 50px;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    position: relative;
+}
+
+.vs-badge {
+    font-size: 32px;
+    font-weight: bold;
+    color: var(--color-danger);
+    text-shadow: 2px 2px 0px rgba(0, 0, 0, 0.5);
+    font-style: italic;
+}
+
+/* SLOTS DE JUGADORES */
+.player-slot {
+    width: 200px;
+    height: 280px;
+    border-radius: 15px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    text-align: center;
+    position: relative;
+    transition: all 0.3s;
+}
+
+.slot-avatar {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    background: #ccc;
+    margin-bottom: 15px;
+    border: 4px solid #fff;
+}
+
+.slot-status {
+    margin-top: 10px;
+    font-size: 12px;
+    font-weight: bold;
+    padding: 5px 10px;
+    border-radius: 15px;
+}
+
+.slot-status.ready {
+    background: var(--color-success);
+    color: white;
+}
+
+.slot-status.inviting {
+    background: #ff9800;
+    color: white;
+    animation: pulse 1.5s infinite;
+}
+
+.slot-status.joined {
+    background: var(--color-success);
+    color: white;
+}
+
+@keyframes pulse {
+    0% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.5;
+    }
+
+    100% {
+        opacity: 1;
+    }
+}
+
+/* SLOT LÍDER */
+.leader-slot {
+    background: linear-gradient(145deg, #2c2f33, #23272a);
+    border: 2px solid var(--color-primary);
+}
+
+.crown-icon {
+    position: absolute;
+    top: -15px;
+    font-size: 30px;
+}
+
+.empty-slot {
+    background: rgba(255, 255, 255, 0.05);
+    border: 2px dashed #666;
+}
+
+.empty-slot.drag-over {
+    background: rgba(170, 59, 255, 0.2);
+    border-color: var(--color-primary);
+    transform: scale(1.05);
+}
+
+.empty-slot.filled {
+    border-style: solid;
+    border-color: var(--color-secondary);
+    background: linear-gradient(145deg, #2c2f33, #23272a);
+}
+
+.empty-content {
+    color: #888;
+    pointer-events: none;
+    /* Evita parpadeos al hacer drag over */
+}
+
+.plus-icon {
+    font-size: 50px;
+    display: block;
+    margin-bottom: 10px;
+    color: #666;
+}
+
+.kick-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: var(--color-danger);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 25px;
+    height: 25px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+/* ACCIONES DE LOBBY */
+.lobby-actions {
+    margin-top: 40px;
+}
+
+.btn-start-game {
+    padding: 15px 40px;
+    font-size: 20px;
+    font-weight: bold;
+    border: none;
+    border-radius: 8px;
+    background: var(--color-success);
+    color: white;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(24, 128, 56, 0.4);
+    transition: all 0.2s;
+}
+
+.btn-start-game:disabled {
+    background: #555;
+    color: #888;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+.btn-start-game:not(:disabled):hover {
+    transform: scale(1.05);
+}
+
+/* =========================================
+   BARRA LATERAL (AMIGOS DRAGGABLE)
+   ========================================= */
+.lobby-sidebar {
+    width: 250px;
+    background: #23272a;
+    border-left: 1px solid #333;
+    display: flex;
+    flex-direction: column;
+}
+
+.friends-drag-list {
+    list-style: none;
+    padding: 10px;
+    margin: 0;
+    flex: 1;
+    overflow-y: auto;
+}
+
+.friend-drag-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px;
+    background: #2c2f33;
+    margin-bottom: 8px;
+    border-radius: 8px;
+    cursor: grab;
+    /* Cursor de "agarrar" */
+    transition: background 0.2s;
+}
+
+.friend-drag-item:active {
+    cursor: grabbing;
+    /* Cursor de "agarrando" */
+    opacity: 0.8;
+}
+
+.friend-drag-item:hover {
+    background: #3a3f45;
+}
+
+.drag-handle {
+    color: #666;
+    font-size: 20px;
+    user-select: none;
+}
+
+.tiny-avatar {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: #fff;
+}
+
+.drag-hint {
+    text-align: center;
+    padding: 15px;
+    color: #888;
+    font-size: 12px;
+    border-top: 1px solid #333;
+    margin: 0;
+}

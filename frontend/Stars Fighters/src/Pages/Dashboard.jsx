@@ -18,6 +18,7 @@ export default function Dashboard() {
     const [incomingRequests, setIncomingRequests] = useState([]);
     const [messages, setMessages] = useState([]);
     const [newMessage, setNewMessage] = useState("");
+    const [gameInvites, setGameInvites] = useState([]);
 
     const stompClientRef = useRef(null);
     const messagesEndRef = useRef(null);
@@ -82,6 +83,9 @@ export default function Dashboard() {
                         } else if (notification.type === 'REQUEST_ACCEPTED') {
                             fetchFriends(token);
                         }
+                        else if (notification.type === 'GAME_INVITE') {
+                            setGameInvites(prev => [...prev, notification]);
+                        }
                     }
                 });
 
@@ -98,6 +102,27 @@ export default function Dashboard() {
         stompClientRef.current = client;
     };
 
+    const handleRespondGameInvite = async (leaderId, lobbyId, senderName, accepted) => {
+        const token = localStorage.getItem("token");
+        try {
+            const response = await fetch(`http://localhost:8080/api/lobby/respond/${leaderId}?accepted=${accepted}&lobbyId=${lobbyId}`, {
+                method: "POST",
+                headers: { "Authorization": `Bearer ${token}` }
+            });
+
+            if (response.ok) {
+                // Quitamos el Toast de la pantalla
+                setGameInvites(prev => prev.filter(inv => inv.lobbyId !== lobbyId));
+
+                // Si aceptamos, viajamos al lobby con el rol de "guest" (invitado)
+                if (accepted) {
+                    navigate(`/lobby?role=guest&lobbyId=${lobbyId}&leaderId=${leaderId}&leaderName=${senderName}`);
+                }
+            }
+        } catch (error) {
+            console.error("Error al responder a la partida:", error);
+        }
+    };
     const fetchPendingRequests = async (token) => {
         try {
             const response = await fetch("http://localhost:8080/api/friendships/pending", {
@@ -112,7 +137,7 @@ export default function Dashboard() {
                 const data = await response.json();
                 setIncomingRequests(data);
             }
-        } catch (error) {}
+        } catch (error) { }
     };
 
     const fetchFriends = async (token) => {
@@ -129,7 +154,7 @@ export default function Dashboard() {
                 const data = await response.json();
                 setFriends(data);
             }
-        } catch (error) {}
+        } catch (error) { }
     };
 
     const handleAddFriend = async () => {
@@ -176,7 +201,7 @@ export default function Dashboard() {
                     fetchFriends(token);
                 }
             }
-        } catch (error) {}
+        } catch (error) { }
     };
 
     const handleFriendClick = async (friend) => {
@@ -193,7 +218,7 @@ export default function Dashboard() {
                     return [...filtered, ...data];
                 });
             }
-        } catch (error) {}
+        } catch (error) { }
     };
 
     const sendMessage = () => {
@@ -229,7 +254,7 @@ export default function Dashboard() {
                     <button className="nav-btn" onClick={() => console.log("Ir a tienda")}>Tienda</button>
                 </div>
                 <div className="nav-center">
-                    <button className="play-btn">Jugar</button>
+                    <button className="play-btn" onClick={() => navigate("/Lobby")}>Jugar</button>
                 </div>
                 <div className="nav-right">
                     <button className="profile-btn" onClick={() => navigate("/profile")}>
@@ -297,7 +322,22 @@ export default function Dashboard() {
                     </div>
                 ))}
             </div>
-
+            <div className="toast-container" style={{ bottom: '220px' }}>
+                {gameInvites.map((invite) => (
+                    <div key={invite.lobbyId} className="toast" style={{ borderLeft: '5px solid var(--color-primary)' }}>
+                        <h4 style={{ color: 'var(--color-primary)' }}>¡Desafío de Pelea!</h4>
+                        <p><strong>{invite.senderName}</strong> te invita a una partida.</p>
+                        <div className="toast-actions">
+                            <button className="btn-accept" onClick={() => handleRespondGameInvite(invite.senderId, invite.lobbyId, invite.senderName, true)}>
+                                Aceptar
+                            </button>
+                            <button className="btn-reject" onClick={() => handleRespondGameInvite(invite.senderId, invite.lobbyId, invite.senderName, false)}>
+                                Rechazar
+                            </button>
+                        </div>
+                    </div>
+                ))}
+            </div>
             {isModalOpen && (
                 <div className="modal-overlay">
                     <div className="modal-content">
@@ -347,15 +387,15 @@ export default function Dashboard() {
                                         <div key={idx} className={`message ${msg.senderUsername === user.username ? 'sent' : 'received'}`}>
                                             {msg.content}
                                         </div>
-                                ))}
+                                    ))}
                                 <div ref={messagesEndRef} />
                             </div>
                         )}
                     </div>
                     <div className="chat-input">
-                        <input 
-                            type="text" 
-                            placeholder="Escribe un mensaje..." 
+                        <input
+                            type="text"
+                            placeholder="Escribe un mensaje..."
                             value={newMessage}
                             onChange={(e) => setNewMessage(e.target.value)}
                             onKeyDown={handleKeyDown}

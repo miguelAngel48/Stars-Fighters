@@ -7,6 +7,7 @@ import NotFound from "./Pages/errorsPages/NotFound";
 import Dashboard from "./Pages/Dashboard";
 import OAuth2RedirectHandler from "./Pages/OAuth2RedirectHandler";
 import Profile from "./Pages/Profile";
+import Lobby from "./Pages/Lobby";
 
 const router = createBrowserRouter([
     { path: "/", element: <App /> },
@@ -15,7 +16,8 @@ const router = createBrowserRouter([
     { path: "/dashboard", element: <Dashboard /> },
     { path: "/oauth2/redirect", element: <OAuth2RedirectHandler /> },
     { path: "*", element: <NotFound /> },
-    { path: "/profile", element: <Profile /> }
+    { path: "/profile", element: <Profile /> },
+    { path: "/lobby", element: <Lobby /> }
 ]);
 
 export default router;
