@@ -11,12 +11,10 @@
     --color-danger-dark: #d93025;
     --bg-danger-light: #ffe6e6;
     --color-success: #188038;
-
     --color-border: #cccccc;
-
+    --color-warning: #ffcc00;
     --font-main: system-ui, 'Segoe UI', Roboto, sans-serif;
 }
-
 
 body {
     margin: 0;
@@ -44,7 +42,6 @@ input {
     border-radius: 4px;
     font-size: 16px;
 }
-
 
 .dashboard-container {
     display: flex;
@@ -199,7 +196,6 @@ input {
     background-color: var(--color-danger-dark);
 }
 
-
 .friends-sidebar {
     width: 10vw;
     min-width: 150px;
@@ -244,16 +240,20 @@ input {
     width: 10px;
     height: 10px;
     border-radius: 50%;
+    transition: background-color 0.3s;
 }
 
-.status-dot.online {
+.status-dot.ONLINE {
     background-color: var(--color-success);
 }
 
-.status-dot.offline {
-    background-color: var(--color-border);
+.status-dot.DND {
+    background-color: var(--color-warning);
 }
 
+.status-dot.OFFLINE {
+    background-color: var(--color-border);
+}
 
 .chat-window {
     position: fixed;
@@ -554,7 +554,6 @@ input {
     transform: scale(1.1);
 }
 
-
 .toast-container {
     position: fixed;
     bottom: 20px;
@@ -581,7 +580,6 @@ input {
         transform: translateX(100%);
         opacity: 0;
     }
-
     to {
         transform: translateX(0);
         opacity: 1;

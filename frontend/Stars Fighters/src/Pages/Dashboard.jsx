@@ -1,8 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
-import { Client } from '@stomp/stompjs';
-import SockJS from 'sockjs-client/dist/sockjs';
+import { useWebSocket } from "../contexts/WebSocketContext";
 import "../Styles/Dashboard.css";
 
 export default function Dashboard() {
@@ -20,8 +19,9 @@ export default function Dashboard() {
     const [newMessage, setNewMessage] = useState("");
     const [gameInvites, setGameInvites] = useState([]);
 
-    const stompClientRef = useRef(null);
     const messagesEndRef = useRef(null);
+
+    const { clientRef, isConnected, disconnect } = useWebSocket();
 
     useEffect(() => {
         const token = localStorage.getItem("token");
@@ -46,20 +46,52 @@ export default function Dashboard() {
                 avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Felix"
             });
 
-            fetchFriends(token);
-            fetchPendingRequests(token);
-            connectWebSocket(token);
-
         } catch (error) {
             handleLogout();
         }
-
-        return () => {
-            if (stompClientRef.current) {
-                stompClientRef.current.deactivate();
-            }
-        };
     }, [navigate]);
+
+    useEffect(() => {
+        if (isConnected && clientRef.current) {
+            const token = localStorage.getItem("token");
+
+            const notifSub = clientRef.current.subscribe('/user/queue/notifications', (message) => {
+                if (message.body) {
+                    const notification = JSON.parse(message.body);
+                    if (notification.type === 'NEW_REQUEST') {
+                        setIncomingRequests(prev => [...prev, notification]);
+                    } else if (notification.type === 'REQUEST_ACCEPTED') {
+                        fetchFriends(token);
+                    } else if (notification.type === 'GAME_INVITE') {
+                        setGameInvites(prev => [...prev, notification]);
+                    } else if (notification.type === 'PRESENCE') {
+                        setFriends(prevFriends => 
+                            prevFriends.map(friend => 
+                                friend.username === notification.username 
+                                    ? { ...friend, currentStatus: notification.status }
+                                    : friend
+                            )
+                        );
+                    }
+                }
+            });
+
+            const msgSub = clientRef.current.subscribe('/user/queue/messages', (message) => {
+                if (message.body) {
+                    const newMsg = JSON.parse(message.body);
+                    setMessages(prev => [...prev, newMsg]);
+                }
+            });
+
+            fetchFriends(token);
+            fetchPendingRequests(token);
+
+            return () => {
+                notifSub.unsubscribe();
+                msgSub.unsubscribe();
+            };
+        }
+    }, [isConnected, clientRef]);
 
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -67,39 +99,8 @@ export default function Dashboard() {
 
     const handleLogout = () => {
         localStorage.removeItem("token");
+        disconnect();
         navigate("/login");
-    };
-
-    const connectWebSocket = (token) => {
-        const client = new Client({
-            webSocketFactory: () => new SockJS('http://localhost:8080/ws-stars'),
-            connectHeaders: { Authorization: `Bearer ${token}` },
-            onConnect: () => {
-                client.subscribe('/user/queue/notifications', (message) => {
-                    if (message.body) {
-                        const notification = JSON.parse(message.body);
-                        if (notification.type === 'NEW_REQUEST') {
-                            setIncomingRequests(prev => [...prev, notification]);
-                        } else if (notification.type === 'REQUEST_ACCEPTED') {
-                            fetchFriends(token);
-                        }
-                        else if (notification.type === 'GAME_INVITE') {
-                            setGameInvites(prev => [...prev, notification]);
-                        }
-                    }
-                });
-
-                client.subscribe('/user/queue/messages', (message) => {
-                    if (message.body) {
-                        const newMsg = JSON.parse(message.body);
-                        setMessages(prev => [...prev, newMsg]);
-                    }
-                });
-            }
-        });
-
-        client.activate();
-        stompClientRef.current = client;
     };
 
     const handleRespondGameInvite = async (leaderId, lobbyId, senderName, accepted) => {
@@ -111,18 +112,17 @@ export default function Dashboard() {
             });
 
             if (response.ok) {
-                // Quitamos el Toast de la pantalla
                 setGameInvites(prev => prev.filter(inv => inv.lobbyId !== lobbyId));
 
-                // Si aceptamos, viajamos al lobby con el rol de "guest" (invitado)
                 if (accepted) {
                     navigate(`/lobby?role=guest&lobbyId=${lobbyId}&leaderId=${leaderId}&leaderName=${senderName}`);
                 }
             }
         } catch (error) {
-            console.error("Error al responder a la partida:", error);
+            console.error("Error respond game invite:", error);
         }
     };
+
     const fetchPendingRequests = async (token) => {
         try {
             const response = await fetch("http://localhost:8080/api/friendships/pending", {
@@ -137,7 +137,9 @@ export default function Dashboard() {
                 const data = await response.json();
                 setIncomingRequests(data);
             }
-        } catch (error) { }
+        } catch (error) { 
+            console.error("Error fetching requests:", error);
+        }
     };
 
     const fetchFriends = async (token) => {
@@ -154,7 +156,9 @@ export default function Dashboard() {
                 const data = await response.json();
                 setFriends(data);
             }
-        } catch (error) { }
+        } catch (error) { 
+            console.error("Error fetching friends:", error);
+        }
     };
 
     const handleAddFriend = async () => {
@@ -201,7 +205,9 @@ export default function Dashboard() {
                     fetchFriends(token);
                 }
             }
-        } catch (error) { }
+        } catch (error) { 
+            console.error("Error respond request:", error);
+        }
     };
 
     const handleFriendClick = async (friend) => {
@@ -218,19 +224,21 @@ export default function Dashboard() {
                     return [...filtered, ...data];
                 });
             }
-        } catch (error) { }
+        } catch (error) { 
+            console.error("Error fetching chat:", error);
+        }
     };
 
     const sendMessage = () => {
-        if (!newMessage.trim() || !activeChat || !stompClientRef.current) return;
+        if (!newMessage.trim() || !activeChat || !clientRef.current) return;
 
         const messagePayload = {
             friendshipId: activeChat.friendshipId,
-            receiverUsername: activeChat.username || activeChat.name,
+            receiverUsername: activeChat.username,
             content: newMessage
         };
 
-        stompClientRef.current.publish({
+        clientRef.current.publish({
             destination: "/app/chat.private",
             body: JSON.stringify(messagePayload)
         });
@@ -251,7 +259,7 @@ export default function Dashboard() {
             <nav className="navbar">
                 <div className="nav-left">
                     <button className="nav-btn" onClick={() => navigate("/dashboard")}>Dashboard</button>
-                    <button className="nav-btn" onClick={() => console.log("Ir a tienda")}>Tienda</button>
+                    <button className="nav-btn">Tienda</button>
                 </div>
                 <div className="nav-center">
                     <button className="play-btn" onClick={() => navigate("/Lobby")}>Jugar</button>
@@ -272,7 +280,7 @@ export default function Dashboard() {
                     <h1>Bienvenido a tu Dashboard</h1>
                     <div className="user-card">
                         <h3>Tu Perfil</h3>
-                        <p><strong>Usuario (sub):</strong> {user.sub}</p>
+                        <p><strong>Usuario (sub):</strong> {user.username}</p>
                         <p><strong>Email:</strong> {user.email}</p>
                         <button className="btn-logout" onClick={handleLogout}>
                             Cerrar Sesión
@@ -297,8 +305,8 @@ export default function Dashboard() {
                         ) : (
                             friends.map((friend) => (
                                 <li key={friend.id} className="friend-item" onClick={() => handleFriendClick(friend)}>
-                                    <div className={`status-dot ${friend.status || 'offline'}`}></div>
-                                    <span>{friend.username || friend.name}</span>
+                                    <div className={`status-dot ${friend.currentStatus || 'OFFLINE'}`}></div>
+                                    <span>{friend.username}</span>
                                 </li>
                             ))
                         )}
@@ -373,12 +381,12 @@ export default function Dashboard() {
             {activeChat && (
                 <div className="chat-window">
                     <div className="chat-header">
-                        <span>Chat con {activeChat.username || activeChat.name}</span>
+                        <span>Chat con {activeChat.username}</span>
                         <button className="close-chat-btn" onClick={() => setActiveChat(null)}>✖</button>
                     </div>
                     <div className="chat-body">
                         {messages.filter(m => m.friendshipId === activeChat.friendshipId).length === 0 ? (
-                            <p className="chat-placeholder">Inicia una conversación con {activeChat.username || activeChat.name}...</p>
+                            <p className="chat-placeholder">Inicia una conversación con {activeChat.username}...</p>
                         ) : (
                             <div className="messages-container">
                                 {messages
