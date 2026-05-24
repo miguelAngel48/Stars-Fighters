@@ -1,6 +1,8 @@
 package com.StarsFighters.StarsFighters.Services;
 
 import com.StarsFighters.StarsFighters.Models.Dto.GameInviteDto;
+import com.StarsFighters.StarsFighters.Models.Dto.GameStartDto;
+import com.StarsFighters.StarsFighters.Models.Dto.SelectionDto;
 import com.StarsFighters.StarsFighters.Models.Entities.User;
 import com.StarsFighters.StarsFighters.Repositories.UserRepo;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -93,6 +95,69 @@ public class LobbyService {
                 "/queue/notifications",
                 kickMsg
         );
+    }
+
+    public void startCharacterSelection(Long leaderId, String guestUsername, String lobbyId) {
+
+        GameInviteDto startMsg = new GameInviteDto(
+                "START_SELECTION",
+                leaderId,
+                "Líder",
+                lobbyId
+        );
+
+        messagingTemplate.convertAndSendToUser(
+                guestUsername,
+                "/queue/notifications",
+                startMsg
+        );
+    }
+
+    private final java.util.Map<String, java.util.Map<String, Object>> activeMatches = new java.util.concurrent.ConcurrentHashMap<>();
+
+    public void submitSelection(String lobbyId, String role, Long characterId, String characterName, Long mapId, String myUsername, String targetUsername) {
+
+        activeMatches.putIfAbsent(lobbyId, new java.util.concurrent.ConcurrentHashMap<>());
+        java.util.Map<String, Object> matchData = activeMatches.get(lobbyId);
+
+
+        matchData.put(role + "CharId", characterId);
+        matchData.put(role + "CharName", characterName);
+        matchData.put(role + "Username", myUsername);
+        if (mapId != null) {
+            matchData.put("mapId", mapId);
+        }
+
+
+        SelectionDto readyNotice = new SelectionDto(
+                "OPPONENT_READY",
+                role,
+                characterId,
+                characterName,
+                mapId,
+                lobbyId
+        );
+        messagingTemplate.convertAndSendToUser(targetUsername, "/queue/notifications", readyNotice);
+
+
+        if (matchData.containsKey("leaderCharId") && matchData.containsKey("guestCharId")) {
+            Long finalMapId = (Long) matchData.getOrDefault("mapId", 1L);
+            Long leaderCharId = (Long) matchData.get("leaderCharId");
+            Long guestCharId = (Long) matchData.get("guestCharId");
+
+            GameStartDto startGameMsg = new GameStartDto(
+                    "START_GAME",
+                    finalMapId,
+                    leaderCharId,
+                    guestCharId,
+                    lobbyId
+            );
+
+            messagingTemplate.convertAndSendToUser((String) matchData.get("leaderUsername"), "/queue/notifications", startGameMsg);
+            messagingTemplate.convertAndSendToUser((String) matchData.get("guestUsername"), "/queue/notifications", startGameMsg);
+
+            activeMatches.remove(lobbyId);
+        }
     }
 
 }

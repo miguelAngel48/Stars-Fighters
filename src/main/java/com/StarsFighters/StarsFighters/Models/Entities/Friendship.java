@@ -1,6 +1,6 @@
 package com.StarsFighters.StarsFighters.Models.Entities;
 
-import com.StarsFighters.StarsFighters.Models.Entities.Enums.FriendshipStatus;
+import com.StarsFighters.StarsFighters.Models.Enums.FriendshipStatus;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;

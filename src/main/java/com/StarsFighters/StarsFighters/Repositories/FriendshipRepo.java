@@ -1,6 +1,6 @@
 package com.StarsFighters.StarsFighters.Repositories;
 
-import com.StarsFighters.StarsFighters.Models.Entities.Enums.FriendshipStatus;
+import com.StarsFighters.StarsFighters.Models.Enums.FriendshipStatus;
 import com.StarsFighters.StarsFighters.Models.Entities.Friendship;
 import com.StarsFighters.StarsFighters.Models.Entities.User;
 import org.springframework.data.jpa.repository.JpaRepository;

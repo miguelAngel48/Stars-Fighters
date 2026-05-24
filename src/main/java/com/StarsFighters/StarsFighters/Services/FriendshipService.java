@@ -3,7 +3,7 @@ package com.StarsFighters.StarsFighters.Services;
 import com.StarsFighters.StarsFighters.Models.Dto.FriendDto;
 import com.StarsFighters.StarsFighters.Models.Dto.FriendRequestDto;
 import com.StarsFighters.StarsFighters.Models.Entities.Friendship;
-import com.StarsFighters.StarsFighters.Models.Entities.Enums.FriendshipStatus;
+import com.StarsFighters.StarsFighters.Models.Enums.FriendshipStatus;
 import com.StarsFighters.StarsFighters.Models.Entities.User;
 import com.StarsFighters.StarsFighters.Repositories.FriendshipRepo;
 import com.StarsFighters.StarsFighters.Repositories.UserRepo;

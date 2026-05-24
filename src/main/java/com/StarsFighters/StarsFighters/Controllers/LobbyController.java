@@ -76,4 +76,37 @@ public class LobbyController {
             return ResponseEntity.badRequest().body("Error al expulsar: " + e.getMessage());
         }
     }
+    @PostMapping("/start")
+    public ResponseEntity<?> startGame(
+            @RequestHeader("Authorization") String authHeader,
+            @RequestParam String guestUsername,
+            @RequestParam String lobbyId
+    ) {
+        try {
+            Long leaderId = jwtService.extractId(authHeader.substring(7));
+            lobbyService.startCharacterSelection(leaderId, guestUsername, lobbyId);
+            return ResponseEntity.ok("Pantalla de selección iniciada");
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Error al iniciar: " + e.getMessage());
+        }
+    }
+
+    @PostMapping("/ready")
+    public ResponseEntity<?> playerReady(
+            @RequestHeader("Authorization") String authHeader,
+            @RequestParam String lobbyId,
+            @RequestParam String role,
+            @RequestParam Long characterId,
+            @RequestParam String characterName,
+            @RequestParam(required = false) Long mapId,
+            @RequestParam String targetUsername
+    ) {
+        try {
+            String myUsername = jwtService.extractUsername(authHeader.substring(7));
+            lobbyService.submitSelection(lobbyId, role, characterId, characterName, mapId, myUsername, targetUsername);
+            return ResponseEntity.ok("Selección registrada");
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
 }

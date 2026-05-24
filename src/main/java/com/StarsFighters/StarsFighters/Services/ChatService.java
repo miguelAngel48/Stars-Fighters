@@ -1,6 +1,6 @@
 package com.StarsFighters.StarsFighters.Services;
 
-import com.StarsFighters.StarsFighters.Models.ChatMessage;
+import com.StarsFighters.StarsFighters.Models.Entities.ChatMessage;
 import com.StarsFighters.StarsFighters.Models.Dto.ChatMessageDto;
 import com.StarsFighters.StarsFighters.Models.Entities.Friendship;
 import com.StarsFighters.StarsFighters.Models.Entities.User;

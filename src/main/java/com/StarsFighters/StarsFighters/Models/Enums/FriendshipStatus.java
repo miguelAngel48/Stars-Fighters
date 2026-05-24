@@ -1,4 +1,4 @@
-package com.StarsFighters.StarsFighters.Models.Entities.Enums;
+package com.StarsFighters.StarsFighters.Models.Enums;
 
 public enum FriendshipStatus {
     PENDING,

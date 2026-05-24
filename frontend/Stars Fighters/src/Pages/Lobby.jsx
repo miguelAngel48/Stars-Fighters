@@ -39,7 +39,7 @@ export default function Lobby() {
             };
             setUser(myUser);
 
-            // Si soy el INVITADO, el Slot 2 soy YO, y el Slot 1 es el Líder que venía en la URL
+
             if (role === "guest") {
                 setPlayer2({ username: myUser.username, status: 'joined' });
             }
@@ -56,7 +56,6 @@ export default function Lobby() {
         };
     }, [navigate, role]);
 
-    // Conexión en tiempo real dentro del Lobby
     const connectLobbyWebSocket = (token) => {
         const client = new Client({
             webSocketFactory: () => new SockJS('http://localhost:8080/ws-stars'),
@@ -64,35 +63,31 @@ export default function Lobby() {
             onConnect: () => {
                 console.log('STOMP Conectado en el Lobby');
 
-                // Nos suscribimos para escuchar las respuestas del amigo
                 client.subscribe('/user/queue/notifications', (message) => {
                     if (message.body) {
                         const notification = JSON.parse(message.body);
 
-                        // Si soy el Líder y mi amigo ACEPTÓ la partida
                         if (notification.type === 'GAME_ACCEPTED') {
                             setPlayer2({ username: notification.senderName, status: 'joined' });
                         }
-                        // Si mi amigo RECHAZÓ la partida
                         else if (notification.type === 'GAME_REJECTED') {
                             alert(`${notification.senderName} ha rechazado tu invitación.`);
                             setPlayer2(null);
                         }
-                        // --- NUEVOS EVENTOS DE DESCONEXIÓN ---
                         else if (notification.type === 'LOBBY_CLOSED') {
-                            // El líder cerró la sala, nos echa automáticamente al Dashboard
                             alert(`El líder ${notification.senderName} ha cerrado la sala.`);
                             navigate("/dashboard");
                         }
                         else if (notification.type === 'GUEST_LEFT') {
-                            // El invitado se fue corriendo, volvemos a dejar la silla vacía
                             alert(`${notification.senderName} ha abandonado la sala.`);
                             setPlayer2(null);
                         }
-                        // --- NUEVA LÓGICA: Si me han expulsado ---
                         else if (notification.type === 'GUEST_KICKED') {
                             alert("Has sido expulsado de la sala por el líder.");
-                            navigate("/dashboard"); // Lo mandamos a su casa
+                            navigate("/dashboard");
+                        }
+                        else if (notification.type === 'START_SELECTION') {
+                            navigate(`/character-selection?lobbyId=${notification.lobbyId}&role=guest`);
                         }
                     }
                 });
@@ -102,6 +97,24 @@ export default function Lobby() {
         stompClientRef.current = client;
     };
 
+    const handleStartGame = async () => {
+        if (!player2 || !currentLobbyId) return;
+
+        const token = localStorage.getItem("token");
+        try {
+            const response = await fetch(`http://localhost:8080/api/lobby/start?guestUsername=${player2.username}&lobbyId=${currentLobbyId}`, {
+                method: "POST",
+                headers: { "Authorization": `Bearer ${token}` }
+            });
+
+            if (response.ok) {
+
+                navigate(`/character-selection?lobbyId=${currentLobbyId}&role=leader`);
+            }
+        } catch (err) {
+            console.error("Error al iniciar partida:", err);
+        }
+    };
     const handleKickPlayer = async () => {
         if (!player2 || !currentLobbyId) return;
 
@@ -280,7 +293,7 @@ export default function Lobby() {
 
                     <div className="lobby-actions">
                         {role !== 'guest' ? (
-                            <button className="btn-start-game" disabled={!player2 || player2.status !== 'joined'}>
+                            <button className="btn-start-game" disabled={!player2 || player2.status !== 'joined'} onClick={handleStartGame}>
                                 INICIAR PARTIDA
                             </button>
                         ) : (

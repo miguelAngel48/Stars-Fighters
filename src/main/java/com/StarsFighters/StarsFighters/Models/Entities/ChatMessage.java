@@ -1,7 +1,5 @@
-package com.StarsFighters.StarsFighters.Models;
+package com.StarsFighters.StarsFighters.Models.Entities;
 
-import com.StarsFighters.StarsFighters.Models.Entities.Friendship;
-import com.StarsFighters.StarsFighters.Models.Entities.User;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
