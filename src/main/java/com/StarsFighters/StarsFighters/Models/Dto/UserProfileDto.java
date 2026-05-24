@@ -7,6 +7,6 @@ public record UserProfileDto(
         String email,
         String friendCode,
         int level,
-        LocalDateTime sinceCreated
-) {
-}
+        LocalDateTime sinceCreated,
+        String statusPreference
+) {}

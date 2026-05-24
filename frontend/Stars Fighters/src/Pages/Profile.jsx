@@ -1,10 +1,12 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import "../Styles/Profile.css";
 
 export default function Profile() {
     const [userData, setUserData] = useState(null);
     const [copySuccess, setCopySuccess] = useState("");
+    const [isStatusMenuOpen, setIsStatusMenuOpen] = useState(false);
+    const dropdownRef = useRef(null);
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -31,15 +33,23 @@ export default function Profile() {
                     navigate("/login");
                 }
             } catch (error) {
-                console.error("Error al cargar perfil:", error);
             }
         };
 
         fetchProfile();
     }, [navigate]);
 
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+                setIsStatusMenuOpen(false);
+            }
+        };
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
+
     const copyToClipboard = () => {
-        console.log("Intentando copiar:", userData?.friendCode);
         if (userData?.friendCode) {
             navigator.clipboard.writeText(userData.friendCode);
             setCopySuccess("¡Copiado!");
@@ -47,11 +57,35 @@ export default function Profile() {
         }
     };
 
+    const handleStatusSelect = async (newStatus) => {
+        setUserData(prev => ({ ...prev, statusPreference: newStatus }));
+        setIsStatusMenuOpen(false);
+        
+        const token = localStorage.getItem("token");
+        try {
+            await fetch(`http://localhost:8080/api/auth/status?pref=${newStatus}`, {
+                method: "PUT",
+                headers: { "Authorization": `Bearer ${token}` }
+            });
+        } catch (error) {
+        }
+    };
+
+    const getStatusConfig = (status) => {
+        switch(status) {
+            case 'ACTIVE': return { text: 'Activo', colorClass: 'status-online' };
+            case 'DND': return { text: 'No molestar', colorClass: 'status-dnd' };
+            case 'INVISIBLE': return { text: 'Invisible', colorClass: 'status-offline' };
+            default: return { text: 'Activo', colorClass: 'status-online' };
+        }
+    };
+
     if (!userData) return <div className="loading">Cargando perfil...</div>;
+
+    const currentStatus = getStatusConfig(userData.statusPreference);
 
     return (
         <div className="profile-page-container">
-            {/* Cabecera con botón volver */}
             <header className="profile-header">
                 <button className="back-btn" onClick={() => navigate("/dashboard")}>
                     ← Volver al juego
@@ -60,7 +94,6 @@ export default function Profile() {
             </header>
 
             <div className="profile-content">
-
                 <div className="profile-main-card">
                     <img
                         src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${userData.username}`}
@@ -69,6 +102,34 @@ export default function Profile() {
                     />
                     <h2>{userData.username}</h2>
                     <span className="badge-level">Nivel {userData.level}</span>
+                    
+                    <div className="custom-status-dropdown" ref={dropdownRef}>
+                        <div 
+                            className="status-dropdown-header" 
+                            onClick={() => setIsStatusMenuOpen(!isStatusMenuOpen)}
+                        >
+                            <div className={`profile-status-dot ${currentStatus.colorClass}`}></div>
+                            <span>{currentStatus.text}</span>
+                            <span className="dropdown-arrow">{isStatusMenuOpen ? '▲' : '▼'}</span>
+                        </div>
+                        
+                        {isStatusMenuOpen && (
+                            <ul className="status-dropdown-list">
+                                <li className="status-dropdown-item" onClick={() => handleStatusSelect('ACTIVE')}>
+                                    <div className="profile-status-dot status-online"></div>
+                                    <span>Activo</span>
+                                </li>
+                                <li className="status-dropdown-item" onClick={() => handleStatusSelect('DND')}>
+                                    <div className="profile-status-dot status-dnd"></div>
+                                    <span>No molestar</span>
+                                </li>
+                                <li className="status-dropdown-item" onClick={() => handleStatusSelect('INVISIBLE')}>
+                                    <div className="profile-status-dot status-offline"></div>
+                                    <span>Invisible</span>
+                                </li>
+                            </ul>
+                        )}
+                    </div>
                 </div>
 
                 <div className="friend-code-section">

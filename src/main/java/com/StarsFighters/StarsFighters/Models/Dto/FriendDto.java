@@ -4,5 +4,6 @@ public record FriendDto(
         Long id,
         String username,
         String friendCode,
-        Long friendshipId
+        Long friendshipId,
+        String currentStatus
 ) {}

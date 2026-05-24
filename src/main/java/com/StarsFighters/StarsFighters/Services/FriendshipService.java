@@ -114,11 +114,21 @@ public class FriendshipService {
                         theOtherPlayer = friendship.getUser();
                     }
 
+                    String currentStatus = "OFFLINE";
+                    if (theOtherPlayer.isOnline()) {
+                        if ("ACTIVE".equals(theOtherPlayer.getStatusPreference())) {
+                            currentStatus = "ONLINE";
+                        } else if ("DND".equals(theOtherPlayer.getStatusPreference())) {
+                            currentStatus = "DND";
+                        }
+                    }
+
                     return new FriendDto(
                             theOtherPlayer.getId(),
                             theOtherPlayer.getUsername(),
                             theOtherPlayer.getFriendCode(),
-                            friendship.getId()
+                            friendship.getId(),
+                            currentStatus
                     );
                 })
                 .collect(Collectors.toList());

@@ -15,7 +15,7 @@ export default function CharacterSelection() {
 
     const [searchParams] = useSearchParams();
     const lobbyId = searchParams.get("lobbyId");
-    const role = searchParams.get("role"); // "leader" o "guest"
+    const role = searchParams.get("role");
 
     const navigate = useNavigate();
     const stompClientRef = useRef(null);
@@ -69,22 +69,19 @@ export default function CharacterSelection() {
         finally { setIsLoading(false); }
     };
 
-    // Averiguamos el nombre del oponente buscando en la sala del lobby
+
     const fetchOpponentInfo = async (token) => {
-        // En un entorno ideal, pasarías el nombre del oponente por la URL igual que el leaderName.
-        // Para simplificar, asumimos que recuperamos los datos del oponente guardados.
-        // Añadiremos un buscador básico o reutilizaremos las variables.
         try {
             const response = await fetch(`http://localhost:8080/api/lobby/info?lobbyId=${lobbyId}`, {
                 headers: { "Authorization": `Bearer ${token}` }
             });
             if (response.ok) {
                 const data = await response.json();
-                // data.opponent contiene el nombre del otro
+
                 setOpponentUsername(role === 'leader' ? data.guestName : data.leaderName);
             }
         } catch (e) {
-            // Fallback por si la ruta no existe todavía: lo sacamos de una variable global o localStorage alternativa
+
             const savedOpponent = localStorage.getItem("last_opponent_username");
             setOpponentUsername(savedOpponent || "Oponente");
         }

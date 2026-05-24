@@ -19,21 +19,21 @@ public class CreateCharacter implements CommandLineRunner {
     public void run(String... args) throws Exception {
         if (characterRepo.count() == 0) {
             characterRepo.save(new Character(
-                    "Astro Knight",
+                    "Samurai",
                     5.0,
                     12.0,
                     100,
                     15,
-                    "/assets/sprites/knight_idle.png",
+                    "/assets/sprites/samurai.png",
                     "/assets/sprites/knight_run.png",
                     "/assets/sprites/knight_attack.png"
             ));
 
             characterRepo.save(new Character(
-                    "Cyber Ninja",
+                    "Shinobi",
                     7.5,
                     10.0,
-                    80,
+                    100,
                     10,
                     "/assets/sprites/ninja_idle.png",
                     "/assets/sprites/ninja_run.png",

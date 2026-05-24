@@ -10,12 +10,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import static com.StarsFighters.StarsFighters.Utils.FriendCodeGenerator.generateCode;
-
 @Service
 public class UserService {
+
     @Autowired
     UserRepo userRepo;
+
     @Autowired
     PasswordEncoder passwordEncoder;
 
@@ -27,7 +27,7 @@ public class UserService {
         user.setEmail(newUser.email());
         user.setUsername(newUser.username());
         user.setPassword(passwordEncoder.encode(newUser.password()));
-        user.setFriendCode(generateCode());
+        user.setFriendCode(FriendCodeGenerator.generateCode());
         user.setLevel(1);
         userRepo.save(user);
     }
@@ -49,15 +49,24 @@ public class UserService {
         if (existUser == null) {
             User newUser = new User();
             newUser.setEmail(email);
-            newUser.setUsername(nombre.replace(" ", ""));
+            newUser.setUsername(nombre != null ? nombre.replace(" ", "") : "GoogleUser");
             newUser.setLevel(1);
             newUser.setFriendCode(FriendCodeGenerator.generateCode());
             return userRepo.save(newUser);
+        } else if (existUser.getFriendCode() == null || existUser.getFriendCode().trim().isEmpty()) {
+            existUser.setFriendCode(FriendCodeGenerator.generateCode());
+            return userRepo.save(existUser);
         }
+
         return existUser;
     }
 
-
+    public void updateStatusPreference(String username, String statusPreference) {
+        User user = userRepo.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+        user.setStatusPreference(statusPreference);
+        userRepo.save(user);
+    }
 
     public UserProfileDto getUserProfileById(Long userId) {
         User user = userRepo.findById(userId)
@@ -68,7 +77,8 @@ public class UserService {
                 user.getEmail(),
                 user.getFriendCode(),
                 user.getLevel(),
-                user.getSinceCreated()
+                user.getSinceCreated(),
+                user.getStatusPreference()
         );
     }
 }

@@ -1,7 +1,6 @@
 package com.StarsFighters.StarsFighters.Models.Entities;
 
 import jakarta.persistence.*;
-
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -17,13 +16,34 @@ public class User {
     private LocalDateTime sinceCreated;
     private int Level;
 
-
     @Column(unique = true, length = 10)
     private String friendCode;
+
+    private String statusPreference = "ACTIVE";
+    private boolean isOnline = false;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     private List<Friendship> friendships = new ArrayList<>();
 
+    public User() {
+        this.sinceCreated = LocalDateTime.now();
+    }
+
+    public String getStatusPreference() {
+        return statusPreference;
+    }
+
+    public void setStatusPreference(String statusPreference) {
+        this.statusPreference = statusPreference;
+    }
+
+    public boolean isOnline() {
+        return isOnline;
+    }
+
+    public void setOnline(boolean online) {
+        this.isOnline = online;
+    }
 
     public int getLevel() {
         return Level;
@@ -32,6 +52,7 @@ public class User {
     public void setLevel(int level) {
         Level = level;
     }
+
     public String getFriendCode() {
         return friendCode;
     }
@@ -47,9 +68,7 @@ public class User {
     public void setSinceCreated(LocalDateTime sinceCreated) {
         this.sinceCreated = sinceCreated;
     }
-    public User (){
-        this.sinceCreated = LocalDateTime.now();
-    }
+
     public Long getId() {
         return id;
     }

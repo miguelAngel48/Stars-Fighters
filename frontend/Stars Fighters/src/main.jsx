@@ -1,10 +1,14 @@
-import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
-
-import './Styles/index.css'
-import App from './App.jsx'
-import router from './router.jsx'
+import React from 'react'
+import ReactDOM from 'react-dom/client'
 import { RouterProvider } from 'react-router-dom'
-createRoot(document.getElementById('root')).render(
-  <RouterProvider router={router} />
+import router from './router'
+import { WebSocketProvider } from "./contexts/WebSocketContext"
+import './Styles/index.css'
+
+ReactDOM.createRoot(document.getElementById('root')).render(
+  <React.StrictMode>
+    <WebSocketProvider>
+      <RouterProvider router={router} />
+    </WebSocketProvider>
+  </React.StrictMode>,
 )
