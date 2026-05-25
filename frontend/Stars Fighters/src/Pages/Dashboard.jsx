@@ -13,6 +13,9 @@ export default function Dashboard() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [newFriendIdentifier, setNewFriendIdentifier] = useState("");
     const [addFriendMessage, setAddFriendMessage] = useState("");
+    
+    const [searchTimeout, setSearchTimeout] = useState(null);
+    const [searchResults, setSearchResults] = useState([]);
 
     const [incomingRequests, setIncomingRequests] = useState([]);
     const [messages, setMessages] = useState([]);
@@ -20,7 +23,6 @@ export default function Dashboard() {
     const [gameInvites, setGameInvites] = useState([]);
 
     const messagesEndRef = useRef(null);
-
     const { clientRef, isConnected, disconnect } = useWebSocket();
 
     useEffect(() => {
@@ -39,11 +41,25 @@ export default function Dashboard() {
                 return;
             }
 
-            setUser({
-                ...decoded,
-                username: decoded.sub || "Usuario",
-                level: decoded.level,
-                avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Felix"
+            fetch("http://localhost:8080/api/auth/profile", {
+                headers: { "Authorization": `Bearer ${token}` }
+            })
+            .then(res => res.json())
+            .then(profileData => {
+                setUser({
+                    username: profileData.username,
+                    level: profileData.level,
+                    email: profileData.email,
+                    avatar: profileData.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${profileData.username}`
+                });
+            })
+            .catch(() => {
+                setUser({
+                    username: decoded.sub || "Usuario",
+                    level: decoded.level,
+                    email: decoded.email,
+                    avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${decoded.sub}`
+                });
             });
 
         } catch (error) {
@@ -113,14 +129,11 @@ export default function Dashboard() {
 
             if (response.ok) {
                 setGameInvites(prev => prev.filter(inv => inv.lobbyId !== lobbyId));
-
                 if (accepted) {
                     navigate(`/lobby?role=guest&lobbyId=${lobbyId}&leaderId=${leaderId}&leaderName=${senderName}`);
                 }
             }
-        } catch (error) {
-            console.error("Error respond game invite:", error);
-        }
+        } catch (error) {}
     };
 
     const fetchPendingRequests = async (token) => {
@@ -137,9 +150,7 @@ export default function Dashboard() {
                 const data = await response.json();
                 setIncomingRequests(data);
             }
-        } catch (error) { 
-            console.error("Error fetching requests:", error);
-        }
+        } catch (error) {}
     };
 
     const fetchFriends = async (token) => {
@@ -156,9 +167,47 @@ export default function Dashboard() {
                 const data = await response.json();
                 setFriends(data);
             }
-        } catch (error) { 
-            console.error("Error fetching friends:", error);
+        } catch (error) {}
+    };
+
+    const handleSearchChange = (e) => {
+        const val = e.target.value;
+        setNewFriendIdentifier(val);
+
+        if (searchTimeout) clearTimeout(searchTimeout);
+
+        if (val.trim().length > 1 && !val.startsWith('#')) {
+            setSearchTimeout(setTimeout(() => {
+                fetchSearchResults(val);
+            }, 300));
+        } else {
+            setSearchResults([]);
         }
+    };
+
+    const fetchSearchResults = async (query) => {
+        const token = localStorage.getItem("token");
+        try {
+            const response = await fetch(`http://localhost:8080/api/users/search?query=${query}`, {
+                headers: { "Authorization": `Bearer ${token}` }
+            });
+            if (response.ok) {
+                const data = await response.json();
+                setSearchResults(data);
+            }
+        } catch (error) {}
+    };
+
+    const selectUser = (friendCode) => {
+        setNewFriendIdentifier(friendCode);
+        setSearchResults([]);
+    };
+
+    const closeModal = () => {
+        setIsModalOpen(false);
+        setAddFriendMessage("");
+        setNewFriendIdentifier("");
+        setSearchResults([]);
     };
 
     const handleAddFriend = async () => {
@@ -178,9 +227,9 @@ export default function Dashboard() {
             if (response.ok) {
                 setAddFriendMessage("¡Solicitud enviada con éxito!");
                 setNewFriendIdentifier("");
+                setSearchResults([]);
                 setTimeout(() => {
-                    setIsModalOpen(false);
-                    setAddFriendMessage("");
+                    closeModal();
                 }, 1500);
             } else {
                 const errorData = await response.text();
@@ -205,9 +254,7 @@ export default function Dashboard() {
                     fetchFriends(token);
                 }
             }
-        } catch (error) { 
-            console.error("Error respond request:", error);
-        }
+        } catch (error) {}
     };
 
     const handleFriendClick = async (friend) => {
@@ -224,9 +271,7 @@ export default function Dashboard() {
                     return [...filtered, ...data];
                 });
             }
-        } catch (error) { 
-            console.error("Error fetching chat:", error);
-        }
+        } catch (error) {}
     };
 
     const sendMessage = () => {
@@ -259,7 +304,7 @@ export default function Dashboard() {
             <nav className="navbar">
                 <div className="nav-left">
                     <button className="nav-btn" onClick={() => navigate("/dashboard")}>Dashboard</button>
-                    <button className="nav-btn">Tienda</button>
+                    <button className="nav-btn" onClick={() => navigate("/store")}>Tienda</button>
                 </div>
                 <div className="nav-center">
                     <button className="play-btn" onClick={() => navigate("/Lobby")}>Jugar</button>
@@ -291,12 +336,7 @@ export default function Dashboard() {
                 <aside className="friends-sidebar">
                     <div className="sidebar-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <h3 className="sidebar-title">Amistades</h3>
-                        <button
-                            onClick={() => setIsModalOpen(true)}
-                            className="btn-add-friend-sidebar"
-                        >
-                            +
-                        </button>
+                        <button onClick={() => setIsModalOpen(true)} className="btn-add-friend-sidebar">+</button>
                     </div>
 
                     <ul className="friends-list">
@@ -320,45 +360,55 @@ export default function Dashboard() {
                         <h4>¡Nueva solicitud!</h4>
                         <p><strong>{request.senderName}</strong> quiere ser tu amigo.</p>
                         <div className="toast-actions">
-                            <button className="btn-accept" onClick={() => handleRespondRequest(request.friendshipId, true)}>
-                                Aceptar
-                            </button>
-                            <button className="btn-reject" onClick={() => handleRespondRequest(request.friendshipId, false)}>
-                                Rechazar
-                            </button>
+                            <button className="btn-accept" onClick={() => handleRespondRequest(request.friendshipId, true)}>Aceptar</button>
+                            <button className="btn-reject" onClick={() => handleRespondRequest(request.friendshipId, false)}>Rechazar</button>
                         </div>
                     </div>
                 ))}
             </div>
+            
             <div className="toast-container" style={{ bottom: '220px' }}>
                 {gameInvites.map((invite) => (
                     <div key={invite.lobbyId} className="toast" style={{ borderLeft: '5px solid var(--color-primary)' }}>
                         <h4 style={{ color: 'var(--color-primary)' }}>¡Desafío de Pelea!</h4>
                         <p><strong>{invite.senderName}</strong> te invita a una partida.</p>
                         <div className="toast-actions">
-                            <button className="btn-accept" onClick={() => handleRespondGameInvite(invite.senderId, invite.lobbyId, invite.senderName, true)}>
-                                Aceptar
-                            </button>
-                            <button className="btn-reject" onClick={() => handleRespondGameInvite(invite.senderId, invite.lobbyId, invite.senderName, false)}>
-                                Rechazar
-                            </button>
+                            <button className="btn-accept" onClick={() => handleRespondGameInvite(invite.senderId, invite.lobbyId, invite.senderName, true)}>Aceptar</button>
+                            <button className="btn-reject" onClick={() => handleRespondGameInvite(invite.senderId, invite.lobbyId, invite.senderName, false)}>Rechazar</button>
                         </div>
                     </div>
                 ))}
             </div>
+
             {isModalOpen && (
                 <div className="modal-overlay">
                     <div className="modal-content">
                         <h3>Añadir nueva amistad</h3>
-                        <p>Introduce el código de amigo (ej: #1234-5678) para buscarlo en Stars Fighters.</p>
+                        <p>Introduce el nombre de usuario o código (ej: #1234-5678) para buscarlo.</p>
 
-                        <input
-                            type="text"
-                            placeholder="Ej: #1234-5678"
-                            value={newFriendIdentifier}
-                            onChange={(e) => setNewFriendIdentifier(e.target.value)}
-                            className="modal-input"
-                        />
+                        <div className="modal-input-container">
+                            <input
+                                type="text"
+                                placeholder="Nombre o código..."
+                                value={newFriendIdentifier}
+                                onChange={handleSearchChange}
+                                className="modal-input"
+                            />
+                            {searchResults.length > 0 && (
+                                <ul className="autocomplete-dropdown">
+                                    {searchResults.map((result) => (
+                                        <li 
+                                            key={result.friendCode} 
+                                            className="autocomplete-item"
+                                            onClick={() => selectUser(result.friendCode)}
+                                        >
+                                            <span className="autocomplete-username">{result.username}</span>
+                                            <span className="autocomplete-code">{result.friendCode}</span>
+                                        </li>
+                                    ))}
+                                </ul>
+                            )}
+                        </div>
 
                         {addFriendMessage && (
                             <p className={addFriendMessage.includes('éxito') ? 'success-text' : 'error-text'}>
@@ -367,12 +417,8 @@ export default function Dashboard() {
                         )}
 
                         <div className="modal-actions">
-                            <button className="btn-cancel" onClick={() => { setIsModalOpen(false); setAddFriendMessage(""); }}>
-                                Cancelar
-                            </button>
-                            <button className="btn-add" onClick={handleAddFriend}>
-                                Añadir
-                            </button>
+                            <button className="btn-cancel" onClick={closeModal}>Cancelar</button>
+                            <button className="btn-add" onClick={handleAddFriend}>Añadir</button>
                         </div>
                     </div>
                 </div>

@@ -8,5 +8,7 @@ public record UserProfileDto(
         String friendCode,
         int level,
         LocalDateTime sinceCreated,
-        String statusPreference
+        String statusPreference,
+        String avatarUrl,
+        String role
 ) {}

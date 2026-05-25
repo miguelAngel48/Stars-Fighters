@@ -3,7 +3,6 @@
     flex-direction: column;
     height: 100vh;
     background-color: #1e1e24;
-    /* Fondo más oscuro para el lobby */
     color: white;
 }
 
@@ -44,7 +43,6 @@
     font-style: italic;
 }
 
-/* SLOTS DE JUGADORES */
 .player-slot {
     width: 200px;
     height: 280px;
@@ -96,17 +94,14 @@
     0% {
         opacity: 1;
     }
-
     50% {
         opacity: 0.5;
     }
-
     100% {
         opacity: 1;
     }
 }
 
-/* SLOT LÍDER */
 .leader-slot {
     background: linear-gradient(145deg, #2c2f33, #23272a);
     border: 2px solid var(--color-primary);
@@ -138,7 +133,6 @@
 .empty-content {
     color: #888;
     pointer-events: none;
-    /* Evita parpadeos al hacer drag over */
 }
 
 .plus-icon {
@@ -162,7 +156,6 @@
     font-weight: bold;
 }
 
-/* ACCIONES DE LOBBY */
 .lobby-actions {
     margin-top: 40px;
 }
@@ -219,13 +212,11 @@
     margin-bottom: 8px;
     border-radius: 8px;
     cursor: grab;
-    /* Cursor de "agarrar" */
     transition: background 0.2s;
 }
 
 .friend-drag-item:active {
     cursor: grabbing;
-    /* Cursor de "agarrando" */
     opacity: 0.8;
 }
 

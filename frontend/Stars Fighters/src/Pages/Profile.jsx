@@ -96,7 +96,7 @@ export default function Profile() {
             <div className="profile-content">
                 <div className="profile-main-card">
                     <img
-                        src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${userData.username}`}
+                        src={userData.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${userData.username}`}
                         alt="Avatar"
                         className="large-avatar"
                     />
