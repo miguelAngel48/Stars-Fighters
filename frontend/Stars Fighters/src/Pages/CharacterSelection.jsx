@@ -8,54 +8,36 @@ export default function CharacterSelection() {
     const [characters, setCharacters] = useState([]);
     const [selectedChar, setSelectedChar] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [maps, setMaps] = useState([]);
+    const [selectedMap, setSelectedMap] = useState("");
 
     const [isMyReady, setIsMyReady] = useState(false);
     const [isOpponentReady, setIsOpponentReady] = useState(false);
     const [opponentCharName, setOpponentCharName] = useState("");
+    const [opponentCharId, setOpponentCharId] = useState(null);
 
     const [searchParams] = useSearchParams();
     const lobbyId = searchParams.get("lobbyId");
     const role = searchParams.get("role");
+    const oppNameUrl = searchParams.get("oppName");
 
     const navigate = useNavigate();
     const stompClientRef = useRef(null);
-    const [opponentUsername, setOpponentUsername] = useState("");
-
-
-    const [maps, setMaps] = useState([]);
-    const [selectedMap, setSelectedMap] = useState("");
+    const [opponentUsername, setOpponentUsername] = useState(oppNameUrl || "Oponente");
 
     useEffect(() => {
         const token = localStorage.getItem("token");
         if (!token) { navigate("/login"); return; }
 
         fetchCharacters(token);
-        fetchOpponentInfo(token);
-        connectSelectionWebSocket(token);
         fetchMaps(token);
+        connectSelectionWebSocket(token);
 
         return () => {
             if (stompClientRef.current) stompClientRef.current.deactivate();
         };
     }, [navigate, lobbyId]);
 
-    const fetchMaps = async (token) => {
-        try {
-            const response = await fetch("http://localhost:8080/api/maps", {
-                headers: { "Authorization": `Bearer ${token}` }
-            });
-            if (response.ok) {
-                const data = await response.json();
-                setMaps(data);
-
-                if (data.length > 0) {
-                    setSelectedMap(data[0].id);
-                }
-            }
-        } catch (error) {
-            console.error("Error al cargar mapas", error);
-        }
-    };
     const fetchCharacters = async (token) => {
         try {
             const response = await fetch("http://localhost:8080/api/characters", {
@@ -65,25 +47,27 @@ export default function CharacterSelection() {
                 const data = await response.json();
                 setCharacters(data);
             }
-        } catch (error) { console.error("Error al cargar personajes", error); }
-        finally { setIsLoading(false); }
+        } catch (error) {
+            console.error(error);
+        } finally {
+            setIsLoading(false);
+        }
     };
 
-
-    const fetchOpponentInfo = async (token) => {
+    const fetchMaps = async (token) => {
         try {
-            const response = await fetch(`http://localhost:8080/api/lobby/info?lobbyId=${lobbyId}`, {
+            const response = await fetch("http://localhost:8080/api/maps", {
                 headers: { "Authorization": `Bearer ${token}` }
             });
             if (response.ok) {
                 const data = await response.json();
-
-                setOpponentUsername(role === 'leader' ? data.guestName : data.leaderName);
+                setMaps(data);
+                if (data.length > 0) {
+                    setSelectedMap(data[0].id);
+                }
             }
-        } catch (e) {
-
-            const savedOpponent = localStorage.getItem("last_opponent_username");
-            setOpponentUsername(savedOpponent || "Oponente");
+        } catch (error) {
+            console.error(error);
         }
     };
 
@@ -99,11 +83,12 @@ export default function CharacterSelection() {
                         if (data.type === "OPPONENT_READY") {
                             setIsOpponentReady(true);
                             setOpponentCharName(data.characterName);
+                            setOpponentCharId(data.characterId);
                         }
                         else if (data.type === "START_GAME") {
                             const myId = role === "leader" ? data.leaderCharId : data.guestCharId;
                             const oppId = role === "leader" ? data.guestCharId : data.leaderCharId;
-                            navigate(`/game?lobbyId=${lobbyId}&mapId=${data.mapId}&myCharId=${myId}&oppCharId=${oppId}`);
+                            navigate(`/game?lobbyId=${lobbyId}&mapId=${data.mapId}&myCharId=${myId}&oppCharId=${oppId}&oppName=${opponentUsername}`);
                         }
                     }
                 });
@@ -117,7 +102,6 @@ export default function CharacterSelection() {
         if (!selectedChar || isMyReady) return;
 
         const token = localStorage.getItem("token");
-
         let url = `http://localhost:8080/api/lobby/ready?lobbyId=${lobbyId}&role=${role}&characterId=${selectedChar.id}&characterName=${selectedChar.name}&targetUsername=${opponentUsername}`;
 
         if (role === "leader") {
@@ -134,7 +118,7 @@ export default function CharacterSelection() {
                 setIsMyReady(true);
             }
         } catch (err) {
-            console.error("Error al enviar preparación:", err);
+            console.error(err);
         }
     };
 
@@ -146,7 +130,7 @@ export default function CharacterSelection() {
 
             <div className="readiness-banner">
                 <div className={`status-badge ${isMyReady ? 'ready' : 'waiting'}`}>
-                    {isMyReady ? "✓ ¡ESTÁS LISTO!" : "SELECCIONA TU CONFIGURACIÓN..."}
+                    {isMyReady ? "✓ ¡ESTÁS LISTO!" : "SELECCIONE SU CONFIGURACIÓN..."}
                 </div>
                 <div className={`status-badge ${isOpponentReady ? 'ready' : 'waiting'}`}>
                     {isOpponentReady ? `✓ ${opponentUsername} ELIGIÓ A ${opponentCharName.toUpperCase()}` : `ESPERANDO A ${opponentUsername.toUpperCase()}...`}
@@ -161,7 +145,7 @@ export default function CharacterSelection() {
                             className={`char-card ${selectedChar?.id === char.id ? 'selected' : ''} ${isMyReady ? 'disabled' : ''}`}
                             onClick={() => !isMyReady && setSelectedChar(char)}
                         >
-                            <img src={char.spriteIdleUrl} alt={char.name} className="char-portrait" />
+                            <img src={char.spriteProfileUrl} alt={char.name} className="char-portrait" />
                             <div className="char-name-badge">{char.name}</div>
                         </div>
                     ))}
@@ -171,6 +155,9 @@ export default function CharacterSelection() {
                     {selectedChar ? (
                         <>
                             <h2>{selectedChar.name}</h2>
+                            <div className="char-preview-box">
+                                <img src={selectedChar.spriteProfileUrl} alt={selectedChar.name} className="char-large-preview" />
+                            </div>
                             <div className="stats-container">
                                 <div className="stat-row">
                                     <span>HP Máximo:</span>
@@ -178,7 +165,7 @@ export default function CharacterSelection() {
                                 </div>
                                 <div className="stat-row">
                                     <span>Fuerza de Ataque:</span>
-                                    <div className="stat-bar"><div className="stat-fill" style={{ width: `${(selectedChar.baseDamage / 30) * 100}%`, background: '#f44336' }}></div></div>
+                                    <div className="stat-bar"><div className="stat-fill damage" style={{ width: `${(selectedChar.baseDamage / 30) * 100}%` }}></div></div>
                                 </div>
                                 <div className="stat-row">
                                     <span>Velocidad:</span>
@@ -186,19 +173,18 @@ export default function CharacterSelection() {
                                 </div>
                                 <div className="stat-row">
                                     <span>Salto (Fuerza Vertical):</span>
-                                    <div className="stat-bar"><div className="stat-fill" style={{ width: `${(selectedChar.jumpForce / 20) * 100}%`, background: '#FFC107' }}></div></div>
+                                    <div className="stat-bar"><div className="stat-fill jump" style={{ width: `${(selectedChar.jumpForce / 20) * 100}%` }}></div></div>
                                 </div>
                             </div>
                         </>
                     ) : (
                         <div className="empty-details">
-                            <p>Selecciona un guerrero para ver sus atributos.</p>
+                            <p>Selecciona un Star Warrior para ver sus atributos.</p>
                         </div>
                     )}
                 </div>
             </div>
 
-            {/* --- SECCIÓN 2: MAPAS (Solo Líder) --- */}
             <div className="map-selection-wrapper">
                 {role === "leader" ? (
                     <>
@@ -228,14 +214,12 @@ export default function CharacterSelection() {
             </div>
 
             <button
-                className="btn-confirm-char"
+                className={`btn-confirm-char ${isMyReady || !selectedChar ? 'btn-disabled' : ''}`}
                 onClick={handleConfirm}
                 disabled={isMyReady || !selectedChar}
-                style={{ backgroundColor: (isMyReady || !selectedChar) ? '#555' : 'var(--color-primary)' }}
             >
                 {isMyReady ? "ESPERANDO AL OTRO..." : "¡FIJAR CONFIGURACIÓN!"}
             </button>
-
         </div>
     );
 }

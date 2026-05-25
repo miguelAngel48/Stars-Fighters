@@ -7,7 +7,7 @@ public record CharacterDto(
         double jumpForce,
         int maxHp,
         int baseDamage,
-        String spriteIdleUrl,
-        String spriteRunUrl,
-        String spriteAttackUrl
+        String spriteProfileUrl,
+        String spriteMovesUrl
+
 ) {}

@@ -1,16 +1,21 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
+import { Client } from '@stomp/stompjs';
+import SockJS from 'sockjs-client/dist/sockjs';
 import "../Styles/Game.css";
 
 export default function Game() {
     const canvasRef = useRef(null);
     const requestRef = useRef(null);
+    const keys = useRef({});
+    const stompClientRef = useRef(null);
 
     const [searchParams] = useSearchParams();
     const lobbyId = searchParams.get("lobbyId");
     const mapId = searchParams.get("mapId");
     const myCharId = searchParams.get("myCharId");
     const oppCharId = searchParams.get("oppCharId");
+    const oppName = searchParams.get("oppName");
     const navigate = useNavigate();
 
     const [gameState, setGameState] = useState("LOADING");
@@ -18,14 +23,25 @@ export default function Game() {
     const [timeLeft, setTimeLeft] = useState(180);
     const [gameAssets, setGameAssets] = useState(null);
 
+    const myPositionRef = useRef({ x: 0, y: 100 });
+    const oppPositionRef = useRef({ x: 0, y: 100 });
+
+    const animations = {
+        IDLE: { row: 0, frames: 4 },
+        RUN: { row: 1, frames: 8 },
+        JUMP: { row: 2, frames: 2 },
+        ATTACK: { row: 3, frames: 4 }
+    };
+
     useEffect(() => {
-        if (!lobbyId || !mapId || !myCharId || !oppCharId) {
+        if (!lobbyId || !mapId || !myCharId || !oppCharId || !oppName) {
             navigate("/dashboard");
             return;
         }
 
+        const token = localStorage.getItem("token");
+
         const loadAssets = async () => {
-            const token = localStorage.getItem("token");
             try {
                 const charsRes = await fetch("http://localhost:8080/api/characters", {
                     headers: { "Authorization": `Bearer ${token}` }
@@ -42,6 +58,9 @@ export default function Game() {
                     const oppChar = chars.find(c => c.id === Number(oppCharId));
                     const currentMap = maps.find(m => m.id === Number(mapId));
 
+                    myPositionRef.current.x = window.innerWidth * 0.3;
+                    oppPositionRef.current.x = window.innerWidth * 0.7 - 80;
+
                     setGameAssets({ myChar, oppChar, currentMap });
                     setGameState("STARTING");
                 }
@@ -50,8 +69,40 @@ export default function Game() {
             }
         };
 
+        const client = new Client({
+            webSocketFactory: () => new SockJS('http://localhost:8080/ws-stars'),
+            connectHeaders: { Authorization: `Bearer ${token}` },
+            onConnect: () => {
+                client.subscribe('/user/queue/game-sync', (msg) => {
+                    const data = JSON.parse(msg.body);
+                    oppPositionRef.current.x = data.x;
+                    oppPositionRef.current.y = data.y;
+                });
+            }
+        });
+
+        client.activate();
+        stompClientRef.current = client;
+
         loadAssets();
-    }, [lobbyId, mapId, myCharId, oppCharId, navigate]);
+
+        return () => {
+            if (stompClientRef.current) stompClientRef.current.deactivate();
+        };
+    }, [lobbyId, mapId, myCharId, oppCharId, oppName, navigate]);
+
+    useEffect(() => {
+        const handleKeyDown = (e) => { keys.current[e.code] = true; };
+        const handleKeyUp = (e) => { keys.current[e.code] = false; };
+
+        window.addEventListener("keydown", handleKeyDown);
+        window.addEventListener("keyup", handleKeyUp);
+
+        return () => {
+            window.removeEventListener("keydown", handleKeyDown);
+            window.removeEventListener("keyup", handleKeyUp);
+        };
+    }, []);
 
     useEffect(() => {
         if (gameState !== "STARTING") return;
@@ -81,9 +132,27 @@ export default function Game() {
                     return prev - 1;
                 });
             }, 1000);
-            return () => clearInterval(matchTimer);
+
+            const syncInterval = setInterval(() => {
+                if (stompClientRef.current && stompClientRef.current.connected) {
+                    stompClientRef.current.publish({
+                        destination: "/app/game.sync",
+                        body: JSON.stringify({
+                            lobbyId: lobbyId,
+                            targetUsername: oppName,
+                            x: myPositionRef.current.x,
+                            y: myPositionRef.current.y
+                        })
+                    });
+                }
+            }, 1000 / 30);
+
+            return () => {
+                clearInterval(matchTimer);
+                clearInterval(syncInterval);
+            };
         }
-    }, [gameState, timeLeft]);
+    }, [gameState, timeLeft, lobbyId, oppName]);
 
     useEffect(() => {
         if (gameState === "LOADING" || !gameAssets) return;
@@ -101,36 +170,48 @@ export default function Game() {
         resizeCanvas();
 
         const myImage = new Image();
-        myImage.src = gameAssets.myChar.spriteIdleUrl;
+        myImage.src = gameAssets.myChar.spriteMovesUrl;
 
         const oppImage = new Image();
-        oppImage.src = gameAssets.oppChar.spriteIdleUrl;
+        oppImage.src = gameAssets.oppChar.spriteMovesUrl;
 
         const bgImage = new Image();
         bgImage.src = gameAssets.currentMap.backgroundUrl;
 
         const myPlayer = {
             id: "p1",
-            x: canvas.width * 0.3,
-            y: 100,
             width: 80,
             height: 100,
+            spriteWidth: 128,
+            spriteHeight: 128,
             velocityY: 0,
             speed: gameAssets.myChar.speed,
             jumpForce: gameAssets.myChar.jumpForce,
-            image: myImage
+            isGrounded: false,
+            image: myImage,
+            frameX: 0,
+            frameY: 0,
+            maxFrames: 4,
+            fps: 10,
+            frameTimer: 0,
+            action: "IDLE",
+            direction: 1
         };
 
         const opponent = {
             id: "p2",
-            x: canvas.width * 0.7 - 80,
-            y: 100,
             width: 80,
             height: 100,
-            velocityY: 0,
-            speed: gameAssets.oppChar.speed,
-            jumpForce: gameAssets.oppChar.jumpForce,
-            image: oppImage
+            spriteWidth: 128,
+            spriteHeight: 128,
+            image: oppImage,
+            frameX: 0,
+            frameY: 0,
+            maxFrames: 4,
+            fps: 10,
+            frameTimer: 0,
+            action: "IDLE",
+            direction: -1
         };
 
         const gravity = gameAssets.currentMap.gravity;
@@ -144,7 +225,7 @@ export default function Game() {
 
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            if (bgImage.complete) {
+            if (bgImage.complete && bgImage.naturalWidth > 0) {
                 ctx.drawImage(bgImage, 0, 0, canvas.width, canvas.height);
             }
 
@@ -156,40 +237,103 @@ export default function Game() {
             ctx.fillStyle = "#2a2d35";
             ctx.fillRect(platformX, platformY, platformWidth, platformHeight);
 
-            const applyPhysics = (player) => {
-                player.velocityY += gravity;
-                player.y += player.velocityY;
+            if (gameState === "PLAYING") {
+                let isMoving = false;
 
-                const isAbovePlatform = player.x + player.width > platformX && player.x < platformX + platformWidth;
-                const isFallingOnPlatform = player.y + player.height >= platformY && player.y + player.height - player.velocityY <= platformY;
+                if (keys.current["ArrowLeft"] || keys.current["KeyA"]) {
+                    myPositionRef.current.x -= myPlayer.speed;
+                    myPlayer.direction = -1;
+                    isMoving = true;
+                }
+                if (keys.current["ArrowRight"] || keys.current["KeyD"]) {
+                    myPositionRef.current.x += myPlayer.speed;
+                    myPlayer.direction = 1;
+                    isMoving = true;
+                }
+                if ((keys.current["ArrowUp"] || keys.current["KeyW"] || keys.current["Space"]) && myPlayer.isGrounded) {
+                    myPlayer.velocityY = -myPlayer.jumpForce;
+                    myPlayer.isGrounded = false;
+                }
+
+                if (!myPlayer.isGrounded) {
+                    myPlayer.action = "JUMP";
+                } else if (isMoving) {
+                    myPlayer.action = "RUN";
+                } else {
+                    myPlayer.action = "IDLE";
+                }
+            }
+
+            if (gameState === "STARTING" || gameState === "PLAYING") {
+                myPlayer.velocityY += gravity;
+                myPositionRef.current.y += myPlayer.velocityY;
+
+                const isAbovePlatform = myPositionRef.current.x + myPlayer.width > platformX && myPositionRef.current.x < platformX + platformWidth;
+                const isFallingOnPlatform = myPositionRef.current.y + myPlayer.height >= platformY && myPositionRef.current.y + myPlayer.height - myPlayer.velocityY <= platformY;
 
                 if (isAbovePlatform && isFallingOnPlatform) {
-                    player.y = platformY - player.height;
-                    player.velocityY = 0;
+                    myPositionRef.current.y = platformY - myPlayer.height;
+                    myPlayer.velocityY = 0;
+                    myPlayer.isGrounded = true;
+                } else {
+                    myPlayer.isGrounded = false;
+                }
+            }
+
+            const updateAnimation = (player) => {
+                const anim = animations[player.action];
+                player.frameY = anim.row;
+                player.maxFrames = anim.frames;
+
+                if (player.frameTimer > 1000 / player.fps) {
+                    player.frameX = (player.frameX + 1) % player.maxFrames;
+                    player.frameTimer = 0;
+                } else {
+                    player.frameTimer += deltaTime;
                 }
             };
 
-            if (gameState === "STARTING" || gameState === "PLAYING") {
-                applyPhysics(myPlayer);
-                applyPhysics(opponent);
-            }
+            const drawPlayer = (player, x, y, label) => {
+                updateAnimation(player);
 
-            const drawPlayer = (player) => {
-                if (player.image.complete) {
-                    ctx.drawImage(player.image, player.x, player.y, player.width, player.height);
+                ctx.save();
+
+                if (player.direction === -1) {
+                    ctx.translate(x + player.width, y);
+                    ctx.scale(-1, 1);
+                    x = 0;
+                    y = 0;
+                }
+
+                if (player.image.complete && player.image.naturalWidth > 0) {
+                    ctx.drawImage(
+                        player.image,
+                        player.frameX * player.spriteWidth,
+                        player.frameY * player.spriteHeight,
+                        player.spriteWidth,
+                        player.spriteHeight,
+                        x,
+                        y,
+                        player.width,
+                        player.height
+                    );
                 } else {
                     ctx.fillStyle = player.id === "p1" ? "#4CAF50" : "#f44336";
-                    ctx.fillRect(player.x, player.y, player.width, player.height);
+                    ctx.fillRect(x, y, player.width, player.height);
                 }
+
+                ctx.restore();
 
                 ctx.fillStyle = "white";
                 ctx.font = "bold 16px Arial";
                 ctx.textAlign = "center";
-                ctx.fillText(player.id === "p1" ? "Tú" : "Rival", player.x + player.width / 2, player.y - 10);
+                ctx.fillText(label, player.direction === -1 ? myPositionRef.current.x + player.width / 2 : x + player.width / 2, player.direction === -1 ? myPositionRef.current.y - 10 : y - 10);
             };
 
-            drawPlayer(myPlayer);
-            drawPlayer(opponent);
+            drawPlayer(myPlayer, myPositionRef.current.x, myPositionRef.current.y, "Tú");
+
+            opponent.action = "IDLE";
+            drawPlayer(opponent, oppPositionRef.current.x, oppPositionRef.current.y, oppName);
         };
 
         requestRef.current = requestAnimationFrame(gameLoop);
@@ -198,7 +342,7 @@ export default function Game() {
             window.removeEventListener("resize", resizeCanvas);
             if (requestRef.current) cancelAnimationFrame(requestRef.current);
         };
-    }, [gameState, gameAssets]);
+    }, [gameState, gameAssets, oppName]);
 
     const formatTime = (seconds) => {
         const m = Math.floor(seconds / 60);

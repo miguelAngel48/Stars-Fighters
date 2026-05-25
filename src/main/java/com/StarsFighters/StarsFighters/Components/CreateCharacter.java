@@ -24,9 +24,8 @@ public class CreateCharacter implements CommandLineRunner {
                     12.0,
                     100,
                     15,
-                    "/assets/sprites/samurai.png",
-                    "/assets/sprites/knight_run.png",
-                    "/assets/sprites/knight_attack.png"
+                    "/sprites/samurai_profile.png",
+                    "/sprites/samurai.png"
             ));
 
             characterRepo.save(new Character(
@@ -35,17 +34,16 @@ public class CreateCharacter implements CommandLineRunner {
                     10.0,
                     100,
                     10,
-                    "/assets/sprites/ninja_idle.png",
-                    "/assets/sprites/ninja_run.png",
-                    "/assets/sprites/ninja_attack.png"
+                    "/sprites/shinobi_profile.png",
+                    "/sprites/shinobi.png"
             ));
         }
         if (mapRepo.count() == 0) {
             mapRepo.save(new GameMaps(
-                    "Estación Espacial Alfa",
-                    "Un mapa en el espacio con una plataforma central",
-                    "/assets/maps/space_station.png",
-                    0.6
+                    "Bosque Olvido",
+                    "Un bosque tranquilo",
+                    "/maps/background_field.png",
+                    0.8
 
             ));
 

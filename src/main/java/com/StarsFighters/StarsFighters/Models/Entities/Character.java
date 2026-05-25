@@ -20,24 +20,24 @@ public class Character {
     private int baseDamage;
 
 
-    private String spriteIdleUrl;
-    private String spriteRunUrl;
-    private String spriteAttackUrl;
+    private String spriteProfileUrl;
+    private String spriteMovesUrl;
+
 
 
     public Character() {}
 
 
     public Character(String name, double speed, double jumpForce, int maxHp, int baseDamage,
-                     String spriteIdleUrl, String spriteRunUrl, String spriteAttackUrl) {
+                     String spriteProfileUrl, String spriteMovesUrl) {
         this.name = name;
         this.speed = speed;
         this.jumpForce = jumpForce;
         this.maxHp = maxHp;
         this.baseDamage = baseDamage;
-        this.spriteIdleUrl = spriteIdleUrl;
-        this.spriteRunUrl = spriteRunUrl;
-        this.spriteAttackUrl = spriteAttackUrl;
+        this.spriteProfileUrl = spriteProfileUrl;
+        this.spriteMovesUrl = spriteMovesUrl;
+
     }
 
 
@@ -53,10 +53,9 @@ public class Character {
     public void setMaxHp(int maxHp) { this.maxHp = maxHp; }
     public int getBaseDamage() { return baseDamage; }
     public void setBaseDamage(int baseDamage) { this.baseDamage = baseDamage; }
-    public String getSpriteIdleUrl() { return spriteIdleUrl; }
-    public void setSpriteIdleUrl(String spriteIdleUrl) { this.spriteIdleUrl = spriteIdleUrl; }
-    public String getSpriteRunUrl() { return spriteRunUrl; }
-    public void setSpriteRunUrl(String spriteRunUrl) { this.spriteRunUrl = spriteRunUrl; }
-    public String getSpriteAttackUrl() { return spriteAttackUrl; }
-    public void setSpriteAttackUrl(String spriteAttackUrl) { this.spriteAttackUrl = spriteAttackUrl; }
+    public String getSpriteIdleUrl() { return spriteProfileUrl; }
+    public void setSpriteIdleUrl(String spriteIdleUrl) { this.spriteProfileUrl = spriteIdleUrl; }
+    public String getSpriteMovesUrl() { return spriteMovesUrl; }
+    public void setSpriteMovesUrl(String spriteMovesUrl) { this.spriteMovesUrl = spriteMovesUrl; }
+
 }

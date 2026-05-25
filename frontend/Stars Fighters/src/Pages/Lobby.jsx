@@ -87,7 +87,7 @@ export default function Lobby() {
                             navigate("/dashboard");
                         }
                         else if (notification.type === 'START_SELECTION') {
-                            navigate(`/character-selection?lobbyId=${notification.lobbyId}&role=guest`);
+                            navigate(`/character-selection?lobbyId=${notification.lobbyId}&role=guest&oppName=${leaderNameUrl}`);
                         }
                     }
                 });
@@ -108,11 +108,10 @@ export default function Lobby() {
             });
 
             if (response.ok) {
-
-                navigate(`/character-selection?lobbyId=${currentLobbyId}&role=leader`);
+                navigate(`/character-selection?lobbyId=${currentLobbyId}&role=leader&oppName=${player2.username}`);
             }
         } catch (err) {
-            console.error("Error al iniciar partida:", err);
+            console.error(err);
         }
     };
     const handleKickPlayer = async () => {
@@ -126,7 +125,6 @@ export default function Lobby() {
             });
 
             if (response.ok) {
-                // El líder limpia la silla de su pantalla inmediatamente
                 setPlayer2(null);
             }
         } catch (err) {
@@ -148,7 +146,6 @@ export default function Lobby() {
         }
     };
 
-    // --- DRAG AND DROP REAL ---
     const handleDragStart = (e, friend) => {
         if (role === "guest") return; // El invitado no puede invitar a otros
         e.dataTransfer.setData("friendData", JSON.stringify(friend));
@@ -156,18 +153,17 @@ export default function Lobby() {
     const handleLeaveLobby = async () => {
         const token = localStorage.getItem("token");
 
-        // Averiguamos a quién tenemos que avisarle de que nos vamos
         let targetUsername = null;
         if (role === "guest") {
-            targetUsername = leaderNameUrl; // Le avisamos al líder
+            targetUsername = leaderNameUrl;
         } else if (player2) {
-            targetUsername = player2.username; // Le avisamos al invitado
+            targetUsername = player2.username;
         }
 
-        // Si había alguien más con nosotros en la sala, le mandamos el aviso
+
         if (targetUsername && currentLobbyId) {
             try {
-                // Usamos fetch normal sin esperar respuesta para no bloquear la salida
+
                 fetch(`http://localhost:8080/api/lobby/leave?targetUsername=${targetUsername}&lobbyId=${currentLobbyId}&isLeader=${role !== "guest"}`, {
                     method: "POST",
                     headers: { "Authorization": `Bearer ${token}` }
@@ -177,7 +173,7 @@ export default function Lobby() {
             }
         }
 
-        // Finalmente, nos vamos al dashboard
+
         navigate("/dashboard");
     };
     const handleDragOver = (e) => {
@@ -195,10 +191,9 @@ export default function Lobby() {
         if (friendDataString) {
             const friendDropped = JSON.parse(friendDataString);
 
-            // Ponemos visualmente al jugador en espera
             setPlayer2({ username: friendDropped.username, status: 'inviting' });
 
-            // Hacemos la llamada real a tu controlador de Java
+
             const token = localStorage.getItem("token");
             try {
                 const response = await fetch(`http://localhost:8080/api/lobby/invite/${friendDropped.id}`, {
@@ -208,7 +203,7 @@ export default function Lobby() {
 
                 if (response.ok) {
                     const data = await response.json();
-                    setCurrentLobbyId(data.lobbyId); // Guardamos la id de sala que generó Java
+                    setCurrentLobbyId(data.lobbyId);
                     console.log("Invitación enviada con éxito, sala:", data.lobbyId);
                 } else {
                     setPlayer2(null);
@@ -245,7 +240,7 @@ export default function Lobby() {
                 <main className="lobby-main">
                     <div className="game-table">
 
-                        {/* SLOT 1: EL LÍDER */}
+
                         <div className="player-slot leader-slot">
                             <div className="crown-icon">👑</div>
                             <img
@@ -259,7 +254,7 @@ export default function Lobby() {
 
                         <div className="vs-badge">VS</div>
 
-                        {/* SLOT 2: EL INVITADO (ZONA DROP) */}
+
                         <div
                             className={`player-slot empty-slot ${isDraggingOver ? 'drag-over' : ''} ${player2 ? 'filled' : ''}`}
                             onDragOver={handleDragOver}
@@ -304,7 +299,7 @@ export default function Lobby() {
                     </div>
                 </main>
 
-                {/* BARRA LATERAL (Solo interactiva para el Líder) */}
+
                 <aside className="lobby-sidebar">
                     <h3 className="sidebar-title">{role === 'guest' ? "Espectadores" : "Invitar Amigos"}</h3>
                     <ul className="friends-drag-list">
@@ -317,7 +312,7 @@ export default function Lobby() {
                                 <li
                                     key={friend.id}
                                     className="friend-drag-item"
-                                    draggable={!player2} // Desactivamos el arrastre si la silla ya está ocupada
+                                    draggable={!player2}
                                     onDragStart={(e) => handleDragStart(e, friend)}
                                     style={{ opacity: player2 ? 0.5 : 1, cursor: player2 ? 'not-allowed' : 'grab' }}
                                 >
