@@ -8,8 +8,8 @@ import Dashboard from "./Pages/Dashboard";
 import OAuth2RedirectHandler from "./Pages/OAuth2RedirectHandler";
 import Profile from "./Pages/Profile";
 import Lobby from "./Pages/Lobby";
-import CharacterSelection from "./Pages/CharacterSelection";
-import Game from "./Pages/Game";
+import Store from "./Pages/Store";
+
 const router = createBrowserRouter([
     { path: "/", element: <App /> },
     { path: "/login", element: <Login /> },
@@ -19,8 +19,7 @@ const router = createBrowserRouter([
     { path: "*", element: <NotFound /> },
     { path: "/profile", element: <Profile /> },
     { path: "/lobby", element: <Lobby /> },
-    { path: "/character-selection", element: <CharacterSelection /> },
-    { path: "/game", element: <Game /> }
+    { path: "/store", element: <Store /> }
 ]);
 
 export default router;

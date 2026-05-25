@@ -25,17 +25,13 @@ public class WebSocketChannelInterceptor implements ChannelInterceptor {
         StompHeaderAccessor accessor = MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);
 
         if (accessor != null && StompCommand.CONNECT.equals(accessor.getCommand())) {
-            // Extraer el token del header (generalmente viene como "Authorization: Bearer <token>")
             String authHeader = accessor.getFirstNativeHeader("Authorization");
 
             if (authHeader != null && authHeader.startsWith("Bearer ")) {
                 String token = authHeader.substring(7);
-
-                // Aquí asumo que tu jwtService tiene un método para extraer el email/usuario
                 String username = jwtService.extractUsername(token);
 
-                if (username != null && jwtService.isTokenValid(token)) { // Asegúrate de validar el token
-                    // Creamos el Principal. Spring usará el "name" de este Principal para enrutar los mensajes privados.
+                if (username != null && jwtService.isTokenValid(token)) {
                     UsernamePasswordAuthenticationToken authentication =
                             new UsernamePasswordAuthenticationToken(username, null, new ArrayList<>());
 

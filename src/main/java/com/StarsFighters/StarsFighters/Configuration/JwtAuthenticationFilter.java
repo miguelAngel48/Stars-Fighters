@@ -28,22 +28,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         final String jwt;
         final String username;
 
-        // Si no hay token, continuamos (Spring Security bloqueará si la ruta lo requiere)
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        // Extraemos el token
         jwt = authHeader.substring(7);
 
         try {
             username = jwtService.extractUsername(jwt);
 
-            // Si hay usuario y no está autenticado en el contexto actual
             if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
                 if (jwtService.isTokenValid(jwt)) {
-                    // Autenticamos al usuario para esta petición
                     UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                             username, null, new ArrayList<>()
                     );

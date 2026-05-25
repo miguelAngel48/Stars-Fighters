@@ -29,6 +29,7 @@ public class UserService {
         user.setPassword(passwordEncoder.encode(newUser.password()));
         user.setFriendCode(FriendCodeGenerator.generateCode());
         user.setLevel(1);
+        user.setRole("USER");
         userRepo.save(user);
     }
 
@@ -51,6 +52,7 @@ public class UserService {
             newUser.setEmail(email);
             newUser.setUsername(nombre != null ? nombre.replace(" ", "") : "GoogleUser");
             newUser.setLevel(1);
+            newUser.setRole("USER");
             newUser.setFriendCode(FriendCodeGenerator.generateCode());
             return userRepo.save(newUser);
         } else if (existUser.getFriendCode() == null || existUser.getFriendCode().trim().isEmpty()) {
@@ -78,7 +80,9 @@ public class UserService {
                 user.getFriendCode(),
                 user.getLevel(),
                 user.getSinceCreated(),
-                user.getStatusPreference()
+                user.getStatusPreference(),
+                user.getEquippedAvatarUrl(),
+                user.getRole()
         );
     }
 }

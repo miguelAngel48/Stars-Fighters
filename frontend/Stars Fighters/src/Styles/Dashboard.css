@@ -672,3 +672,55 @@ input {
     color: var(--text-main);
     align-self: flex-start;
 }
+
+.modal-input-container {
+    position: relative;
+    width: 100%;
+    margin: 10px 0;
+}
+
+.modal-input-container .modal-input {
+    margin: 0;
+}
+
+.autocomplete-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background-color: var(--bg-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 4px;
+    max-height: 150px;
+    overflow-y: auto;
+    z-index: 10;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    margin-top: 5px;
+    list-style: none;
+    padding: 0;
+}
+
+.autocomplete-item {
+    padding: 10px 15px;
+    cursor: pointer;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    justify-content: space-between;
+}
+
+.autocomplete-item:last-child {
+    border-bottom: none;
+}
+
+.autocomplete-item:hover {
+    background-color: var(--bg-main);
+}
+
+.autocomplete-username {
+    font-weight: bold;
+}
+
+.autocomplete-code {
+    color: var(--text-muted);
+    font-size: 12px;
+}
