@@ -11,12 +11,11 @@ export default function Lobby() {
     const [player2, setPlayer2] = useState(null);
     const [isDraggingOver, setIsDraggingOver] = useState(false);
 
-    // Herramienta para leer los datos de la URL (?role=guest&lobbyId=...)
     const [searchParams] = useSearchParams();
     const role = searchParams.get("role");
     const lobbyIdUrl = searchParams.get("lobbyId");
     const leaderNameUrl = searchParams.get("leaderName");
-    const leaderIdUrl = searchParams.get("leaderId");
+
 
     const [currentLobbyId, setCurrentLobbyId] = useState(lobbyIdUrl || null);
 
@@ -32,22 +31,53 @@ export default function Lobby() {
 
         try {
             const decoded = jwtDecode(token);
-            const myUser = {
-                id: decoded.id,
-                username: decoded.sub || "Jugador",
-                avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${decoded.sub}`
-            };
-            setUser(myUser);
+            const currentTime = Date.now() / 1000;
 
-
-            if (role === "guest") {
-                setPlayer2({ username: myUser.username, status: 'joined' });
+            if (decoded.exp < currentTime) {
+                localStorage.removeItem("token");
+                navigate("/login");
+                return;
             }
+
+            fetch("http://localhost:8080/api/auth/profile", {
+                headers: { "Authorization": `Bearer ${token}` }
+            })
+                .then(res => res.json())
+                .then(profileData => {
+                    const fetchedAvatar = profileData.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${profileData.username}`;
+
+                    setUser({
+                        username: profileData.username,
+                        level: profileData.level,
+                        email: profileData.email,
+                        avatar: fetchedAvatar
+                    });
+
+
+                    if (role === "guest") {
+                        setPlayer2({ username: profileData.username, status: 'joined', avatar: fetchedAvatar });
+                    }
+                })
+                .catch(() => {
+
+                    const fallbackAvatar = `https://api.dicebear.com/7.x/avataaars/svg?seed=${decoded.sub}`;
+                    setUser({
+                        username: decoded.sub || "Usuario",
+                        level: decoded.level || 1,
+                        email: decoded.email,
+                        avatar: fallbackAvatar
+                    });
+
+                    if (role === "guest") {
+                        setPlayer2({ username: decoded.sub, status: 'joined', avatar: fallbackAvatar });
+                    }
+                });
 
             fetchFriends(token);
             connectLobbyWebSocket(token);
 
         } catch (error) {
+            localStorage.removeItem("token");
             navigate("/login");
         }
 
@@ -114,6 +144,7 @@ export default function Lobby() {
             console.error(err);
         }
     };
+
     const handleKickPlayer = async () => {
         if (!player2 || !currentLobbyId) return;
 
@@ -147,9 +178,10 @@ export default function Lobby() {
     };
 
     const handleDragStart = (e, friend) => {
-        if (role === "guest") return; // El invitado no puede invitar a otros
+        if (role === "guest") return;
         e.dataTransfer.setData("friendData", JSON.stringify(friend));
     };
+
     const handleLeaveLobby = async () => {
         const token = localStorage.getItem("token");
 
@@ -160,10 +192,8 @@ export default function Lobby() {
             targetUsername = player2.username;
         }
 
-
         if (targetUsername && currentLobbyId) {
             try {
-
                 fetch(`http://localhost:8080/api/lobby/leave?targetUsername=${targetUsername}&lobbyId=${currentLobbyId}&isLeader=${role !== "guest"}`, {
                     method: "POST",
                     headers: { "Authorization": `Bearer ${token}` }
@@ -173,9 +203,9 @@ export default function Lobby() {
             }
         }
 
-
         navigate("/dashboard");
     };
+
     const handleDragOver = (e) => {
         e.preventDefault();
         if (role === "guest" || player2) return;
@@ -192,7 +222,6 @@ export default function Lobby() {
             const friendDropped = JSON.parse(friendDataString);
 
             setPlayer2({ username: friendDropped.username, status: 'inviting' });
-
 
             const token = localStorage.getItem("token");
             try {
@@ -244,7 +273,8 @@ export default function Lobby() {
                         <div className="player-slot leader-slot">
                             <div className="crown-icon">👑</div>
                             <img
-                                src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${role === 'guest' ? leaderNameUrl : user.username}`}
+
+                                src={role === 'guest' ? `https://api.dicebear.com/7.x/avataaars/svg?seed=${leaderNameUrl}` : user.avatar}
                                 alt="Líder"
                                 className="slot-avatar"
                             />
@@ -272,7 +302,8 @@ export default function Lobby() {
                                         <button className="kick-btn" onClick={handleKickPlayer} title="Expulsar jugador">✖</button>
                                     )}
                                     <img
-                                        src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${player2.username}`}
+                                        /* Si eres invitado, TÚ eres el jugador 2 (usamos tu avatar). Si no, usamos el del amigo (dicebear de momento) */
+                                        src={role === 'guest' ? user.avatar : `https://api.dicebear.com/7.x/avataaars/svg?seed=${player2.username}`}
                                         alt="Jugador 2"
                                         className="slot-avatar"
                                     />
@@ -298,7 +329,6 @@ export default function Lobby() {
                         )}
                     </div>
                 </main>
-
 
                 <aside className="lobby-sidebar">
                     <h3 className="sidebar-title">{role === 'guest' ? "Espectadores" : "Invitar Amigos"}</h3>

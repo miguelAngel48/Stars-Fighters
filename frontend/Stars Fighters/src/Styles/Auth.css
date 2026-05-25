@@ -20,6 +20,10 @@
     margin-top: 0;
 }
 
+.divider {
+    text-align: center;
+}
+
 .auth-box form {
     display: flex;
     flex-direction: column;
