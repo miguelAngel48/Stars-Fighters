@@ -4,5 +4,6 @@ public record GameInviteDto(
         String type,
         Long senderId,
         String senderName,
-        String lobbyId
+        String lobbyId,
+        String avatarUrl
 ) {}

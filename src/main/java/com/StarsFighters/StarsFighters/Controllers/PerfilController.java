@@ -89,6 +89,8 @@ public class PerfilController {
                 currentStatus = "ONLINE";
             } else if ("DND".equals(pref)) {
                 currentStatus = "DND";
+            } else if ("INVISIBLE".equals(pref)) {
+                currentStatus = "OFFLINE";
             }
 
             Map<String, Object> presenceMsg = Map.of(

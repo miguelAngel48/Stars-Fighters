@@ -9,9 +9,14 @@ export default function Store() {
     const [inventory, setInventory] = useState([]);
     const [message, setMessage] = useState("");
     const [user, setUser] = useState(null);
-    const [newCosmetic, setNewCosmetic] = useState({ name: "", price: 0, imageUrl: "" });
+    const [isUploading, setIsUploading] = useState(false);
+    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+    
+    const [newCosmeticName, setNewCosmeticName] = useState("");
+    const [newCosmeticPrice, setNewCosmeticPrice] = useState(0);
+    const [newCosmeticImage, setNewCosmeticImage] = useState(null);
+    
     const navigate = useNavigate();
-
     const token = localStorage.getItem("token");
 
     const fetchData = async () => {
@@ -27,7 +32,8 @@ export default function Store() {
                 setStoreItems(await resItems.json());
                 setInventory(await resInv.json());
             }
-        } catch (error) {}
+        } catch (error) {
+        }
     };
 
     useEffect(() => {
@@ -52,7 +58,7 @@ export default function Store() {
                 setUser({
                     username: profileData.username,
                     level: profileData.level,
-                    avatar: profileData.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${profileData.username}`,
+                    avatar: profileData.avatarUrl || "http://localhost:8080/uploads/cosmetics/default-avatar.png",
                     role: profileData.role
                 });
             })
@@ -60,7 +66,7 @@ export default function Store() {
                 setUser({
                     username: decoded.sub || "Usuario",
                     level: decoded.level,
-                    avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${decoded.sub}`,
+                    avatar: "http://localhost:8080/uploads/cosmetics/default-avatar.png",
                     role: decoded.role || "USER"
                 });
             });
@@ -81,8 +87,10 @@ export default function Store() {
             const data = await response.json();
             setMessage(data.message || response.statusText);
             fetchData();
+            setTimeout(() => setMessage(""), 3000);
         } catch (error) {
             setMessage("Error al comprar");
+            setTimeout(() => setMessage(""), 3000);
         }
     };
 
@@ -95,30 +103,60 @@ export default function Store() {
             const data = await response.json();
             setMessage(data.message || response.statusText);
             fetchData();
+            setTimeout(() => setMessage(""), 3000);
         } catch (error) {
             setMessage("Error al equipar");
+            setTimeout(() => setMessage(""), 3000);
+        }
+    };
+
+    const handleFileChange = (e) => {
+        if (e.target.files && e.target.files.length > 0) {
+            setNewCosmeticImage(e.target.files[0]);
         }
     };
 
     const handleCreateCosmetic = async (e) => {
         e.preventDefault();
+        
+        if (!newCosmeticImage) {
+            setMessage("Por favor, selecciona una imagen");
+            return;
+        }
+
+        setIsUploading(true);
+
+        const formData = new FormData();
+        formData.append("name", newCosmeticName);
+        formData.append("price", newCosmeticPrice);
+        formData.append("image", newCosmeticImage);
+
         try {
             const response = await fetch("http://localhost:8080/api/store/admin/items", {
                 method: "POST",
                 headers: {
-                    "Authorization": `Bearer ${token}`,
-                    "Content-Type": "application/json"
+                    "Authorization": `Bearer ${token}`
                 },
-                body: JSON.stringify(newCosmetic)
+                body: formData 
             });
-            const data = await response.json();
-            setMessage(data.message || "Error al crear");
+            
             if (response.ok) {
-                setNewCosmetic({ name: "", price: 0, imageUrl: "" });
+                const data = await response.json();
+                setMessage(data.message || "Creado correctamente");
+                setNewCosmeticName("");
+                setNewCosmeticPrice(0);
+                setNewCosmeticImage(null);
+                setIsCreateModalOpen(false);
                 fetchData();
+            } else {
+                const errorData = await response.text();
+                setMessage(errorData || "Error al crear");
             }
         } catch (error) {
             setMessage("Error de conexión");
+        } finally {
+            setIsUploading(false);
+            setTimeout(() => setMessage(""), 3000);
         }
     };
 
@@ -149,42 +187,16 @@ export default function Store() {
 
             <div className="store-scroll-area">
                 <div className="store-content">
-                    <h1 className="store-title">Tienda de Cosméticos</h1>
+                    <div className="store-header-container">
+                        <h1 className="store-title">Tienda de Cosméticos</h1>
+                        {user.role === "ADMIN" && (
+                            <button className="btn-create-cosmetic" onClick={() => setIsCreateModalOpen(true)}>
+                                Crear Cosmético
+                            </button>
+                        )}
+                    </div>
 
                     {message && <div className="store-alert">{message}</div>}
-
-                    {user.role === "ADMIN" && (
-                        <div className="admin-panel">
-                            <h3>Panel de Administración</h3>
-                            <form className="admin-form" onSubmit={handleCreateCosmetic}>
-                                <input
-                                    type="text"
-                                    placeholder="Nombre del avatar"
-                                    className="admin-input"
-                                    value={newCosmetic.name}
-                                    onChange={(e) => setNewCosmetic({ ...newCosmetic, name: e.target.value })}
-                                    required
-                                />
-                                <input
-                                    type="number"
-                                    placeholder="Precio"
-                                    className="admin-input"
-                                    value={newCosmetic.price}
-                                    onChange={(e) => setNewCosmetic({ ...newCosmetic, price: parseInt(e.target.value) || 0 })}
-                                    required
-                                />
-                                <input
-                                    type="url"
-                                    placeholder="URL de la imagen"
-                                    className="admin-input"
-                                    value={newCosmetic.imageUrl}
-                                    onChange={(e) => setNewCosmetic({ ...newCosmetic, imageUrl: e.target.value })}
-                                    required
-                                />
-                                <button type="submit" className="btn-create">Añadir Producto</button>
-                            </form>
-                        </div>
-                    )}
 
                     <div className="store-grid">
                         {storeItems.map((item) => (
@@ -207,6 +219,57 @@ export default function Store() {
                     </div>
                 </div>
             </div>
+
+            {isCreateModalOpen && (
+                <div className="modal-overlay">
+                    <div className="modal-content">
+                        <h3>Añadir Producto</h3>
+                        <p>Sube una imagen JPG o PNG para el nuevo cosmético.</p>
+
+                        <form onSubmit={handleCreateCosmetic} className="modal-form-grid">
+                            <input
+                                type="text"
+                                placeholder="Nombre del avatar"
+                                className="modal-input"
+                                value={newCosmeticName}
+                                onChange={(e) => setNewCosmeticName(e.target.value)}
+                                required
+                                disabled={isUploading}
+                            />
+                            <input
+                                type="number"
+                                placeholder="Precio"
+                                className="modal-input"
+                                value={newCosmeticPrice}
+                                onChange={(e) => setNewCosmeticPrice(parseInt(e.target.value) || 0)}
+                                required
+                                disabled={isUploading}
+                            />
+                            <input
+                                type="file"
+                                accept="image/png, image/jpeg"
+                                className="modal-input"
+                                onChange={handleFileChange}
+                                required
+                                disabled={isUploading}
+                            />
+                            <div className="modal-actions">
+                                <button 
+                                    type="button" 
+                                    className="btn-cancel" 
+                                    onClick={() => setIsCreateModalOpen(false)} 
+                                    disabled={isUploading}
+                                >
+                                    Cancelar
+                                </button>
+                                <button type="submit" className="btn-add" disabled={isUploading}>
+                                    {isUploading ? "Subiendo..." : "Añadir"}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

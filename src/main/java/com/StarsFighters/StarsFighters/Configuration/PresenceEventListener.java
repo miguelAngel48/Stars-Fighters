@@ -52,6 +52,8 @@ public class PresenceEventListener {
                     currentStatus = "ONLINE";
                 } else if ("DND".equals(user.getStatusPreference())) {
                     currentStatus = "DND";
+                } else if ("INVISIBLE".equals(user.getStatusPreference())) {
+                    currentStatus = "OFFLINE";
                 }
             }
 

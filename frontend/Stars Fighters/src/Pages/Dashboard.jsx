@@ -50,7 +50,7 @@ export default function Dashboard() {
                     username: profileData.username,
                     level: profileData.level,
                     email: profileData.email,
-                    avatar: profileData.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${profileData.username}`
+                    avatar: profileData.avatarUrl || "http://localhost:8080/uploads/cosmetics/default-avatar.png"
                 });
             })
             .catch(() => {
@@ -58,7 +58,7 @@ export default function Dashboard() {
                     username: decoded.sub || "Usuario",
                     level: decoded.level,
                     email: decoded.email,
-                    avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${decoded.sub}`
+                    avatar: "http://localhost:8080/uploads/cosmetics/default-avatar.png"
                 });
             });
 
@@ -345,7 +345,10 @@ export default function Dashboard() {
                         ) : (
                             friends.map((friend) => (
                                 <li key={friend.id} className="friend-item" onClick={() => handleFriendClick(friend)}>
-                                    <div className={`status-dot ${friend.currentStatus || 'OFFLINE'}`}></div>
+                                    <div className="friend-avatar-container">
+                                        <img src={friend.avatarUrl || "http://localhost:8080/uploads/cosmetics/default-avatar.png"} alt="Avatar" className="friend-avatar" />
+                                        <div className={`status-dot ${friend.currentStatus || 'OFFLINE'}`}></div>
+                                    </div>
                                     <span>{friend.username}</span>
                                 </li>
                             ))

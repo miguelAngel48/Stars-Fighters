@@ -16,23 +16,25 @@ import static org.springframework.security.config.Customizer.withDefaults;
 
 @Configuration
 public class SecurityConfig {
-@Autowired
-OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
+    @Autowired
+    OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
+
     @Autowired
     private JwtAuthenticationFilter jwtAuthenticationFilter;
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/","/login", "/error", "/api/auth/**", "/ws-stars/**").permitAll()
+                        .requestMatchers("/","/login", "/error", "/api/auth/**", "/ws-stars/**", "/uploads/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .oauth2Login(oauth2 -> oauth2
                         .successHandler(oAuth2LoginSuccessHandler)
                 )
-        .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
