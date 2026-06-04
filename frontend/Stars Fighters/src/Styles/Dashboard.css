@@ -236,10 +236,29 @@ input {
     background-color: var(--bg-main);
 }
 
-.status-dot {
-    width: 10px;
-    height: 10px;
+.friend-avatar-container {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.friend-avatar {
+    width: 35px;
+    height: 35px;
     border-radius: 50%;
+    object-fit: cover;
+    background-color: var(--color-border);
+}
+
+.status-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    position: absolute;
+    bottom: -2px;
+    right: -2px;
+    border: 2px solid var(--bg-surface);
     transition: background-color 0.3s;
 }
 

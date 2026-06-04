@@ -32,7 +32,8 @@ public class LobbyService {
                 "GAME_INVITE",
                 leader.getId(),
                 leader.getUsername(),
-                lobbyId
+                lobbyId,
+                leader.getEquippedAvatarUrl()
         );
 
         messagingTemplate.convertAndSendToUser(
@@ -51,7 +52,8 @@ public class LobbyService {
                 accepted ? "GAME_ACCEPTED" : "GAME_REJECTED",
                 friend.getId(),
                 friend.getUsername(),
-                lobbyId
+                lobbyId,
+                friend.getEquippedAvatarUrl()
         );
 
         messagingTemplate.convertAndSendToUser(
@@ -63,16 +65,15 @@ public class LobbyService {
     public void notifyLeave(Long myId, String targetUsername, String lobbyId, boolean isLeader) {
         User me = userRepo.findById(myId).orElseThrow();
 
-
         String type = isLeader ? "LOBBY_CLOSED" : "GUEST_LEFT";
 
         GameInviteDto leaveMsg = new GameInviteDto(
                 type,
                 me.getId(),
                 me.getUsername(),
-                lobbyId
+                lobbyId,
+                me.getEquippedAvatarUrl()
         );
-
 
         messagingTemplate.convertAndSendToUser(
                 targetUsername,
@@ -87,7 +88,8 @@ public class LobbyService {
                 "GUEST_KICKED",
                 leader.getId(),
                 leader.getUsername(),
-                lobbyId
+                lobbyId,
+                leader.getEquippedAvatarUrl()
         );
 
         messagingTemplate.convertAndSendToUser(
@@ -98,12 +100,12 @@ public class LobbyService {
     }
 
     public void startCharacterSelection(Long leaderId, String guestUsername, String lobbyId) {
-
         GameInviteDto startMsg = new GameInviteDto(
                 "START_SELECTION",
                 leaderId,
                 "Líder",
-                lobbyId
+                lobbyId,
+                null
         );
 
         messagingTemplate.convertAndSendToUser(
@@ -120,14 +122,12 @@ public class LobbyService {
         activeMatches.putIfAbsent(lobbyId, new java.util.concurrent.ConcurrentHashMap<>());
         java.util.Map<String, Object> matchData = activeMatches.get(lobbyId);
 
-
         matchData.put(role + "CharId", characterId);
         matchData.put(role + "CharName", characterName);
         matchData.put(role + "Username", myUsername);
         if (mapId != null) {
             matchData.put("mapId", mapId);
         }
-
 
         SelectionDto readyNotice = new SelectionDto(
                 "OPPONENT_READY",
@@ -138,7 +138,6 @@ public class LobbyService {
                 lobbyId
         );
         messagingTemplate.convertAndSendToUser(targetUsername, "/queue/notifications", readyNotice);
-
 
         if (matchData.containsKey("leaderCharId") && matchData.containsKey("guestCharId")) {
             Long finalMapId = (Long) matchData.getOrDefault("mapId", 1L);
@@ -159,5 +158,4 @@ public class LobbyService {
             activeMatches.remove(lobbyId);
         }
     }
-
 }

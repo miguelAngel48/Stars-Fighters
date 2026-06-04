@@ -7,8 +7,14 @@ import com.StarsFighters.StarsFighters.Repositories.UserRepo;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 public class StoreService {
@@ -18,6 +24,8 @@ public class StoreService {
 
     @Autowired
     private UserRepo userRepo;
+
+    private final String UPLOAD_DIR = "uploads/cosmetics/";
 
     public List<Cosmetic> getStoreItems() {
         return cosmeticRepo.findAll();
@@ -55,12 +63,39 @@ public class StoreService {
     }
 
     @Transactional
-    public void addCosmetic(String username, String name, int price, String imageUrl) {
+    public void addCosmetic(String username, String name, int price, MultipartFile imageFile) throws IOException {
         User user = userRepo.findByUsername(username).orElseThrow();
         if (!"ADMIN".equals(user.getRole())) {
             throw new RuntimeException("No tienes permisos para crear cosméticos");
         }
-        Cosmetic cosmetic = new Cosmetic(name, price, imageUrl);
+
+        if (imageFile.isEmpty()) {
+            throw new RuntimeException("El archivo de imagen está vacío");
+        }
+
+        String contentType = imageFile.getContentType();
+        if (contentType == null || (!contentType.equals("image/jpeg") && !contentType.equals("image/png"))) {
+            throw new RuntimeException("Solo se permiten archivos JPG o PNG");
+        }
+
+        Path uploadPath = Paths.get(UPLOAD_DIR);
+        if (!Files.exists(uploadPath)) {
+            Files.createDirectories(uploadPath);
+        }
+
+        String originalFilename = imageFile.getOriginalFilename();
+        String fileExtension = "";
+        if (originalFilename != null && originalFilename.contains(".")) {
+            fileExtension = originalFilename.substring(originalFilename.lastIndexOf("."));
+        }
+
+        String fileName = UUID.randomUUID().toString() + fileExtension;
+        Path filePath = uploadPath.resolve(fileName);
+        Files.copy(imageFile.getInputStream(), filePath);
+
+        String fileUrl = "http://localhost:8080/uploads/cosmetics/" + fileName;
+
+        Cosmetic cosmetic = new Cosmetic(name, price, fileUrl);
         cosmeticRepo.save(cosmetic);
     }
 }

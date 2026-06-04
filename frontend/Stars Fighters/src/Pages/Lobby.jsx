@@ -16,7 +16,6 @@ export default function Lobby() {
     const lobbyIdUrl = searchParams.get("lobbyId");
     const leaderNameUrl = searchParams.get("leaderName");
 
-
     const [currentLobbyId, setCurrentLobbyId] = useState(lobbyIdUrl || null);
 
     const navigate = useNavigate();
@@ -44,7 +43,7 @@ export default function Lobby() {
             })
                 .then(res => res.json())
                 .then(profileData => {
-                    const fetchedAvatar = profileData.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${profileData.username}`;
+                    const fetchedAvatar = profileData.avatarUrl || "http://localhost:8080/uploads/cosmetics/default-avatar.png";
 
                     setUser({
                         username: profileData.username,
@@ -53,14 +52,12 @@ export default function Lobby() {
                         avatar: fetchedAvatar
                     });
 
-
                     if (role === "guest") {
-                        setPlayer2({ username: profileData.username, status: 'joined', avatar: fetchedAvatar });
+                        setPlayer2({ username: profileData.username, status: 'joined', avatarUrl: fetchedAvatar });
                     }
                 })
                 .catch(() => {
-
-                    const fallbackAvatar = `https://api.dicebear.com/7.x/avataaars/svg?seed=${decoded.sub}`;
+                    const fallbackAvatar = "http://localhost:8080/uploads/cosmetics/default-avatar.png";
                     setUser({
                         username: decoded.sub || "Usuario",
                         level: decoded.level || 1,
@@ -69,7 +66,7 @@ export default function Lobby() {
                     });
 
                     if (role === "guest") {
-                        setPlayer2({ username: decoded.sub, status: 'joined', avatar: fallbackAvatar });
+                        setPlayer2({ username: decoded.sub, status: 'joined', avatarUrl: fallbackAvatar });
                     }
                 });
 
@@ -91,14 +88,12 @@ export default function Lobby() {
             webSocketFactory: () => new SockJS('http://localhost:8080/ws-stars'),
             connectHeaders: { Authorization: `Bearer ${token}` },
             onConnect: () => {
-                console.log('STOMP Conectado en el Lobby');
-
                 client.subscribe('/user/queue/notifications', (message) => {
                     if (message.body) {
                         const notification = JSON.parse(message.body);
 
                         if (notification.type === 'GAME_ACCEPTED') {
-                            setPlayer2({ username: notification.senderName, status: 'joined' });
+                            setPlayer2({ username: notification.senderName, status: 'joined', avatarUrl: notification.avatarUrl });
                         }
                         else if (notification.type === 'GAME_REJECTED') {
                             alert(`${notification.senderName} ha rechazado tu invitación.`);
@@ -140,9 +135,7 @@ export default function Lobby() {
             if (response.ok) {
                 navigate(`/character-selection?lobbyId=${currentLobbyId}&role=leader&oppName=${player2.username}`);
             }
-        } catch (err) {
-            console.error(err);
-        }
+        } catch (err) {}
     };
 
     const handleKickPlayer = async () => {
@@ -158,9 +151,7 @@ export default function Lobby() {
             if (response.ok) {
                 setPlayer2(null);
             }
-        } catch (err) {
-            console.error("Error al conectar con el servidor para expulsar:", err);
-        }
+        } catch (err) {}
     };
 
     const fetchFriends = async (token) => {
@@ -172,9 +163,7 @@ export default function Lobby() {
                 const data = await response.json();
                 setFriends(data);
             }
-        } catch (error) {
-            console.error("Error al cargar amigos:", error);
-        }
+        } catch (error) {}
     };
 
     const handleDragStart = (e, friend) => {
@@ -198,9 +187,7 @@ export default function Lobby() {
                     method: "POST",
                     headers: { "Authorization": `Bearer ${token}` }
                 });
-            } catch (e) {
-                console.error("No se pudo notificar la salida");
-            }
+            } catch (e) {}
         }
 
         navigate("/dashboard");
@@ -221,7 +208,7 @@ export default function Lobby() {
         if (friendDataString) {
             const friendDropped = JSON.parse(friendDataString);
 
-            setPlayer2({ username: friendDropped.username, status: 'inviting' });
+            setPlayer2({ username: friendDropped.username, status: 'inviting', avatarUrl: friendDropped.avatarUrl });
 
             const token = localStorage.getItem("token");
             try {
@@ -233,12 +220,10 @@ export default function Lobby() {
                 if (response.ok) {
                     const data = await response.json();
                     setCurrentLobbyId(data.lobbyId);
-                    console.log("Invitación enviada con éxito, sala:", data.lobbyId);
                 } else {
                     setPlayer2(null);
                 }
             } catch (err) {
-                console.error("Error al conectar con el servidor para invitar:", err);
                 setPlayer2(null);
             }
         }
@@ -268,13 +253,10 @@ export default function Lobby() {
             <div className="lobby-body">
                 <main className="lobby-main">
                     <div className="game-table">
-
-
                         <div className="player-slot leader-slot">
                             <div className="crown-icon">👑</div>
                             <img
-
-                                src={role === 'guest' ? `https://api.dicebear.com/7.x/avataaars/svg?seed=${leaderNameUrl}` : user.avatar}
+                                src={role === 'guest' ? "http://localhost:8080/uploads/cosmetics/default-avatar.png" : user.avatar}
                                 alt="Líder"
                                 className="slot-avatar"
                             />
@@ -283,7 +265,6 @@ export default function Lobby() {
                         </div>
 
                         <div className="vs-badge">VS</div>
-
 
                         <div
                             className={`player-slot empty-slot ${isDraggingOver ? 'drag-over' : ''} ${player2 ? 'filled' : ''}`}
@@ -302,8 +283,7 @@ export default function Lobby() {
                                         <button className="kick-btn" onClick={handleKickPlayer} title="Expulsar jugador">✖</button>
                                     )}
                                     <img
-                                        /* Si eres invitado, TÚ eres el jugador 2 (usamos tu avatar). Si no, usamos el del amigo (dicebear de momento) */
-                                        src={role === 'guest' ? user.avatar : `https://api.dicebear.com/7.x/avataaars/svg?seed=${player2.username}`}
+                                        src={role === 'guest' ? user.avatar : (player2?.avatarUrl || "http://localhost:8080/uploads/cosmetics/default-avatar.png")}
                                         alt="Jugador 2"
                                         className="slot-avatar"
                                     />
@@ -314,7 +294,6 @@ export default function Lobby() {
                                 </div>
                             )}
                         </div>
-
                     </div>
 
                     <div className="lobby-actions">
@@ -347,7 +326,7 @@ export default function Lobby() {
                                     style={{ opacity: player2 ? 0.5 : 1, cursor: player2 ? 'not-allowed' : 'grab' }}
                                 >
                                     <div className="drag-handle">⠿</div>
-                                    <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${friend.username}`} alt="Avatar" className="tiny-avatar" />
+                                    <img src={friend.avatarUrl || "http://localhost:8080/uploads/cosmetics/default-avatar.png"} alt="Avatar" className="tiny-avatar" />
                                     <span>{friend.username}</span>
                                 </li>
                             ))

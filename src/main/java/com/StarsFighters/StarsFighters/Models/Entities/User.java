@@ -29,7 +29,7 @@ public class User {
 
     private String role = "USER";
 
-    private String equippedAvatarUrl = "https://api.dicebear.com/7.x/avataaars/svg?seed=Felix";
+    private String equippedAvatarUrl = "http://localhost:8080/uploads/cosmetics/default-avatar.png";
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     private List<Friendship> friendships = new ArrayList<>();

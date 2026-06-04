@@ -4,6 +4,7 @@ import com.StarsFighters.StarsFighters.Services.StoreService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.security.Principal;
 import java.util.Map;
@@ -46,12 +47,13 @@ public class StoreController {
     }
 
     @PostMapping("/admin/items")
-    public ResponseEntity<?> addCosmetic(@RequestBody Map<String, Object> payload, Principal principal) {
+    public ResponseEntity<?> addCosmetic(
+            @RequestParam("name") String name,
+            @RequestParam("price") int price,
+            @RequestParam("image") MultipartFile imageFile,
+            Principal principal) {
         try {
-            String name = (String) payload.get("name");
-            int price = Integer.parseInt(payload.get("price").toString());
-            String imageUrl = (String) payload.get("imageUrl");
-            storeService.addCosmetic(principal.getName(), name, price, imageUrl);
+            storeService.addCosmetic(principal.getName(), name, price, imageFile);
             return ResponseEntity.ok(Map.of("message", "Producto añadido a la tienda"));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());

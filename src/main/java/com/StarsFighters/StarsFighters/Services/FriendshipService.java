@@ -120,6 +120,8 @@ public class FriendshipService {
                             currentStatus = "ONLINE";
                         } else if ("DND".equals(theOtherPlayer.getStatusPreference())) {
                             currentStatus = "DND";
+                        } else if ("INVISIBLE".equals(theOtherPlayer.getStatusPreference())) {
+                            currentStatus = "OFFLINE";
                         }
                     }
 
@@ -128,7 +130,8 @@ public class FriendshipService {
                             theOtherPlayer.getUsername(),
                             theOtherPlayer.getFriendCode(),
                             friendship.getId(),
-                            currentStatus
+                            currentStatus,
+                            theOtherPlayer.getEquippedAvatarUrl()
                     );
                 })
                 .collect(Collectors.toList());

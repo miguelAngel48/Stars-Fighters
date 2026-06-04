@@ -11,11 +11,33 @@
     padding: 40px;
 }
 
-.store-title {
-    margin-bottom: 30px;
+.store-header-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     width: 100%;
     max-width: 1000px;
+    margin-bottom: 30px;
+}
+
+.store-title {
+    margin: 0;
     text-align: left;
+}
+
+.btn-create-cosmetic {
+    padding: 10px 20px;
+    background-color: var(--color-primary);
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.btn-create-cosmetic:hover {
+    background-color: var(--color-primary-hover);
 }
 
 .store-alert {
@@ -28,48 +50,6 @@
     width: 100%;
     max-width: 1000px;
     text-align: center;
-}
-
-.admin-panel {
-    background: var(--bg-surface);
-    border: 1px solid var(--color-border);
-    border-radius: 10px;
-    padding: 20px;
-    margin-bottom: 30px;
-    width: 100%;
-    max-width: 1000px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-}
-
-.admin-form {
-    display: flex;
-    gap: 15px;
-    align-items: center;
-    flex-wrap: wrap;
-    margin-top: 15px;
-}
-
-.admin-input {
-    flex: 1;
-    min-width: 150px;
-    padding: 10px;
-    border: 1px solid var(--color-border);
-    border-radius: 5px;
-}
-
-.btn-create {
-    padding: 10px 20px;
-    background-color: var(--color-success);
-    color: white;
-    border: none;
-    border-radius: 5px;
-    font-weight: bold;
-    cursor: pointer;
-    transition: background-color 0.2s;
-}
-
-.btn-create:hover {
-    background-color: #136a2b;
 }
 
 .store-grid {
@@ -137,4 +117,12 @@
 
 .btn-equip:hover {
     background-color: var(--color-primary-hover);
+}
+
+.modal-form-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-top: 15px;
+    margin-bottom: 20px;
 }
