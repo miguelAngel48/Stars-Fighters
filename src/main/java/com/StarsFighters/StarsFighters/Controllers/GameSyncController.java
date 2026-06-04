@@ -20,4 +20,27 @@ public class GameSyncController {
                 syncDto
         );
     }
+
+    @MessageMapping("/game.hit")
+    public void handleGameHit(java.util.Map<String, Object> payload, java.security.Principal principal) {
+        String targetUsername = (String) payload.get("targetUsername");
+
+
+        messagingTemplate.convertAndSendToUser(
+                targetUsername,
+                "/queue/game-hit",
+                payload
+        );
+    }
+    @MessageMapping("/game.death")
+    public void handleGameDeath(@org.springframework.messaging.handler.annotation.Payload java.util.Map<String, Object> payload) {
+        String targetUsername = (String) payload.get("targetUsername");
+
+
+        messagingTemplate.convertAndSendToUser(
+                targetUsername,
+                "/queue/game-death",
+                payload
+        );
+    }
 }

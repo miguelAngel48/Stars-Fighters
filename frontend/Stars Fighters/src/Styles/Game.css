@@ -75,3 +75,29 @@
         opacity: 1;
     }
 }
+
+.ui-layer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 10;
+    pointer-events: none;
+
+}
+
+.victory-modal-overlay {
+    pointer-events: auto;
+}
+
+
+.victory-modal-content {
+    pointer-events: auto;
+}
+
+
+.victory-modal-content button:hover {
+    filter: brightness(1.2);
+    transform: scale(1.05);
+}

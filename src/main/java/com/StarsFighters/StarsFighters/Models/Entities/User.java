@@ -16,7 +16,11 @@ public class User {
     private String password;
     private LocalDateTime sinceCreated;
     private int Level;
+    @Column(name = "wins", columnDefinition = "integer default 0")
+    private int wins = 0;
 
+    @Column(name = "losses", columnDefinition = "integer default 0")
+    private int losses = 0;
     @Column(unique = true, length = 10)
     private String friendCode;
 
@@ -145,4 +149,13 @@ public class User {
     public void setOwnedCosmetics(List<Cosmetic> ownedCosmetics) {
         this.ownedCosmetics = ownedCosmetics;
     }
+
+    public int getWins() { return wins; }
+
+    public void setWins(int wins) { this.wins = wins; }
+
+    public int getLosses() { return losses; }
+
+    public void setLosses(int losses) { this.losses = losses; }
+
 }

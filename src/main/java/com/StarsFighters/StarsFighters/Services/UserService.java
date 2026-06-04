@@ -50,7 +50,7 @@ public class UserService {
         if (existUser == null) {
             User newUser = new User();
             newUser.setEmail(email);
-            newUser.setUsername(nombre != null ? nombre.replace(" ", "") : "GoogleUser");
+            newUser.setUsername(nombre);
             newUser.setLevel(1);
             newUser.setRole("USER");
             newUser.setFriendCode(FriendCodeGenerator.generateCode());
@@ -85,4 +85,17 @@ public class UserService {
                 user.getRole()
         );
     }
+
+    public void recordMatchResult(String username, boolean isWinner) {
+
+        User user = userRepo.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado en la base de datos"));
+        if (isWinner) {
+            user.setWins(user.getWins() + 1);
+        } else {
+            user.setLosses(user.getLosses() + 1);
+        }
+        userRepo.save(user);
+    }
+
 }
