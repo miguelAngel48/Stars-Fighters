@@ -1,12 +1,14 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
-import { Client } from '@stomp/stompjs';
-import SockJS from 'sockjs-client/dist/sockjs';
+import { useUser } from "../contexts/UserContext";
+import { useNotification } from "../contexts/NotificationContext";
+import Navbar from "../Components/Navbar";
 import "../Styles/Lobby.css";
 
 export default function Lobby() {
-    const [user, setUser] = useState(null);
+    const { user } = useUser();
+    const { latestEvent } = useNotification();
     const [friends, setFriends] = useState([]);
     const [player2, setPlayer2] = useState(null);
     const [isDraggingOver, setIsDraggingOver] = useState(false);
@@ -17,9 +19,7 @@ export default function Lobby() {
     const leaderNameUrl = searchParams.get("leaderName");
 
     const [currentLobbyId, setCurrentLobbyId] = useState(lobbyIdUrl || null);
-
     const navigate = useNavigate();
-    const stompClientRef = useRef(null);
 
     useEffect(() => {
         const token = localStorage.getItem("token");
@@ -27,100 +27,32 @@ export default function Lobby() {
             navigate("/login");
             return;
         }
+        fetchFriends(token);
 
-        try {
-            const decoded = jwtDecode(token);
-            const currentTime = Date.now() / 1000;
-
-            if (decoded.exp < currentTime) {
-                localStorage.removeItem("token");
-                navigate("/login");
-                return;
-            }
-
-            fetch("http://localhost:8080/api/auth/profile", {
-                headers: { "Authorization": `Bearer ${token}` }
-            })
-                .then(res => res.json())
-                .then(profileData => {
-                    const fetchedAvatar = profileData.avatarUrl || "http://localhost:8080/uploads/cosmetics/default-avatar.png";
-
-                    setUser({
-                        username: profileData.username,
-                        coins: profileData.coins,
-                        email: profileData.email,
-                        avatar: fetchedAvatar
-                    });
-
-                    if (role === "guest") {
-                        setPlayer2({ username: profileData.username, status: 'joined', avatarUrl: fetchedAvatar });
-                    }
-                })
-                .catch(() => {
-                    const fallbackAvatar = "http://localhost:8080/uploads/cosmetics/default-avatar.png";
-                    setUser({
-                        username: decoded.sub || "Usuario",
-                        coins: decoded.coins || 0,
-                        email: decoded.email,
-                        avatar: fallbackAvatar
-                    });
-
-                    if (role === "guest") {
-                        setPlayer2({ username: decoded.sub, status: 'joined', avatarUrl: fallbackAvatar });
-                    }
-                });
-
-            fetchFriends(token);
-            connectLobbyWebSocket(token);
-
-        } catch (error) {
-            localStorage.removeItem("token");
-            navigate("/login");
+        if (role === "guest" && leaderNameUrl) {
+            setPlayer2({ username: user?.username, status: 'joined', avatarUrl: user?.avatarUrl });
         }
+    }, [navigate, role, user]);
 
-        return () => {
-            if (stompClientRef.current) stompClientRef.current.deactivate();
-        };
-    }, [navigate, role]);
+    useEffect(() => {
+        if (!latestEvent) return;
 
-    const connectLobbyWebSocket = (token) => {
-        const client = new Client({
-            webSocketFactory: () => new SockJS('http://localhost:8080/ws-stars'),
-            connectHeaders: { Authorization: `Bearer ${token}` },
-            onConnect: () => {
-                client.subscribe('/user/queue/notifications', (message) => {
-                    if (message.body) {
-                        const notification = JSON.parse(message.body);
-
-                        if (notification.type === 'GAME_ACCEPTED') {
-                            setPlayer2({ username: notification.senderName, status: 'joined', avatarUrl: notification.avatarUrl });
-                        }
-                        else if (notification.type === 'GAME_REJECTED') {
-                            alert(`${notification.senderName} ha rechazado tu invitación.`);
-                            setPlayer2(null);
-                        }
-                        else if (notification.type === 'LOBBY_CLOSED') {
-                            alert(`El líder ${notification.senderName} ha cerrado la sala.`);
-                            navigate("/dashboard");
-                        }
-                        else if (notification.type === 'GUEST_LEFT') {
-                            alert(`${notification.senderName} ha abandonado la sala.`);
-                            setPlayer2(null);
-                        }
-                        else if (notification.type === 'GUEST_KICKED') {
-                            alert("Has sido expulsado de la sala por el líder.");
-                            navigate("/dashboard");
-                        }
-                        else if (notification.type === 'START_SELECTION') {
-                            navigate(`/character-selection?lobbyId=${notification.lobbyId}&role=guest&oppName=${leaderNameUrl}`);
-                        }
-                    }
-                });
-            }
-        });
-        client.activate();
-        stompClientRef.current = client;
-    };
+        if (latestEvent.type === 'GAME_ACCEPTED') {
+            setPlayer2({ username: latestEvent.senderName, status: 'joined', avatarUrl: latestEvent.avatarUrl });
+        }
+        else if (latestEvent.type === 'GAME_REJECTED') {
+            setPlayer2(null);
+        }
+        else if (latestEvent.type === 'LOBBY_CLOSED') {
+            navigate("/dashboard");
+        }
+        else if (latestEvent.type === 'GUEST_LEFT') {
+            setPlayer2(null);
+        }
+        else if (latestEvent.type === 'GUEST_KICKED') {
+            navigate("/dashboard");
+        }
+    }, [latestEvent, navigate]);
 
     const handleStartGame = async () => {
         if (!player2 || !currentLobbyId) return;
@@ -233,25 +165,10 @@ export default function Lobby() {
 
     return (
         <div className="lobby-container">
-            <nav className="navbar">
-                <div className="nav-left">
-                    <button className="nav-btn" onClick={handleLeaveLobby}>Salir al Menu</button>
-                </div>
-                <div className="nav-center">
-                    <h2 style={{ margin: 0, color: 'var(--color-primary)' }}>
-                        {role === 'guest' ? `SALA DE ${leaderNameUrl.toUpperCase()}` : "TU SALA DE ESPERA"}
-                    </h2>
-                </div>
-                <div className="nav-right">
-                    <div className="profile-btn">
-                        <img src={user.avatar} alt="Perfil" className="profile-img" />
-                        <span className="profile-name">{user.username}</span>
-                        <span style={{ color: '#ffb703', fontSize: '13px', fontWeight: 'bold' }}>
-                            🪙 {user.coins}
-                        </span>
-                    </div>
-                </div>
-            </nav>
+            <Navbar 
+                leftContent={<button className="nav-btn" onClick={handleLeaveLobby}>Salir al Menu</button>}
+                centerContent={<h2 style={{ margin: 0, color: 'var(--color-primary)' }}>{role === 'guest' ? `SALA DE ${leaderNameUrl?.toUpperCase()}` : "TU SALA DE ESPERA"}</h2>}
+            />
 
             <div className="lobby-body">
                 <main className="lobby-main">
@@ -259,7 +176,7 @@ export default function Lobby() {
                         <div className="player-slot leader-slot">
                             <div className="crown-icon">👑</div>
                             <img
-                                src={role === 'guest' ? "http://localhost:8080/uploads/cosmetics/default-avatar.png" : user.avatar}
+                                src={role === 'guest' ? "http://localhost:8080/uploads/cosmetics/default-avatar.png" : (user.avatar || user.avatarUrl)}
                                 alt="Líder"
                                 className="slot-avatar"
                             />
@@ -286,7 +203,7 @@ export default function Lobby() {
                                         <button className="kick-btn" onClick={handleKickPlayer} title="Expulsar jugador">✖</button>
                                     )}
                                     <img
-                                        src={role === 'guest' ? user.avatar : (player2?.avatarUrl || "http://localhost:8080/uploads/cosmetics/default-avatar.png")}
+                                        src={role === 'guest' ? (user.avatar || user.avatarUrl) : (player2?.avatarUrl || "http://localhost:8080/uploads/cosmetics/default-avatar.png")}
                                         alt="Jugador 2"
                                         className="slot-avatar"
                                     />

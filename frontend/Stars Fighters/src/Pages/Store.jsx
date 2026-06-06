@@ -1,14 +1,16 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
+import { useUser } from "../contexts/UserContext";
+import Navbar from "../Components/Navbar";
 import "../Styles/Store.css";
 import "../Styles/Dashboard.css";
 
 export default function Store() {
+    const { user } = useUser();
     const [storeItems, setStoreItems] = useState([]);
     const [inventory, setInventory] = useState([]);
     const [message, setMessage] = useState("");
-    const [user, setUser] = useState(null);
     const [isUploading, setIsUploading] = useState(false);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     
@@ -32,8 +34,7 @@ export default function Store() {
                 setStoreItems(await resItems.json());
                 setInventory(await resInv.json());
             }
-        } catch (error) {
-        }
+        } catch (error) {}
     };
 
     useEffect(() => {
@@ -41,37 +42,14 @@ export default function Store() {
             navigate("/login");
             return;
         }
-
         try {
             const decoded = jwtDecode(token);
             if (decoded.exp < Date.now() / 1000) {
                 localStorage.removeItem("token");
                 navigate("/login");
-                return;
+            } else {
+                fetchData();
             }
-
-            fetch("http://localhost:8080/api/auth/profile", {
-                headers: { "Authorization": `Bearer ${token}` }
-            })
-            .then(res => res.json())
-            .then(profileData => {
-                setUser({
-                    username: profileData.username,
-                    level: profileData.level,
-                    avatar: profileData.avatarUrl || "http://localhost:8080/uploads/cosmetics/default-avatar.png",
-                    role: profileData.role
-                });
-            })
-            .catch(() => {
-                setUser({
-                    username: decoded.sub || "Usuario",
-                    level: decoded.level,
-                    avatar: "http://localhost:8080/uploads/cosmetics/default-avatar.png",
-                    role: decoded.role || "USER"
-                });
-            });
-
-            fetchData();
         } catch (error) {
             localStorage.removeItem("token");
             navigate("/login");
@@ -166,24 +144,15 @@ export default function Store() {
 
     return (
         <div className="dashboard-container">
-            <nav className="navbar">
-                <div className="nav-left">
-                    <button className="nav-btn" onClick={() => navigate("/dashboard")}>Dashboard</button>
-                    <button className="nav-btn" onClick={() => navigate("/store")}>Tienda</button>
-                </div>
-                <div className="nav-center">
-                    <button className="play-btn" onClick={() => navigate("/Lobby")}>Jugar</button>
-                </div>
-                <div className="nav-right">
-                    <button className="profile-btn" onClick={() => navigate("/profile")}>
-                        <img src={user.avatar} alt="Perfil" className="profile-img" />
-                        <div className="profile-info">
-                            <span className="profile-name">{user.username}</span>
-                            <span className="profile-level">Nvl. {user.level}</span>
-                        </div>
-                    </button>
-                </div>
-            </nav>
+            <Navbar 
+                leftContent={
+                    <>
+                        <button className="nav-btn" onClick={() => navigate("/dashboard")}>Dashboard</button>
+                        <button className="nav-btn" onClick={() => navigate("/store")}>Tienda</button>
+                    </>
+                }
+                centerContent={<button className="play-btn" onClick={() => navigate("/Lobby")}>Jugar</button>}
+            />
 
             <div className="store-scroll-area">
                 <div className="store-content">
