@@ -7,6 +7,7 @@ public record UserProfileDto(
         String email,
         String friendCode,
         int level,
+        int coins,
         LocalDateTime sinceCreated,
         String statusPreference,
         String avatarUrl,

@@ -21,6 +21,10 @@ public class User {
 
     @Column(name = "losses", columnDefinition = "integer default 0")
     private int losses = 0;
+
+    @Column(name = "coins", columnDefinition = "integer default 0")
+    private int coins = 0;
+
     @Column(unique = true, length = 10)
     private String friendCode;
 
@@ -157,5 +161,9 @@ public class User {
     public int getLosses() { return losses; }
 
     public void setLosses(int losses) { this.losses = losses; }
+
+    public int getCoins() { return coins; }
+
+    public void setCoins(int coins) { this.coins = coins; }
 
 }

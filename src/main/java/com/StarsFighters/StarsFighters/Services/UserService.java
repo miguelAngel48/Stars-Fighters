@@ -79,6 +79,7 @@ public class UserService {
                 user.getEmail(),
                 user.getFriendCode(),
                 user.getLevel(),
+                user.getCoins(),
                 user.getSinceCreated(),
                 user.getStatusPreference(),
                 user.getEquippedAvatarUrl(),
@@ -92,10 +93,14 @@ public class UserService {
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado en la base de datos"));
         if (isWinner) {
             user.setWins(user.getWins() + 1);
+            user.setCoins(user.getCoins() + 10);
         } else {
             user.setLosses(user.getLosses() + 1);
+            user.setCoins(user.getCoins() + 5);
         }
         userRepo.save(user);
     }
+
+
 
 }

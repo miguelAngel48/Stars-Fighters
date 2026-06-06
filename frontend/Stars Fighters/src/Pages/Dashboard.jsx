@@ -13,7 +13,7 @@ export default function Dashboard() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [newFriendIdentifier, setNewFriendIdentifier] = useState("");
     const [addFriendMessage, setAddFriendMessage] = useState("");
-    
+
     const [searchTimeout, setSearchTimeout] = useState(null);
     const [searchResults, setSearchResults] = useState([]);
 
@@ -44,23 +44,24 @@ export default function Dashboard() {
             fetch("http://localhost:8080/api/auth/profile", {
                 headers: { "Authorization": `Bearer ${token}` }
             })
-            .then(res => res.json())
-            .then(profileData => {
-                setUser({
-                    username: profileData.username,
-                    level: profileData.level,
-                    email: profileData.email,
-                    avatar: profileData.avatarUrl || "http://localhost:8080/uploads/cosmetics/default-avatar.png"
+                .then(res => res.json())
+                .then(profileData => {
+                    setUser({
+                        username: profileData.username,
+                        email: profileData.email,
+                        coins: profileData.coins,
+                        avatar: profileData.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${profileData.username}`
+                    });
+                })
+                .catch(() => {
+
+                    setUser({
+                        username: decoded.sub || "Usuario",
+                        email: decoded.email,
+                        coins: decoded.coins || 0,
+                        avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${decoded.sub}`
+                    });
                 });
-            })
-            .catch(() => {
-                setUser({
-                    username: decoded.sub || "Usuario",
-                    level: decoded.level,
-                    email: decoded.email,
-                    avatar: "http://localhost:8080/uploads/cosmetics/default-avatar.png"
-                });
-            });
 
         } catch (error) {
             handleLogout();
@@ -81,9 +82,9 @@ export default function Dashboard() {
                     } else if (notification.type === 'GAME_INVITE') {
                         setGameInvites(prev => [...prev, notification]);
                     } else if (notification.type === 'PRESENCE') {
-                        setFriends(prevFriends => 
-                            prevFriends.map(friend => 
-                                friend.username === notification.username 
+                        setFriends(prevFriends =>
+                            prevFriends.map(friend =>
+                                friend.username === notification.username
                                     ? { ...friend, currentStatus: notification.status }
                                     : friend
                             )
@@ -133,7 +134,7 @@ export default function Dashboard() {
                     navigate(`/lobby?role=guest&lobbyId=${lobbyId}&leaderId=${leaderId}&leaderName=${senderName}`);
                 }
             }
-        } catch (error) {}
+        } catch (error) { }
     };
 
     const fetchPendingRequests = async (token) => {
@@ -150,7 +151,7 @@ export default function Dashboard() {
                 const data = await response.json();
                 setIncomingRequests(data);
             }
-        } catch (error) {}
+        } catch (error) { }
     };
 
     const fetchFriends = async (token) => {
@@ -167,7 +168,7 @@ export default function Dashboard() {
                 const data = await response.json();
                 setFriends(data);
             }
-        } catch (error) {}
+        } catch (error) { }
     };
 
     const handleSearchChange = (e) => {
@@ -195,7 +196,7 @@ export default function Dashboard() {
                 const data = await response.json();
                 setSearchResults(data);
             }
-        } catch (error) {}
+        } catch (error) { }
     };
 
     const selectUser = (friendCode) => {
@@ -254,7 +255,7 @@ export default function Dashboard() {
                     fetchFriends(token);
                 }
             }
-        } catch (error) {}
+        } catch (error) { }
     };
 
     const handleFriendClick = async (friend) => {
@@ -271,7 +272,7 @@ export default function Dashboard() {
                     return [...filtered, ...data];
                 });
             }
-        } catch (error) {}
+        } catch (error) { }
     };
 
     const sendMessage = () => {
@@ -314,7 +315,7 @@ export default function Dashboard() {
                         <img src={user.avatar} alt="Perfil" className="profile-img" />
                         <div className="profile-info">
                             <span className="profile-name">{user.username}</span>
-                            <span className="profile-level">Nvl. {user.level}</span>
+                            <span className="profile-level">🪙{user.coins}</span>
                         </div>
                     </button>
                 </div>
@@ -369,7 +370,7 @@ export default function Dashboard() {
                     </div>
                 ))}
             </div>
-            
+
             <div className="toast-container" style={{ bottom: '220px' }}>
                 {gameInvites.map((invite) => (
                     <div key={invite.lobbyId} className="toast" style={{ borderLeft: '5px solid var(--color-primary)' }}>
@@ -400,8 +401,8 @@ export default function Dashboard() {
                             {searchResults.length > 0 && (
                                 <ul className="autocomplete-dropdown">
                                     {searchResults.map((result) => (
-                                        <li 
-                                            key={result.friendCode} 
+                                        <li
+                                            key={result.friendCode}
                                             className="autocomplete-item"
                                             onClick={() => selectUser(result.friendCode)}
                                         >

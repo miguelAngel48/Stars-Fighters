@@ -130,9 +130,9 @@ export default function Game() {
                     myPositionRef.current.x += (hitData.direction * hitData.force);
                     myHealthRef.current = Math.max(0, myHealthRef.current - 10);
 
-                    // Si YO muero por un golpe:
+
                     if (myHealthRef.current <= 0) {
-                        oppKillsRef.current += 1; // Le doy el punto al enemigo visualmente
+                        oppKillsRef.current += 1;
                         myHealthRef.current = 100;
                         myPositionRef.current = { x: window.innerWidth * 0.3, y: 100 };
 
@@ -146,8 +146,6 @@ export default function Game() {
                 });
 
                 client.subscribe('/user/queue/game-death', () => {
-                    // Si el servidor me avisa de esto, significa que EL ENEMIGO murió.
-                    // ¡PUNTO PARA MÍ!
                     myKillsRef.current += 1;
                 });
             }
@@ -553,7 +551,7 @@ export default function Game() {
                         }}>
                             <h1 style={{ color: 'var(--color-primary)', fontSize: '36px', margin: '0 0 10px 0' }}>FIN DE LA PARTIDA</h1>
 
-                            {/* Ahora ganamos si TENEMOS MÁS KILLS que el oponente */}
+
                             <h2 style={{ fontSize: '28px', color: finalStats.myKills > finalStats.oppKills ? '#4CAF50' : finalStats.myKills < finalStats.oppKills ? '#ff3333' : '#ffb703', margin: '20px 0' }}>
                                 {finalStats.myKills > finalStats.oppKills
                                     ? "¡HAS GANADO LA BATALLA!"
@@ -581,7 +579,11 @@ export default function Game() {
                                         ? "Entrena más duro y vuelve a intentarlo."
                                         : "Ambos guerreros están al mismo nivel."}
                             </p>
-
+                            <div className="rewards">
+                                <span style={{ fontSize: '22px', fontWeight: 'bold', color: '#ffb703' }}>
+                                    🪙 RECOMPENSA: +{finalStats.myKills > finalStats.oppKills ? 10 : finalStats.myKills < finalStats.oppKills ? 5 : 0}
+                                </span>
+                            </div>
                             <button
                                 onClick={() => {
                                     localStorage.removeItem(`game_start_${lobbyId}`);

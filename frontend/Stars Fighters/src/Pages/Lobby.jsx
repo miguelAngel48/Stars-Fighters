@@ -47,7 +47,7 @@ export default function Lobby() {
 
                     setUser({
                         username: profileData.username,
-                        level: profileData.level,
+                        coins: profileData.coins,
                         email: profileData.email,
                         avatar: fetchedAvatar
                     });
@@ -60,7 +60,7 @@ export default function Lobby() {
                     const fallbackAvatar = "http://localhost:8080/uploads/cosmetics/default-avatar.png";
                     setUser({
                         username: decoded.sub || "Usuario",
-                        level: decoded.level || 1,
+                        coins: decoded.coins || 0,
                         email: decoded.email,
                         avatar: fallbackAvatar
                     });
@@ -135,7 +135,7 @@ export default function Lobby() {
             if (response.ok) {
                 navigate(`/character-selection?lobbyId=${currentLobbyId}&role=leader&oppName=${player2.username}`);
             }
-        } catch (err) {}
+        } catch (err) { }
     };
 
     const handleKickPlayer = async () => {
@@ -151,7 +151,7 @@ export default function Lobby() {
             if (response.ok) {
                 setPlayer2(null);
             }
-        } catch (err) {}
+        } catch (err) { }
     };
 
     const fetchFriends = async (token) => {
@@ -163,7 +163,7 @@ export default function Lobby() {
                 const data = await response.json();
                 setFriends(data);
             }
-        } catch (error) {}
+        } catch (error) { }
     };
 
     const handleDragStart = (e, friend) => {
@@ -187,7 +187,7 @@ export default function Lobby() {
                     method: "POST",
                     headers: { "Authorization": `Bearer ${token}` }
                 });
-            } catch (e) {}
+            } catch (e) { }
         }
 
         navigate("/dashboard");
@@ -246,6 +246,9 @@ export default function Lobby() {
                     <div className="profile-btn">
                         <img src={user.avatar} alt="Perfil" className="profile-img" />
                         <span className="profile-name">{user.username}</span>
+                        <span style={{ color: '#ffb703', fontSize: '13px', fontWeight: 'bold' }}>
+                            🪙 {user.coins}
+                        </span>
                     </div>
                 </div>
             </nav>
