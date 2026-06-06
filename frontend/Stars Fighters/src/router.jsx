@@ -11,19 +11,25 @@ import Lobby from "./Pages/Lobby";
 import Store from "./Pages/Store";
 import CharacterSelection from "./Pages/CharacterSelection";
 import Game from "./Pages/Game";
+import RootLayout from "./Components/RootLayout";
 
 const router = createBrowserRouter([
     { path: "/", element: <App /> },
     { path: "/login", element: <Login /> },
     { path: "/register", element: <Register /> },
-    { path: "/dashboard", element: <Dashboard /> },
     { path: "/oauth2/redirect", element: <OAuth2RedirectHandler /> },
     { path: "*", element: <NotFound /> },
-    { path: "/profile", element: <Profile /> },
-    { path: "/lobby", element: <Lobby /> },
-    { path: "/character-selection", element: <CharacterSelection /> },
-    { path: "/game", element: <Game /> },
-    { path: "/store", element: <Store /> }
+    {
+        element: <RootLayout />,
+        children: [
+            { path: "/dashboard", element: <Dashboard /> },
+            { path: "/profile", element: <Profile /> },
+            { path: "/lobby", element: <Lobby /> },
+            { path: "/character-selection", element: <CharacterSelection /> },
+            { path: "/game", element: <Game /> },
+            { path: "/store", element: <Store /> }
+        ]
+    }
 ]);
 
 export default router;

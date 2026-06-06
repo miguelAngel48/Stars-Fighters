@@ -1,42 +1,19 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import { useUser } from "../contexts/UserContext";
+import Navbar from "../Components/Navbar";
 import "../Styles/Profile.css";
 
 export default function Profile() {
-    const [userData, setUserData] = useState(null);
+    const { user, refreshUser } = useUser();
     const [copySuccess, setCopySuccess] = useState("");
     const [isStatusMenuOpen, setIsStatusMenuOpen] = useState(false);
     const dropdownRef = useRef(null);
     const navigate = useNavigate();
 
     useEffect(() => {
-        const fetchProfile = async () => {
-            const token = localStorage.getItem("token");
-            if (!token) {
-                navigate("/login");
-                return;
-            }
-
-            try {
-                const response = await fetch("http://localhost:8080/api/auth/profile", {
-                    method: "GET",
-                    headers: {
-                        "Authorization": `Bearer ${token}`,
-                        "Content-Type": "application/json"
-                    }
-                });
-
-                if (response.ok) {
-                    const data = await response.json();
-                    setUserData(data);
-                } else {
-                    navigate("/login");
-                }
-            } catch (error) {
-            }
-        };
-
-        fetchProfile();
+        const token = localStorage.getItem("token");
+        if (!token) navigate("/login");
     }, [navigate]);
 
     useEffect(() => {
@@ -50,25 +27,23 @@ export default function Profile() {
     }, []);
 
     const copyToClipboard = () => {
-        if (userData?.friendCode) {
-            navigator.clipboard.writeText(userData.friendCode);
+        if (user?.friendCode) {
+            navigator.clipboard.writeText(user.friendCode);
             setCopySuccess("¡Copiado!");
             setTimeout(() => setCopySuccess(""), 2000);
         }
     };
 
     const handleStatusSelect = async (newStatus) => {
-        setUserData(prev => ({ ...prev, statusPreference: newStatus }));
         setIsStatusMenuOpen(false);
-        
         const token = localStorage.getItem("token");
         try {
             await fetch(`http://localhost:8080/api/auth/status?pref=${newStatus}`, {
                 method: "PUT",
                 headers: { "Authorization": `Bearer ${token}` }
             });
-        } catch (error) {
-        }
+            refreshUser();
+        } catch (error) {}
     };
 
     const getStatusConfig = (status) => {
@@ -80,28 +55,28 @@ export default function Profile() {
         }
     };
 
-    if (!userData) return <div className="loading">Cargando perfil...</div>;
+    if (!user) return <div className="loading">Cargando perfil...</div>;
 
-    const currentStatus = getStatusConfig(userData.statusPreference);
+    const currentStatus = getStatusConfig(user.statusPreference);
 
     return (
         <div className="profile-page-container">
-            <header className="profile-header">
-                <button className="back-btn" onClick={() => navigate("/dashboard")}>
-                    ← Volver al juego
-                </button>
-                <h1>Mi Perfil</h1>
-            </header>
+            <Navbar 
+                leftContent={
+                    <button className="back-btn" onClick={() => navigate("/dashboard")}>← Volver al juego</button>
+                }
+                centerContent={<h1>Mi Perfil</h1>}
+            />
 
-            <div className="profile-content">
+            <div className="profile-content" style={{ marginTop: '40px' }}>
                 <div className="profile-main-card">
                     <img
-                        src={userData.avatarUrl || "http://localhost:8080/uploads/cosmetics/default-avatar.png"}
+                        src={user.avatarUrl || "http://localhost:8080/uploads/cosmetics/default-avatar.png"}
                         alt="Avatar"
                         className="large-avatar"
                     />
-                    <h2>{userData.username}</h2>
-                    <span className="badge-level">Nivel {userData.level}</span>
+                    <h2>{user.username}</h2>
+                    <span className="badge-level">Nivel {user.level}</span>
                     
                     <div className="custom-status-dropdown" ref={dropdownRef}>
                         <div 
@@ -135,7 +110,7 @@ export default function Profile() {
                 <div className="friend-code-section">
                     <h3>Tu Código de Amigo</h3>
                     <div className="code-display" onClick={copyToClipboard}>
-                        <span className="code-text">{userData.friendCode}</span>
+                        <span className="code-text">{user.friendCode}</span>
                         <button className="copy-btn">📋</button>
                     </div>
                     {copySuccess && <span className="copy-msg">{copySuccess}</span>}
@@ -145,7 +120,7 @@ export default function Profile() {
                 <div className="account-details">
                     <div className="detail-item">
                         <label>Email</label>
-                        <p>{userData.email}</p>
+                        <p>{user.email}</p>
                     </div>
                     <div className="detail-item">
                         <label>Estado de Cuenta</label>
