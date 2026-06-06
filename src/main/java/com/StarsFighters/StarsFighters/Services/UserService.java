@@ -88,15 +88,35 @@ public class UserService {
     }
 
     public void recordMatchResult(String username, boolean isWinner) {
-
         User user = userRepo.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado en la base de datos"));
+
         if (isWinner) {
             user.setWins(user.getWins() + 1);
             user.setCoins(user.getCoins() + 10);
         } else {
             user.setLosses(user.getLosses() + 1);
             user.setCoins(user.getCoins() + 5);
+        }
+
+
+        if (user.getLevel() < 20) {
+            int baseXp = 100 + (10 * user.getLevel());
+            int xpGained = isWinner ? baseXp : (baseXp / 2);
+            user.setXp(user.getXp() + xpGained);
+            int xpRequiredForNextLevel = user.getLevel() * 100;
+            while (user.getLevel() < 20 && user.getXp() >= xpRequiredForNextLevel) {
+
+                user.setXp(user.getXp() - xpRequiredForNextLevel);
+                user.setLevel(user.getLevel() + 1);
+                xpRequiredForNextLevel = user.getLevel() * 100;
+            }
+
+
+            if (user.getLevel() >= 20) {
+                user.setLevel(20);
+                user.setXp(0);
+            }
         }
         userRepo.save(user);
     }
