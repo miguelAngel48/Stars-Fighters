@@ -68,7 +68,7 @@ public class StoreService {
     }
 
     @Transactional
-    public void addCosmetic(String username, String name, int price, MultipartFile imageFile) throws IOException {
+    public void addCosmetic(String username, String name, int price, String type, MultipartFile imageFile) throws IOException {
         User user = userRepo.findByUsername(username).orElseThrow();
         if (!"ADMIN".equals(user.getRole())) {
             throw new RuntimeException("No tienes permisos para crear cosméticos");
@@ -100,7 +100,7 @@ public class StoreService {
 
         String fileUrl = "http://localhost:8080/uploads/cosmetics/" + fileName;
 
-        Cosmetic cosmetic = new Cosmetic(name, price, fileUrl);
+        Cosmetic cosmetic = new Cosmetic(name, price, fileUrl, type.toUpperCase());
         cosmeticRepo.save(cosmetic);
     }
 }

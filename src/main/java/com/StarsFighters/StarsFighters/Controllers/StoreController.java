@@ -50,10 +50,11 @@ public class StoreController {
     public ResponseEntity<?> addCosmetic(
             @RequestParam("name") String name,
             @RequestParam("price") int price,
+            @RequestParam(value = "type", defaultValue = "AVATAR") String type,
             @RequestParam("image") MultipartFile imageFile,
             Principal principal) {
         try {
-            storeService.addCosmetic(principal.getName(), name, price, imageFile);
+            storeService.addCosmetic(principal.getName(), name, price, type, imageFile);
             return ResponseEntity.ok(Map.of("message", "Producto añadido a la tienda"));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());

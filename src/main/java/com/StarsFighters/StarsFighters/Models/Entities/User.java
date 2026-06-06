@@ -15,14 +15,7 @@ public class User {
     private String username;
     private String password;
     private LocalDateTime sinceCreated;
-    @Column(name = "level", columnDefinition = "integer default 1")
     private int Level;
-
-
-
-    @Column(name = "xp", columnDefinition = "integer default 0")
-    private int xp = 0;
-
     @Column(name = "wins", columnDefinition = "integer default 0")
     private int wins = 0;
 
@@ -40,7 +33,7 @@ public class User {
 
     private String role = "USER";
 
-    private String equippedAvatarUrl = "http://localhost:8080/uploads/cosmetics/default-avatar.png";
+    private String equippedAvatarUrl = "http://localhost:8080/uploads/cosmetics/avatar.png";
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     private List<Friendship> friendships = new ArrayList<>();
@@ -172,10 +165,5 @@ public class User {
     public int getCoins() { return coins; }
 
     public void setCoins(int coins) { this.coins = coins; }
-
-    public int getXp() {return xp;  }
-
-    public void setXp(int xp) {  this.xp = xp;  }
-
 
 }

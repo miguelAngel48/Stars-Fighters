@@ -14,12 +14,16 @@ public class Cosmetic {
     private int price;
     private String imageUrl;
 
+    @Column(nullable = false)
+    private String type = "AVATAR";
+
     public Cosmetic() {}
 
-    public Cosmetic(String name, int price, String imageUrl) {
+    public Cosmetic(String name, int price, String imageUrl, String type) {
         this.name = name;
         this.price = price;
         this.imageUrl = imageUrl;
+        this.type = type != null ? type : "AVATAR";
     }
 
     public Long getId() {
@@ -52,5 +56,13 @@ public class Cosmetic {
 
     public void setImageUrl(String imageUrl) {
         this.imageUrl = imageUrl;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
     }
 }
