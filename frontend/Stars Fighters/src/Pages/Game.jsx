@@ -3,6 +3,7 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import { Client } from '@stomp/stompjs';
 import SockJS from 'sockjs-client/dist/sockjs';
 import "../Styles/Game.css";
+import { jwtDecode } from "jwt-decode";
 
 export default function Game() {
     const canvasRef = useRef(null);
@@ -27,9 +28,14 @@ export default function Game() {
     const myPositionRef = useRef({ x: 0, y: 100 });
     const oppPositionRef = useRef({ x: 0, y: 100 });
 
+    const myActionRef = useRef("IDLE");
+    const myDirectionRef = useRef(1);
+    const oppActionRef = useRef("IDLE");
+    const oppDirectionRef = useRef(-1);
     const myHealthRef = useRef(100);
     const oppHealthRef = useRef(100);
 
+    const isLeftPlayerRef = useRef(true);
 
     const myKillsRef = useRef(0);
     const oppKillsRef = useRef(0);
@@ -49,7 +55,7 @@ export default function Game() {
                 method: "POST",
                 headers: { "Authorization": `Bearer ${token}` }
             });
-            console.log("Estadísticas guardadas en BD.");
+
         } catch (error) {
             console.error("No se pudo guardar la estadística", error);
         }
@@ -62,7 +68,9 @@ export default function Game() {
         }
 
         const token = localStorage.getItem("token");
-
+        const decoded = jwtDecode(token);
+        const myUsername = decoded.sub;
+        isLeftPlayerRef.current = myUsername < oppName;
         const loadGameData = async () => {
             try {
                 const charsRes = await fetch("http://localhost:8080/api/characters", { headers: { "Authorization": `Bearer ${token}` } });
@@ -86,8 +94,14 @@ export default function Game() {
                         gravity: Number(rawMap.gravity) || 0.6
                     };
 
-                    myPositionRef.current.x = window.innerWidth * 0.3;
-                    oppPositionRef.current.x = window.innerWidth * 0.7 - 80;
+                    const leftX = window.innerWidth * 0.3;
+                    const rightX = window.innerWidth * 0.7 - 80;
+
+                    myPositionRef.current.x = isLeftPlayerRef.current ? leftX : rightX;
+                    oppPositionRef.current.x = isLeftPlayerRef.current ? rightX : leftX;
+
+                    myDirectionRef.current = isLeftPlayerRef.current ? 1 : -1;
+                    oppDirectionRef.current = isLeftPlayerRef.current ? -1 : 1;
 
                     setGameAssets({ myChar: safeMyChar, oppChar: oppRawChar, currentMap: safeMap });
 
@@ -123,6 +137,8 @@ export default function Game() {
                     const data = JSON.parse(msg.body);
                     oppPositionRef.current.x = data.x;
                     oppPositionRef.current.y = data.y;
+                    oppActionRef.current = data.action || "IDLE";
+                    oppDirectionRef.current = data.direction || -1;
                 });
 
                 client.subscribe('/user/queue/game-hit', (msg) => {
@@ -134,7 +150,8 @@ export default function Game() {
                     if (myHealthRef.current <= 0) {
                         oppKillsRef.current += 1;
                         myHealthRef.current = 100;
-                        myPositionRef.current = { x: window.innerWidth * 0.3, y: 100 };
+                        const mySpawnX = isLeftPlayerRef.current ? window.innerWidth * 0.3 : window.innerWidth * 0.7 - 80;
+                        myPositionRef.current = { x: mySpawnX, y: 100 };
 
                         if (stompClientRef.current && stompClientRef.current.connected) {
                             stompClientRef.current.publish({
@@ -147,6 +164,7 @@ export default function Game() {
 
                 client.subscribe('/user/queue/game-death', () => {
                     myKillsRef.current += 1;
+                    oppHealthRef.current = 100;
                 });
             }
         });
@@ -218,13 +236,12 @@ export default function Game() {
                             oppKills: oppFinalKills
                         });
 
-                        // GUARDAR EN BD AL TERMINAR
+
                         if (myFinalKills > oppFinalKills) {
-                            recordMatchInDatabase(true); // Victoria
+                            recordMatchInDatabase(true);
                         } else if (myFinalKills < oppFinalKills) {
-                            recordMatchInDatabase(false); // Derrota
+                            recordMatchInDatabase(false);
                         }
-                        // Si hay empate, puedes decidir no guardar nada o gestionarlo.
 
                         return 0;
                     }
@@ -240,7 +257,9 @@ export default function Game() {
                             lobbyId: lobbyId,
                             targetUsername: oppName,
                             x: myPositionRef.current.x,
-                            y: myPositionRef.current.y
+                            y: myPositionRef.current.y,
+                            action: myActionRef.current,
+                            direction: myDirectionRef.current
                         })
                     });
                 }
@@ -294,7 +313,7 @@ export default function Game() {
         const opponent = {
             id: "p2",
             width: 80, height: 100,
-            spriteWidth: 192, spriteHeight: 205,
+            spriteWidth: 192, spriteHeight: 215,
             image: oppImage,
             frameX: 0, frameY: 0, maxFrames: 4, fps: 10, frameTimer: 0,
             action: "IDLE", direction: -1,
@@ -419,11 +438,14 @@ export default function Game() {
                     myPlayer.isGrounded = false;
                 }
 
-                // --- SI CAES AL VACÍO ---
+
                 if (myPositionRef.current.y > canvas.height + 50) {
                     oppKillsRef.current += 1; // Punto para el enemigo
                     myHealthRef.current = 100;
-                    myPositionRef.current = { x: window.innerWidth * 0.3, y: -50 };
+
+
+                    const mySpawnX = isLeftPlayerRef.current ? window.innerWidth * 0.3 : window.innerWidth * 0.7 - 80;
+                    myPositionRef.current = { x: mySpawnX, y: -50 };
                     myPlayer.velocityY = 0;
 
                     if (stompClientRef.current && stompClientRef.current.connected) {
@@ -499,7 +521,15 @@ export default function Game() {
                 ctx.fillRect(textX - 40, textY - 28, currentHealthWidth, 6);
             };
 
+            myActionRef.current = myPlayer.action;
+            myDirectionRef.current = myPlayer.direction;
+
             drawPlayer(myPlayer, myPositionRef.current.x, myPositionRef.current.y, "Tú");
+
+
+            opponent.action = oppActionRef.current;
+            opponent.direction = oppDirectionRef.current;
+
             drawPlayer(opponent, oppPositionRef.current.x, oppPositionRef.current.y, oppName);
         };
 
@@ -579,10 +609,26 @@ export default function Game() {
                                         ? "Entrena más duro y vuelve a intentarlo."
                                         : "Ambos guerreros están al mismo nivel."}
                             </p>
-                            <div className="rewards">
-                                <span style={{ fontSize: '22px', fontWeight: 'bold', color: '#ffb703' }}>
-                                    🪙 RECOMPENSA: +{finalStats.myKills > finalStats.oppKills ? 10 : finalStats.myKills < finalStats.oppKills ? 5 : 0}
-                                </span>
+                            <div className="rewards-container">
+                                {/* RECUADRO DE MONEDAS */}
+                                <div className="reward-box reward-coins">
+                                    <span className="reward-coins-text">
+                                        🪙 +{finalStats.myKills > finalStats.oppKills ? 10 : finalStats.myKills < finalStats.oppKills ? 5 : 0} Monedas
+                                    </span>
+                                </div>
+
+                                {/* RECUADRO DE EXPERIENCIA */}
+                                <div className="reward-box reward-xp">
+                                    <span className="reward-xp-text">
+                                        ✨ +{
+                                            (() => {
+                                                const currentLevel = gameAssets?.myChar?.level || 1;
+                                                const baseXP = 100 + (10 * currentLevel);
+                                                return finalStats.myKills > finalStats.oppKills ? baseXP : Math.floor(baseXP / 2);
+                                            })()
+                                        } XP
+                                    </span>
+                                </div>
                             </div>
                             <button
                                 onClick={() => {

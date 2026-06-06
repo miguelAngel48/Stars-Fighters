@@ -4,5 +4,7 @@ public record GameSyncDto(
         String lobbyId,
         String targetUsername,
         double x,
-        double y
+        double y,
+        String action,
+        int direction
 ) {}

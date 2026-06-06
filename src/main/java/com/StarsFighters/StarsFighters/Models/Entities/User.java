@@ -15,7 +15,14 @@ public class User {
     private String username;
     private String password;
     private LocalDateTime sinceCreated;
+    @Column(name = "level", columnDefinition = "integer default 1")
     private int Level;
+
+
+
+    @Column(name = "xp", columnDefinition = "integer default 0")
+    private int xp = 0;
+
     @Column(name = "wins", columnDefinition = "integer default 0")
     private int wins = 0;
 
@@ -165,5 +172,10 @@ public class User {
     public int getCoins() { return coins; }
 
     public void setCoins(int coins) { this.coins = coins; }
+
+    public int getXp() {return xp;  }
+
+    public void setXp(int xp) {  this.xp = xp;  }
+
 
 }
