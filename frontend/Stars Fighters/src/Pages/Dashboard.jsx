@@ -1,4 +1,3 @@
-// Nueva carpeta (2)/src frontend/Pages/Dashboard.jsx
 import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
@@ -25,9 +24,17 @@ export default function Dashboard() {
     const [messages, setMessages] = useState([]);
     const [newMessage, setNewMessage] = useState("");
 
+    const [openDropdownId, setOpenDropdownId] = useState(null);
+
     const messagesEndRef = useRef(null);
     const { clientRef, isConnected, disconnect } = useWebSocket();
     const { latestEvent, addChatNotification, clearChatNotification } = useNotification();
+
+    useEffect(() => {
+        const handleClickOutside = () => setOpenDropdownId(null);
+        document.addEventListener("click", handleClickOutside);
+        return () => document.removeEventListener("click", handleClickOutside);
+    }, []);
 
     useEffect(() => {
         activeChatRef.current = activeChat;
@@ -204,6 +211,32 @@ export default function Dashboard() {
         setNewMessage("");
     };
 
+    const handleRemoveFriend = async (friendshipId, e) => {
+        if (e) e.stopPropagation();
+        
+        setFriends(prev => prev.filter(f => f.friendshipId !== friendshipId));
+        if (activeChat && activeChat.friendshipId === friendshipId) {
+            setActiveChat(null);
+        }
+        setOpenDropdownId(null);
+
+        const token = localStorage.getItem("token");
+        try {
+            const response = await fetch(`http://localhost:8080/api/friendships/${friendshipId}`, {
+                method: "DELETE",
+                headers: { "Authorization": `Bearer ${token}` }
+            });
+            
+            if (!response.ok) {
+                fetchFriends(token);
+            } else {
+                fetchFriends(token);
+            }
+        } catch (error) {
+            fetchFriends(token);
+        }
+    };
+
     if (!user) return <div className="loading">Cargando perfil...</div>;
 
     return (
@@ -241,11 +274,37 @@ export default function Dashboard() {
                         ) : (
                             friends.map((friend) => (
                                 <li key={friend.id} className="friend-item" onClick={() => handleFriendClick(friend)}>
-                                    <div className="friend-avatar-container">
-                                        <img src={friend.avatarUrl || "http://localhost:8080/uploads/cosmetics/default-avatar.png"} alt="Avatar" className="friend-avatar" />
-                                        <div className={`status-dot ${friend.currentStatus || 'OFFLINE'}`}></div>
+                                    <div className="friend-info-left">
+                                        <div className="friend-avatar-container">
+                                            <img src={friend.avatarUrl || "http://localhost:8080/uploads/cosmetics/default-avatar.png"} alt="Avatar" className="friend-avatar" />
+                                            <div className={`status-dot ${friend.currentStatus || 'OFFLINE'}`}></div>
+                                        </div>
+                                        <span>{friend.username}</span>
                                     </div>
-                                    <span>{friend.username}</span>
+
+                                    <div className="friend-options-container" onClick={(e) => e.stopPropagation()}>
+                                        <button 
+                                            className="friend-options-btn" 
+                                            onClick={() => setOpenDropdownId(openDropdownId === friend.id ? null : friend.id)}
+                                        >
+                                            ⋮
+                                        </button>
+                                        
+                                        {openDropdownId === friend.id && (
+                                            <div className="friend-dropdown-menu">
+                                                <button className="dropdown-item" onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setOpenDropdownId(null);
+                                                    navigate(`/friend-profile/${friend.username}`, { state: { friend } });
+                                                }}>
+                                                    Ver perfil
+                                                </button>
+                                                <button className="dropdown-item danger" onClick={(e) => handleRemoveFriend(friend.friendshipId, e)}>
+                                                    Cancelar amistad
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
                                 </li>
                             ))
                         )}

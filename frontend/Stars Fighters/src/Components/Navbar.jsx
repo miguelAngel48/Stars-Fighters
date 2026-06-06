@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "../contexts/UserContext";
 import { useNotification } from "../contexts/NotificationContext";
+import bellIcon from "../assets/campana.svg"; 
 import "../Styles/Notifications.css";
 
 export default function Navbar({ leftContent, centerContent }) {
@@ -27,10 +28,12 @@ export default function Navbar({ leftContent, centerContent }) {
             <div className="nav-center">{centerContent}</div>
             <div className="nav-right">
                 <div className="bell-container" ref={bellRef}>
+                    {/* 2. Reemplazamos el contenido del botón por la imagen */}
                     <button className="bell-btn" onClick={() => setIsBellOpen(!isBellOpen)}>
-                        🔔
+                        <img src={bellIcon} alt="Notificaciones" style={{ width: '24px', height: '24px' }} />
                         {bellList.length > 0 && <span className="bell-badge">{bellList.length}</span>}
                     </button>
+                    
                     {isBellOpen && (
                         <div className="bell-dropdown">
                             <h4>Notificaciones</h4>
@@ -59,7 +62,7 @@ export default function Navbar({ leftContent, centerContent }) {
                     <img src={user.avatar || user.avatarUrl || "http://localhost:8080/uploads/cosmetics/default-avatar.png"} alt="Perfil" className="profile-img" />
                     <div className="profile-info">
                         <span className="profile-name">{user.username}</span>
-                        <span className="profile-level">🪙{user.coins}</span>
+                        <span className="profile-level">{user.coins} 💰</span>
                     </div>
                 </button>
             </div>

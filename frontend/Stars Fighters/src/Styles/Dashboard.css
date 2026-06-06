@@ -197,8 +197,8 @@ input {
 }
 
 .friends-sidebar {
-    width: 10vw;
-    min-width: 150px;
+    width: 15vw;
+    min-width: 220px;
     background-color: var(--bg-surface);
     border-left: 1px solid var(--color-border);
     display: flex;
@@ -218,22 +218,30 @@ input {
     padding: 0;
     margin: 0;
     overflow-y: auto;
+    padding-bottom: 120px;
 }
 
 .friend-item {
     display: flex;
+    justify-content: space-between;
     align-items: center;
-    gap: 10px;
-    padding: 15px;
+    padding: 10px 15px;
     cursor: pointer;
     border-bottom: 1px solid #f0f0f0;
     transition: background-color 0.2s;
     font-size: 14px;
     font-weight: 500;
+    position: relative;
 }
 
 .friend-item:hover {
     background-color: var(--bg-main);
+}
+
+.friend-info-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
 
 .friend-avatar-container {
@@ -274,10 +282,73 @@ input {
     background-color: var(--color-border);
 }
 
+.friend-options-container {
+    position: relative;
+}
+
+.friend-options-btn {
+    background: none;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+    color: var(--text-muted);
+    padding: 0;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    transition: background-color 0.2s;
+}
+
+.friend-options-btn:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+    color: var(--text-main);
+}
+
+.friend-dropdown-menu {
+    position: absolute;
+    right: 0;
+    top: 35px;
+    background: var(--bg-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 5px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+    width: 150px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.dropdown-item {
+    padding: 10px 15px;
+    background: none;
+    border: none;
+    text-align: left;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.2s;
+    color: var(--text-main);
+}
+
+.dropdown-item:hover {
+    background-color: var(--bg-main);
+}
+
+.dropdown-item.danger {
+    color: var(--color-danger);
+}
+
+.dropdown-item.danger:hover {
+    background-color: var(--bg-danger-light);
+}
+
 .chat-window {
     position: fixed;
     bottom: 0;
-    right: calc(10vw + 20px);
+    right: calc(15vw + 20px);
     width: 300px;
     height: 350px;
     background-color: var(--bg-surface);

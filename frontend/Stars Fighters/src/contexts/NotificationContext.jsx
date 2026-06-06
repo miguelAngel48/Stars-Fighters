@@ -1,4 +1,3 @@
-// Nueva carpeta (2)/src frontend/contexts/NotificationContext.jsx
 import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useWebSocket } from "./WebSocketContext";

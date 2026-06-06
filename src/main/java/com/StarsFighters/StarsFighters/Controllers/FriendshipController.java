@@ -22,7 +22,7 @@ public class FriendshipController {
             String username = principal.getName();
             return ResponseEntity.ok(friendshipService.getAcceptedFriends(username));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Error al obtener la lista de amigos: " + e.getMessage());
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 
@@ -31,10 +31,8 @@ public class FriendshipController {
         try {
             String senderUsername = principal.getName();
             String receiverFriendCode = request.friendCode();
-
             friendshipService.sendFriendRequestByCode(senderUsername, receiverFriendCode);
-
-            return ResponseEntity.status(HttpStatus.CREATED).body("Solicitud de amistad enviada con éxito.");
+            return ResponseEntity.status(HttpStatus.CREATED).body("Solicitud enviada");
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
@@ -46,8 +44,17 @@ public class FriendshipController {
             @RequestParam boolean accepted) {
         try {
             friendshipService.respondToRequest(requestId, accepted);
-            String message = accepted ? "Amistad aceptada" : "Amistad rechazada";
-            return ResponseEntity.ok(message);
+            return ResponseEntity.ok(accepted ? "Aceptada" : "Rechazada");
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @DeleteMapping("/{friendshipId}")
+    public ResponseEntity<?> removeFriendship(@PathVariable Long friendshipId, Principal principal) {
+        try {
+            friendshipService.removeFriendship(friendshipId, principal.getName());
+            return ResponseEntity.ok("Amistad cancelada");
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }

@@ -1,11 +1,5 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import Login from './Pages/Login';
-import Dashboard from './Pages/Dashboard';
-import Store from './Pages/Store';
-import Lobby from './Pages/Lobby';
-import OAuth2RedirectHandler from './Pages/OAuth2RedirectHandler';
-import NotFound from './Pages/errorsPages/NotFound';
+import { Link } from 'react-router-dom';
 
 function App() {
     return (

@@ -7,7 +7,7 @@ import "../Styles/Store.css";
 import "../Styles/Dashboard.css";
 
 export default function Store() {
-    const { user } = useUser();
+    const { user, refreshUser } = useUser();
     const [storeItems, setStoreItems] = useState([]);
     const [inventory, setInventory] = useState([]);
     const [message, setMessage] = useState("");
@@ -62,12 +62,19 @@ export default function Store() {
                 method: "POST",
                 headers: { "Authorization": `Bearer ${token}` }
             });
-            const data = await response.json();
-            setMessage(data.message || response.statusText);
-            fetchData();
+            
+            if (response.ok) {
+                const data = await response.json();
+                setMessage(data.message || "Comprado con éxito");
+                fetchData();
+                if (refreshUser) refreshUser();
+            } else {
+                const errorData = await response.text();
+                setMessage(errorData || "Error al comprar");
+            }
             setTimeout(() => setMessage(""), 3000);
         } catch (error) {
-            setMessage("Error al comprar");
+            setMessage("Error de conexión");
             setTimeout(() => setMessage(""), 3000);
         }
     };
@@ -78,12 +85,19 @@ export default function Store() {
                 method: "POST",
                 headers: { "Authorization": `Bearer ${token}` }
             });
-            const data = await response.json();
-            setMessage(data.message || response.statusText);
-            fetchData();
+            
+            if (response.ok) {
+                const data = await response.json();
+                setMessage(data.message || "Equipado con éxito");
+                fetchData();
+                if (refreshUser) refreshUser();
+            } else {
+                const errorData = await response.text();
+                setMessage(errorData || "Error al equipar");
+            }
             setTimeout(() => setMessage(""), 3000);
         } catch (error) {
-            setMessage("Error al equipar");
+            setMessage("Error de conexión");
             setTimeout(() => setMessage(""), 3000);
         }
     };
@@ -157,7 +171,10 @@ export default function Store() {
             <div className="store-scroll-area">
                 <div className="store-content">
                     <div className="store-header-container">
-                        <h1 className="store-title">Tienda de Cosméticos</h1>
+                        <div>
+                            <h1 className="store-title">Tienda de Cosméticos</h1>
+                            <p style={{ fontWeight: 'bold', marginTop: '10px' }}>💰 Monedas disponibles: {user.coins}</p>
+                        </div>
                         {user.role === "ADMIN" && (
                             <button className="btn-create-cosmetic" onClick={() => setIsCreateModalOpen(true)}>
                                 Crear Cosmético

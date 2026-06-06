@@ -10,4 +10,5 @@ import java.util.List;
 @Repository
 public interface ChatMessageRepo extends JpaRepository<ChatMessage, Long> {
     List<ChatMessage> findByFriendshipOrderByCreatedAtAsc(Friendship friendship);
+    List<ChatMessage> findByFriendshipId(Long friendshipId);
 }

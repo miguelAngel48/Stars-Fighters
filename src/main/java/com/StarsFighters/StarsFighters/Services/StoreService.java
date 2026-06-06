@@ -45,6 +45,11 @@ public class StoreService {
             throw new RuntimeException("Ya posees este cosmético");
         }
 
+        if (user.getCoins() < cosmetic.getPrice()) {
+            throw new RuntimeException("No tienes suficientes monedas");
+        }
+
+        user.setCoins(user.getCoins() - cosmetic.getPrice());
         user.getOwnedCosmetics().add(cosmetic);
         userRepo.save(user);
     }

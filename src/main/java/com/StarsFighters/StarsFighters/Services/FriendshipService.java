@@ -2,9 +2,11 @@ package com.StarsFighters.StarsFighters.Services;
 
 import com.StarsFighters.StarsFighters.Models.Dto.FriendDto;
 import com.StarsFighters.StarsFighters.Models.Dto.FriendRequestDto;
+import com.StarsFighters.StarsFighters.Models.Entities.ChatMessage;
 import com.StarsFighters.StarsFighters.Models.Entities.Friendship;
 import com.StarsFighters.StarsFighters.Models.Enums.FriendshipStatus;
 import com.StarsFighters.StarsFighters.Models.Entities.User;
+import com.StarsFighters.StarsFighters.Repositories.ChatMessageRepo;
 import com.StarsFighters.StarsFighters.Repositories.FriendshipRepo;
 import com.StarsFighters.StarsFighters.Repositories.UserRepo;
 import jakarta.transaction.Transactional;
@@ -27,18 +29,18 @@ public class FriendshipService {
     private FriendshipRepo friendshipRepo;
 
     @Autowired
+    private ChatMessageRepo chatMessageRepo;
+
+    @Autowired
     private SimpMessagingTemplate messagingTemplate;
 
     @Transactional
     public void sendFriendRequestByCode(String senderUsername, String receiverFriendCode) {
-        User sender = userRepo.findByUsername(senderUsername)
-                .orElseThrow(() -> new RuntimeException("Usuario remitente no encontrado"));
-
-        User receiver = userRepo.findByFriendCode(receiverFriendCode)
-                .orElseThrow(() -> new RuntimeException("Jugador no encontrado con el código: " + receiverFriendCode));
+        User sender = userRepo.findByUsername(senderUsername).orElseThrow();
+        User receiver = userRepo.findByFriendCode(receiverFriendCode).orElseThrow();
 
         if (sender.getId().equals(receiver.getId())) {
-            throw new RuntimeException("No puedes enviarte una solicitud de amistad a ti mismo.");
+            throw new RuntimeException("Error");
         }
 
         Friendship request = new Friendship(sender, receiver, FriendshipStatus.PENDING);
@@ -61,7 +63,7 @@ public class FriendshipService {
         User sender = userRepo.findById(senderId).orElseThrow();
         User receiver = userRepo.findById(receiverId).orElseThrow();
 
-        Friendship request = new Friendship(sender,receiver,FriendshipStatus.PENDING);
+        Friendship request = new Friendship(sender, receiver, FriendshipStatus.PENDING);
         friendshipRepo.save(request);
 
         Map<String, Object> alert = new HashMap<>();
@@ -99,20 +101,35 @@ public class FriendshipService {
         }
     }
 
-    public List<FriendDto> getAcceptedFriends(String username) {
-        User currentUser = userRepo.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+    @Transactional
+    public void removeFriendship(Long friendshipId, String username) {
+        Friendship friendship = friendshipRepo.findById(friendshipId).orElseThrow();
+        User currentUser = userRepo.findByUsername(username).orElseThrow();
 
+        if (!friendship.getUser().getId().equals(currentUser.getId()) &&
+                !friendship.getFriend().getId().equals(currentUser.getId())) {
+            throw new RuntimeException("Error");
+        }
+
+        // Primero borramos todos los mensajes asociados a esta amistad para evitar errores de clave foránea
+        List<ChatMessage> messages = chatMessageRepo.findByFriendshipId(friendshipId);
+        if (messages != null && !messages.isEmpty()) {
+            chatMessageRepo.deleteAll(messages);
+        }
+
+        // Ahora sí podemos borrar la amistad
+        friendshipRepo.delete(friendship);
+    }
+
+    public List<FriendDto> getAcceptedFriends(String username) {
+        User currentUser = userRepo.findByUsername(username).orElseThrow();
         List<Friendship> friendships = friendshipRepo.findAcceptedFriendships(currentUser, FriendshipStatus.ACCEPTED);
 
         return friendships.stream()
                 .map(friendship -> {
-                    User theOtherPlayer;
-                    if (friendship.getUser().getId().equals(currentUser.getId())) {
-                        theOtherPlayer = friendship.getFriend();
-                    } else {
-                        theOtherPlayer = friendship.getUser();
-                    }
+                    User theOtherPlayer = friendship.getUser().getId().equals(currentUser.getId())
+                            ? friendship.getFriend()
+                            : friendship.getUser();
 
                     String currentStatus = "OFFLINE";
                     if (theOtherPlayer.isOnline()) {
@@ -138,9 +155,7 @@ public class FriendshipService {
     }
 
     public List<FriendRequestDto> getPendingRequests(String username) {
-        User currentUser = userRepo.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
-
+        User currentUser = userRepo.findByUsername(username).orElseThrow();
         List<Friendship> pending = friendshipRepo.findByFriendAndStatus(currentUser, FriendshipStatus.PENDING);
 
         return pending.stream()

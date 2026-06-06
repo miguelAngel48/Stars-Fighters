@@ -11,6 +11,7 @@ import Lobby from "./Pages/Lobby";
 import Store from "./Pages/Store";
 import CharacterSelection from "./Pages/CharacterSelection";
 import Game from "./Pages/Game";
+import FriendProfile from "./Pages/FriendProfile";
 import RootLayout from "./Components/RootLayout";
 
 const router = createBrowserRouter([
@@ -27,7 +28,8 @@ const router = createBrowserRouter([
             { path: "/lobby", element: <Lobby /> },
             { path: "/character-selection", element: <CharacterSelection /> },
             { path: "/game", element: <Game /> },
-            { path: "/store", element: <Store /> }
+            { path: "/store", element: <Store /> },
+            { path: "/friend-profile/:username", element: <FriendProfile /> }
         ]
     }
 ]);
