@@ -9,7 +9,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
+import java.util.Queue;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 @Service
 public class LobbyService {
@@ -20,11 +22,47 @@ public class LobbyService {
     @Autowired
     private SimpMessagingTemplate messagingTemplate;
 
+    private final Queue<Long> matchmakingQueue = new ConcurrentLinkedQueue<>();
+    private final java.util.Map<String, java.util.Map<String, Object>> activeMatches = new java.util.concurrent.ConcurrentHashMap<>();
+
+    public void joinMatchmaking(Long userId) {
+        if (matchmakingQueue.contains(userId)) return;
+
+        Long waitingUserId = matchmakingQueue.poll();
+        if (waitingUserId != null && !waitingUserId.equals(userId)) {
+            User player1 = userRepo.findById(waitingUserId).orElseThrow();
+            User player2 = userRepo.findById(userId).orElseThrow();
+            String lobbyId = UUID.randomUUID().toString();
+
+            GameInviteDto p1Msg = new GameInviteDto(
+                    "MATCH_FOUND_LEADER",
+                    player2.getId(),
+                    player2.getUsername(),
+                    lobbyId,
+                    player2.getEquippedAvatarUrl()
+            );
+            messagingTemplate.convertAndSendToUser(player1.getUsername(), "/queue/notifications", p1Msg);
+
+            GameInviteDto p2Msg = new GameInviteDto(
+                    "MATCH_FOUND_GUEST",
+                    player1.getId(),
+                    player1.getUsername(),
+                    lobbyId,
+                    player1.getEquippedAvatarUrl()
+            );
+            messagingTemplate.convertAndSendToUser(player2.getUsername(), "/queue/notifications", p2Msg);
+        } else {
+            matchmakingQueue.add(userId);
+        }
+    }
+
+    public void leaveMatchmaking(Long userId) {
+        matchmakingQueue.remove(userId);
+    }
+
     public String sendGameInvite(Long leaderId, Long friendId) {
-        User leader = userRepo.findById(leaderId)
-                .orElseThrow(() -> new RuntimeException("Líder no encontrado"));
-        User friend = userRepo.findById(friendId)
-                .orElseThrow(() -> new RuntimeException("Amigo no encontrado"));
+        User leader = userRepo.findById(leaderId).orElseThrow();
+        User friend = userRepo.findById(friendId).orElseThrow();
 
         String lobbyId = UUID.randomUUID().toString();
 
@@ -62,9 +100,9 @@ public class LobbyService {
                 response
         );
     }
+
     public void notifyLeave(Long myId, String targetUsername, String lobbyId, boolean isLeader) {
         User me = userRepo.findById(myId).orElseThrow();
-
         String type = isLeader ? "LOBBY_CLOSED" : "GUEST_LEFT";
 
         GameInviteDto leaveMsg = new GameInviteDto(
@@ -81,6 +119,7 @@ public class LobbyService {
                 leaveMsg
         );
     }
+
     public void kickPlayer(Long leaderId, String guestUsername, String lobbyId) {
         User leader = userRepo.findById(leaderId).orElseThrow();
 
@@ -100,10 +139,7 @@ public class LobbyService {
     }
 
     public void startCharacterSelection(Long leaderId, String guestUsername, String lobbyId) {
-
-        User leader = userRepo.findById(leaderId)
-                .orElseThrow(() -> new RuntimeException("Líder no encontrado"));
-
+        User leader = userRepo.findById(leaderId).orElseThrow();
 
         GameInviteDto startMsg = new GameInviteDto(
                 "START_SELECTION",
@@ -120,10 +156,7 @@ public class LobbyService {
         );
     }
 
-    private final java.util.Map<String, java.util.Map<String, Object>> activeMatches = new java.util.concurrent.ConcurrentHashMap<>();
-
     public void submitSelection(String lobbyId, String role, Long characterId, String characterName, Long mapId, String myUsername, String targetUsername) {
-
         activeMatches.putIfAbsent(lobbyId, new java.util.concurrent.ConcurrentHashMap<>());
         java.util.Map<String, Object> matchData = activeMatches.get(lobbyId);
 

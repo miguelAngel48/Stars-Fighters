@@ -40,7 +40,7 @@ const AppContent = () => {
                     <div className="hero-content">
                         <img src="/logo.png" alt="Main Logo" className="main-logo" />
                         <h1 className="hero-subtitle">UN UNIVERSO DE ESTRATEGIA Y COMBATE</h1>
-                        <button className="play-free-btn" onClick={() => navigate(user ? '/lobby' : '/register')}>
+                        <button className="play-free-btn" onClick={() => navigate(user ? '/play' : '/register')}>
                             {user ? 'JUGAR' : 'JUGAR GRATIS'}
                         </button>
                     </div>

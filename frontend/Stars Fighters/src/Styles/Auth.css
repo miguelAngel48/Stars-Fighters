@@ -116,3 +116,10 @@
 .register-link:hover {
     color: var(--color-accent);
 }
+
+.success-message {
+    color: #4CAF50;
+    margin-bottom: 20px;
+    font-size: 14px;
+    font-weight: bold;
+}

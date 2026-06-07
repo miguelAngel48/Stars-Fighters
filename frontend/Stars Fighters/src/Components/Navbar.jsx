@@ -132,7 +132,7 @@ export default function Navbar() {
 
             <div className="nav-center">
                 {user && (
-                    <button className="play-btn" onClick={() => navigate("/lobby")}>
+                    <button className="play-btn" onClick={() => navigate("/play")}>
                         JUGAR
                     </button>
                 )}

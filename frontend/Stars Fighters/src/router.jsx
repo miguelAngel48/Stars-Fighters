@@ -8,6 +8,7 @@ import Dashboard from "./Pages/Dashboard";
 import OAuth2RedirectHandler from "./Pages/OAuth2RedirectHandler";
 import Profile from "./Pages/Profile";
 import Lobby from "./Pages/Lobby";
+import PlayMenu from "./Pages/PlayMenu";
 import Store from "./Pages/Store";
 import CharacterSelection from "./Pages/CharacterSelection";
 import Game from "./Pages/Game";
@@ -29,6 +30,7 @@ const router = createBrowserRouter([
             { path: "/campeones", element: <Champions /> },
             { path: "/dashboard", element: <Dashboard /> },
             { path: "/profile", element: <Profile /> },
+            { path: "/play", element: <PlayMenu /> },
             { path: "/lobby", element: <Lobby /> },
             { path: "/character-selection", element: <CharacterSelection /> },
             { path: "/game", element: <Game /> },

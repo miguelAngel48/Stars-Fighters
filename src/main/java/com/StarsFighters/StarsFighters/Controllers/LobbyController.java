@@ -16,7 +16,6 @@ public class LobbyController {
     @Autowired
     private JwtService jwtService;
 
-    // Endpoint para cuando arrastras al amigo
     @PostMapping("/invite/{friendId}")
     public ResponseEntity<?> inviteFriend(
             @RequestHeader("Authorization") String authHeader,
@@ -31,7 +30,6 @@ public class LobbyController {
         }
     }
 
-    // Endpoint para cuando el amigo pulsa Aceptar/Rechazar
     @PostMapping("/respond/{leaderId}")
     public ResponseEntity<?> respondToInvite(
             @RequestHeader("Authorization") String authHeader,
@@ -44,24 +42,26 @@ public class LobbyController {
             lobbyService.respondToInvite(friendId, leaderId, accepted, lobbyId);
             return ResponseEntity.ok("Respuesta procesada");
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Error al responder: " + e.getMessage());
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
+
     @PostMapping("/leave")
     public ResponseEntity<?> leaveLobby(
             @RequestHeader("Authorization") String authHeader,
-            @RequestParam String targetUsername, // A quién le vamos a avisar
+            @RequestParam String targetUsername,
             @RequestParam String lobbyId,
             @RequestParam boolean isLeader
     ) {
         try {
             Long myId = jwtService.extractId(authHeader.substring(7));
             lobbyService.notifyLeave(myId, targetUsername, lobbyId, isLeader);
-            return ResponseEntity.ok("Notificación de salida enviada");
+            return ResponseEntity.ok("Notificación enviada");
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Error al salir: " + e.getMessage());
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
+
     @PostMapping("/kick")
     public ResponseEntity<?> kickPlayer(
             @RequestHeader("Authorization") String authHeader,
@@ -71,11 +71,12 @@ public class LobbyController {
         try {
             Long leaderId = jwtService.extractId(authHeader.substring(7));
             lobbyService.kickPlayer(leaderId, guestUsername, lobbyId);
-            return ResponseEntity.ok("Jugador expulsado con éxito");
+            return ResponseEntity.ok("Jugador expulsado");
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Error al expulsar: " + e.getMessage());
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
+
     @PostMapping("/start")
     public ResponseEntity<?> startGame(
             @RequestHeader("Authorization") String authHeader,
@@ -85,9 +86,9 @@ public class LobbyController {
         try {
             Long leaderId = jwtService.extractId(authHeader.substring(7));
             lobbyService.startCharacterSelection(leaderId, guestUsername, lobbyId);
-            return ResponseEntity.ok("Pantalla de selección iniciada");
+            return ResponseEntity.ok("Iniciado");
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Error al iniciar: " + e.getMessage());
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 
@@ -105,6 +106,28 @@ public class LobbyController {
             String myUsername = jwtService.extractUsername(authHeader.substring(7));
             lobbyService.submitSelection(lobbyId, role, characterId, characterName, mapId, myUsername, targetUsername);
             return ResponseEntity.ok("Selección registrada");
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @PostMapping("/matchmaking/join")
+    public ResponseEntity<?> joinMatchmaking(@RequestHeader("Authorization") String authHeader) {
+        try {
+            Long myId = jwtService.extractId(authHeader.substring(7));
+            lobbyService.joinMatchmaking(myId);
+            return ResponseEntity.ok("En cola");
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @PostMapping("/matchmaking/leave")
+    public ResponseEntity<?> leaveMatchmaking(@RequestHeader("Authorization") String authHeader) {
+        try {
+            Long myId = jwtService.extractId(authHeader.substring(7));
+            lobbyService.leaveMatchmaking(myId);
+            return ResponseEntity.ok("Fuera de cola");
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
