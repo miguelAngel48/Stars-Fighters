@@ -13,5 +13,7 @@ public record UserProfileDto(
         String avatarUrl,
         String role,
         int wins,
-        int losses
+        int losses,
+        int xp,
+        boolean hasPassword
 ) {}

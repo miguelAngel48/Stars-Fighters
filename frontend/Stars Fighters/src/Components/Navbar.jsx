@@ -54,9 +54,14 @@ export default function Navbar() {
         window.location.href = "/";
     };
 
+    const currentLevel = user?.level || 1;
     const currentXp = user?.xp || 0;
-    const nextLevelXp = 100;
-    const xpPercentage = Math.min((currentXp / nextLevelXp) * 100, 100);
+    let xpPercentage = 100;
+    
+    if (currentLevel < 20) {
+        const nextLevelXp = currentLevel * 100;
+        xpPercentage = Math.min((currentXp / nextLevelXp) * 100, 100);
+    }
 
     const renderBell = (ref) => (
         <div className="bell-container" ref={ref}>
@@ -98,7 +103,7 @@ export default function Navbar() {
                 <div className="profile-info" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '4px' }}>
                     <span className="profile-name">{user.username}</span>
                     <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "12px" }}>
-                        <span style={{ color: "var(--color-accent)", fontWeight: "bold" }}>Lv. {user.level || 1}</span>
+                        <span style={{ color: "var(--color-accent)", fontWeight: "bold" }}>Lv. {currentLevel}</span>
                         <div style={{ width: "80px", height: "6px", backgroundColor: "rgba(255, 255, 255, 0.1)", borderRadius: "3px", overflow: "hidden", border: "1px solid var(--color-border)" }}>
                             <div style={{ width: `${xpPercentage}%`, height: "100%", backgroundColor: "var(--color-primary)" }}></div>
                         </div>

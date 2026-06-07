@@ -127,7 +127,9 @@ public class UserService {
                 user.getEquippedAvatarUrl(),
                 user.getRole(),
                 user.getWins(),
-                user.getLosses()
+                user.getLosses(),
+                user.getXp(),
+                user.getPassword() != null
         );
     }
 

@@ -9,7 +9,6 @@ export default function Profile() {
     const [copySuccess, setCopySuccess] = useState("");
     const [isStatusMenuOpen, setIsStatusMenuOpen] = useState(false);
     
-    // Estado local para forzar actualización visual instantánea del estado
     const [localStatus, setLocalStatus] = useState("ACTIVE");
     
     const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
@@ -31,7 +30,6 @@ export default function Profile() {
         else fetchAvatars();
     }, [navigate]);
 
-    // Sincronizar el estado local cuando cambia el usuario global
     useEffect(() => {
         if (user?.statusPreference) {
             setLocalStatus(user.statusPreference);
@@ -71,7 +69,7 @@ export default function Profile() {
 
     const handleStatusSelect = async (newStatus) => {
         setIsStatusMenuOpen(false);
-        setLocalStatus(newStatus); // Actualización visual inmediata
+        setLocalStatus(newStatus); 
         
         const token = localStorage.getItem("token");
         try {
@@ -79,7 +77,7 @@ export default function Profile() {
                 method: "PUT",
                 headers: { "Authorization": `Bearer ${token}` }
             });
-            refreshUser(); // Actualiza en segundo plano
+            refreshUser();
         } catch (error) {}
     };
 
@@ -263,19 +261,20 @@ export default function Profile() {
                         <label>Estado de Cuenta</label>
                         <p className="status-verified">✓ Verificada</p>
                     </div>
-                    <div className="detail-item" style={{ borderBottom: 'none' }}>
-                        <button className="btn-change-password" onClick={() => {
-                            setIsPasswordModalOpen(true);
-                            setErrorMessage("");
-                            setSuccessMessage("");
-                        }}>
-                            Cambiar Contraseña
-                        </button>
-                    </div>
+                    {user?.hasPassword && (
+                        <div className="detail-item" style={{ borderBottom: 'none' }}>
+                            <button className="btn-change-password" onClick={() => {
+                                setIsPasswordModalOpen(true);
+                                setErrorMessage("");
+                                setSuccessMessage("");
+                            }}>
+                                Cambiar Contraseña
+                            </button>
+                        </div>
+                    )}
                 </div>
             </div>
 
-            {/* MODALES REINCORPORADOS */}
             {isAvatarModalOpen && (
                 <div className="modal-overlay">
                     <div className="modal-content">
