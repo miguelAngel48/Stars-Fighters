@@ -54,6 +54,10 @@ export default function Navbar() {
         window.location.href = "/";
     };
 
+    const currentXp = user?.xp || 0;
+    const nextLevelXp = 100;
+    const xpPercentage = Math.min((currentXp / nextLevelXp) * 100, 100);
+
     const renderBell = (ref) => (
         <div className="bell-container" ref={ref}>
             <button className="bell-btn" onClick={() => setIsBellOpen(!isBellOpen)}>
@@ -91,9 +95,14 @@ export default function Navbar() {
         <div className="profile-dropdown-container" ref={ref}>
             <button className="profile-btn" onClick={() => setIsProfileOpen(!isProfileOpen)}>
                 <img src={user.avatar || user.avatarUrl || "http://localhost:8080/uploads/cosmetics/default-avatar.png"} alt="Perfil" className="profile-img" />
-                <div className="profile-info">
+                <div className="profile-info" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '4px' }}>
                     <span className="profile-name">{user.username}</span>
-                    <span className="profile-level">{user.coins} 💰</span>
+                    <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "12px" }}>
+                        <span style={{ color: "var(--color-accent)", fontWeight: "bold" }}>Lv. {user.level || 1}</span>
+                        <div style={{ width: "80px", height: "6px", backgroundColor: "rgba(255, 255, 255, 0.1)", borderRadius: "3px", overflow: "hidden", border: "1px solid var(--color-border)" }}>
+                            <div style={{ width: `${xpPercentage}%`, height: "100%", backgroundColor: "var(--color-primary)" }}></div>
+                        </div>
+                    </div>
                 </div>
             </button>
 
