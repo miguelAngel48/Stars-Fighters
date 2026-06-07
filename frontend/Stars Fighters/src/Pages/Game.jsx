@@ -2,10 +2,11 @@ import React, { useEffect, useRef, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { Client } from '@stomp/stompjs';
 import SockJS from 'sockjs-client/dist/sockjs';
-import "../Styles/Game.css";
 import { jwtDecode } from "jwt-decode";
-
+import "../Styles/Game.css";
+import LevelUpModal from "./LevelUpModal";
 export default function Game() {
+
     const canvasRef = useRef(null);
     const requestRef = useRef(null);
     const keys = useRef({});
@@ -24,7 +25,9 @@ export default function Game() {
     const [timeLeft, setTimeLeft] = useState(180);
     const [gameAssets, setGameAssets] = useState(null);
     const [finalStats, setFinalStats] = useState(null);
+    const [levelUpData, setLevelUpData] = useState(null);
 
+    const isLeftPlayerRef = useRef(true);
     const myPositionRef = useRef({ x: 0, y: 100 });
     const oppPositionRef = useRef({ x: 0, y: 100 });
 
@@ -32,11 +35,9 @@ export default function Game() {
     const myDirectionRef = useRef(1);
     const oppActionRef = useRef("IDLE");
     const oppDirectionRef = useRef(-1);
+
     const myHealthRef = useRef(100);
     const oppHealthRef = useRef(100);
-
-    const isLeftPlayerRef = useRef(true);
-
     const myKillsRef = useRef(0);
     const oppKillsRef = useRef(0);
 
@@ -51,15 +52,25 @@ export default function Game() {
     const recordMatchInDatabase = async (isWinner) => {
         const token = localStorage.getItem("token");
         try {
-            await fetch(`http://localhost:8080/api/stats/record?isWinner=${isWinner}`, {
+            const response = await fetch(`http://localhost:8080/api/stats/record?isWinner=${isWinner}`, {
                 method: "POST",
                 headers: { "Authorization": `Bearer ${token}` }
             });
 
+            if (response.ok) {
+                const data = await response.json();
+                console.log("Estadísticas guardadas. Datos de nivel:", data);
+
+
+                if (data.leveledUp) {
+                    setLevelUpData({ newLevel: data.newLevel });
+                }
+            }
         } catch (error) {
             console.error("No se pudo guardar la estadística", error);
         }
     };
+
 
     useEffect(() => {
         if (!lobbyId || !mapId || !myCharId || !oppCharId || !oppName) {
@@ -68,9 +79,14 @@ export default function Game() {
         }
 
         const token = localStorage.getItem("token");
+
+
         const decoded = jwtDecode(token);
-        const myUsername = decoded.sub;
-        isLeftPlayerRef.current = myUsername < oppName;
+        const myUsername = String(decoded.sub).toLowerCase();
+        const opponentNameSafe = String(oppName).toLowerCase();
+
+        isLeftPlayerRef.current = myUsername < opponentNameSafe;
+
         const loadGameData = async () => {
             try {
                 const charsRes = await fetch("http://localhost:8080/api/characters", { headers: { "Authorization": `Bearer ${token}` } });
@@ -94,6 +110,7 @@ export default function Game() {
                         gravity: Number(rawMap.gravity) || 0.6
                     };
 
+
                     const leftX = window.innerWidth * 0.3;
                     const rightX = window.innerWidth * 0.7 - 80;
 
@@ -104,6 +121,7 @@ export default function Game() {
                     oppDirectionRef.current = isLeftPlayerRef.current ? -1 : 1;
 
                     setGameAssets({ myChar: safeMyChar, oppChar: oppRawChar, currentMap: safeMap });
+
 
                     const savedStartTime = localStorage.getItem(`game_start_${lobbyId}`);
                     const now = Date.now();
@@ -133,6 +151,7 @@ export default function Game() {
             webSocketFactory: () => new SockJS('http://localhost:8080/ws-stars'),
             connectHeaders: { Authorization: `Bearer ${token}` },
             onConnect: () => {
+
                 client.subscribe('/user/queue/game-sync', (msg) => {
                     const data = JSON.parse(msg.body);
                     oppPositionRef.current.x = data.x;
@@ -140,6 +159,7 @@ export default function Game() {
                     oppActionRef.current = data.action || "IDLE";
                     oppDirectionRef.current = data.direction || -1;
                 });
+
 
                 client.subscribe('/user/queue/game-hit', (msg) => {
                     const hitData = JSON.parse(msg.body);
@@ -150,6 +170,8 @@ export default function Game() {
                     if (myHealthRef.current <= 0) {
                         oppKillsRef.current += 1;
                         myHealthRef.current = 100;
+
+
                         const mySpawnX = isLeftPlayerRef.current ? window.innerWidth * 0.3 : window.innerWidth * 0.7 - 80;
                         myPositionRef.current = { x: mySpawnX, y: 100 };
 
@@ -161,6 +183,7 @@ export default function Game() {
                         }
                     }
                 });
+
 
                 client.subscribe('/user/queue/game-death', () => {
                     myKillsRef.current += 1;
@@ -178,6 +201,7 @@ export default function Game() {
             if (stompClientRef.current) stompClientRef.current.deactivate();
         };
     }, [lobbyId, mapId, myCharId, oppCharId, oppName, navigate]);
+
 
     useEffect(() => {
         const handleKeyDown = (e) => {
@@ -197,6 +221,7 @@ export default function Game() {
             window.removeEventListener("keyup", handleKeyUp);
         };
     }, []);
+
 
     useEffect(() => {
         if (gameState !== "STARTING") return;
@@ -224,6 +249,7 @@ export default function Game() {
                         clearInterval(matchTimer);
                         setGameState("ENDED");
 
+
                         if (requestRef.current) {
                             cancelAnimationFrame(requestRef.current);
                         }
@@ -236,11 +262,11 @@ export default function Game() {
                             oppKills: oppFinalKills
                         });
 
-
+                        // GUARDAR EN BD AL TERMINAR
                         if (myFinalKills > oppFinalKills) {
-                            recordMatchInDatabase(true);
+                            recordMatchInDatabase(true); // Victoria
                         } else if (myFinalKills < oppFinalKills) {
-                            recordMatchInDatabase(false);
+                            recordMatchInDatabase(false); // Derrota
                         }
 
                         return 0;
@@ -248,6 +274,7 @@ export default function Game() {
                     return prev - 1;
                 });
             }, 1000);
+
 
             const syncInterval = setInterval(() => {
                 if (stompClientRef.current && stompClientRef.current.connected) {
@@ -271,6 +298,7 @@ export default function Game() {
             };
         }
     }, [gameState, timeLeft, lobbyId, oppName]);
+
 
     useEffect(() => {
         if (gameState === "LOADING" || !gameAssets) return;
@@ -297,14 +325,15 @@ export default function Game() {
         const myPlayer = {
             id: "p1",
             width: 80, height: 100,
-            spriteWidth: 192, spriteHeight: 215,
+            spriteWidth: gameAssets.myChar.spriteWidth || 192,
+            spriteHeight: gameAssets.myChar.spriteHeight || 215,
             velocityY: 0,
             speed: gameAssets.myChar.speed - 2,
             jumpForce: gameAssets.myChar.jumpForce * 2,
             isGrounded: false,
             image: myImage,
             frameX: 0, frameY: 0, maxFrames: 4, fps: 10, frameTimer: 0,
-            action: "IDLE", direction: 1,
+            action: "IDLE", direction: myDirectionRef.current,
             isAttacking: false,
             attackCooldown: 0,
             health: 100
@@ -313,10 +342,11 @@ export default function Game() {
         const opponent = {
             id: "p2",
             width: 80, height: 100,
-            spriteWidth: 192, spriteHeight: 215,
+            spriteWidth: gameAssets.oppChar.spriteWidth || 192,
+            spriteHeight: gameAssets.oppChar.spriteHeight || 215,
             image: oppImage,
             frameX: 0, frameY: 0, maxFrames: 4, fps: 10, frameTimer: 0,
-            action: "IDLE", direction: -1,
+            action: "IDLE", direction: oppDirectionRef.current,
             health: 100
         };
 
@@ -329,14 +359,17 @@ export default function Game() {
             const deltaTime = timestamp - lastTime;
             lastTime = timestamp;
 
+
             myPlayer.health = myHealthRef.current;
             opponent.health = oppHealthRef.current;
 
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+
             if (bgImage.complete && bgImage.naturalWidth > 0) {
                 ctx.drawImage(bgImage, 0, 0, canvas.width, canvas.height);
             }
+
 
             const platformWidth = canvas.width * 0.7;
             const platformHeight = 40;
@@ -351,6 +384,7 @@ export default function Game() {
 
             if (gameState === "PLAYING") {
                 let isMoving = false;
+
 
                 if ((keys.current["Space"] || keys.current[" "]) && myPlayer.attackCooldown <= 0 && !myPlayer.isAttacking) {
                     myPlayer.isAttacking = true;
@@ -368,6 +402,7 @@ export default function Game() {
                     const oppX = oppPositionRef.current.x;
                     const oppY = oppPositionRef.current.y;
 
+                    // Colisión
                     if (
                         hitboxX < oppX + opponent.width &&
                         hitboxX + hitboxWidth > oppX &&
@@ -394,6 +429,7 @@ export default function Game() {
                 if (myPlayer.isAttacking && myPlayer.attackCooldown < 200) {
                     myPlayer.isAttacking = false;
                 }
+
 
                 if (!myPlayer.isAttacking) {
                     if (keys.current["ArrowLeft"] || keys.current["KeyA"] || keys.current["a"]) {
@@ -423,6 +459,7 @@ export default function Game() {
                 }
             }
 
+
             if (gameState === "STARTING" || gameState === "PLAYING") {
                 myPlayer.velocityY += gravity;
                 myPositionRef.current.y += myPlayer.velocityY;
@@ -440,7 +477,7 @@ export default function Game() {
 
 
                 if (myPositionRef.current.y > canvas.height + 50) {
-                    oppKillsRef.current += 1; // Punto para el enemigo
+                    oppKillsRef.current += 1;
                     myHealthRef.current = 100;
 
 
@@ -504,32 +541,29 @@ export default function Game() {
 
                 ctx.restore();
 
+                // Nombres
                 ctx.fillStyle = "white";
                 ctx.font = "bold 16px Arial";
                 ctx.textAlign = "center";
-
                 const textX = startX + player.width / 2;
                 const textY = startY - 10;
-
                 ctx.fillText(label, textX, textY);
 
+                // Barras de vida
                 ctx.fillStyle = "rgba(0,0,0,0.5)";
                 ctx.fillRect(textX - 40, textY - 28, 80, 6);
-
                 ctx.fillStyle = player.id === "p1" ? "#4CAF50" : "#ff3333";
                 const currentHealthWidth = (player.health / 100) * 80;
                 ctx.fillRect(textX - 40, textY - 28, currentHealthWidth, 6);
             };
 
+
             myActionRef.current = myPlayer.action;
             myDirectionRef.current = myPlayer.direction;
-
             drawPlayer(myPlayer, myPositionRef.current.x, myPositionRef.current.y, "Tú");
-
 
             opponent.action = oppActionRef.current;
             opponent.direction = oppDirectionRef.current;
-
             drawPlayer(opponent, oppPositionRef.current.x, oppPositionRef.current.y, oppName);
         };
 
@@ -540,6 +574,7 @@ export default function Game() {
             if (requestRef.current) cancelAnimationFrame(requestRef.current);
         };
     }, [gameState, gameAssets, oppName]);
+
 
     const formatTime = (seconds) => {
         const m = Math.floor(seconds / 60);
@@ -556,12 +591,14 @@ export default function Game() {
             <canvas ref={canvasRef} className="game-canvas" />
 
             <div className="ui-layer">
+
                 <div className="top-bar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '90%', margin: '0 auto' }}>
                     <div className="player-deaths" style={{ color: '#4CAF50', fontWeight: 'bold', fontSize: '20px' }}>Mis Bajas: {myKillsRef.current}</div>
                     <div className="timer" style={{ fontSize: '28px' }}>{formatTime(timeLeft)}</div>
                     <div className="opp-deaths" style={{ color: '#ff3333', fontWeight: 'bold', fontSize: '20px' }}>Bajas de {oppName}: {oppKillsRef.current}</div>
                 </div>
 
+                {/* Cuenta atrás "FIGHT" */}
                 <div className="center-screen">
                     {countdown !== null && (
                         <div key={countdown} className={`countdown-text ${countdown === "FIGHT!" ? "countdown-fight" : ""}`}>
@@ -569,6 +606,7 @@ export default function Game() {
                         </div>
                     )}
                 </div>
+
 
                 {gameState === "ENDED" && finalStats && (
                     <div className="victory-modal-overlay" style={{
@@ -581,13 +619,12 @@ export default function Game() {
                         }}>
                             <h1 style={{ color: 'var(--color-primary)', fontSize: '36px', margin: '0 0 10px 0' }}>FIN DE LA PARTIDA</h1>
 
-
                             <h2 style={{ fontSize: '28px', color: finalStats.myKills > finalStats.oppKills ? '#4CAF50' : finalStats.myKills < finalStats.oppKills ? '#ff3333' : '#ffb703', margin: '20px 0' }}>
                                 {finalStats.myKills > finalStats.oppKills
-                                    ? "¡HAS GANADO LA BATALLA!"
+                                    ? "🏆 ¡HAS GANADO LA BATALLA! 🏆"
                                     : finalStats.myKills < finalStats.oppKills
-                                        ? "HAS SIDO DERROTADO"
-                                        : "¡UN EMPATE LEGENDARIO!"}
+                                        ? "❌ HAS SIDO DERROTADO ❌"
+                                        : "🤝 ¡UN EMPATE LEGENDARIO! 🤝"}
                             </h2>
 
                             <div className="stats-summary" style={{ display: 'flex', justifyContent: 'space-around', margin: '30px 0', background: '#333', padding: '20px', borderRadius: '8px' }}>
@@ -602,22 +639,22 @@ export default function Game() {
                                 </div>
                             </div>
 
-                            <p style={{ color: '#aaa', fontStyle: 'italic', marginBottom: '30px' }}>
+                            <p style={{ color: '#aaa', fontStyle: 'italic', marginBottom: '10px' }}>
                                 {finalStats.myKills > finalStats.oppKills
-                                    ? "Has demostrado ser el Star Warrior."
+                                    ? "Has demostrado ser el Star Warrior definitivo."
                                     : finalStats.myKills < finalStats.oppKills
                                         ? "Entrena más duro y vuelve a intentarlo."
                                         : "Ambos guerreros están al mismo nivel."}
                             </p>
+
+
                             <div className="rewards-container">
-                                {/* RECUADRO DE MONEDAS */}
                                 <div className="reward-box reward-coins">
                                     <span className="reward-coins-text">
                                         🪙 +{finalStats.myKills > finalStats.oppKills ? 10 : finalStats.myKills < finalStats.oppKills ? 5 : 0} Monedas
                                     </span>
                                 </div>
 
-                                {/* RECUADRO DE EXPERIENCIA */}
                                 <div className="reward-box reward-xp">
                                     <span className="reward-xp-text">
                                         ✨ +{
@@ -630,6 +667,7 @@ export default function Game() {
                                     </span>
                                 </div>
                             </div>
+
                             <button
                                 onClick={() => {
                                     localStorage.removeItem(`game_start_${lobbyId}`);
@@ -644,6 +682,12 @@ export default function Game() {
                             </button>
                         </div>
                     </div>
+                )}
+                {levelUpData && (
+                    <LevelUpModal
+                        newLevel={levelUpData.newLevel}
+                        onClose={() => setLevelUpData(null)}
+                    />
                 )}
             </div>
         </div>

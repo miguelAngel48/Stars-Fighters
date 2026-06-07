@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import jakarta.transaction.Transactional;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -125,9 +126,12 @@ public class UserService {
         );
     }
 
-    public void recordMatchResult(String username, boolean isWinner) {
+    public Map<String, Object> recordMatchResult(String username, boolean isWinner) {
         User user = userRepo.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado en la base de datos"));
+
+        int oldLevel = user.getLevel();
+
         if (isWinner) {
             user.setWins(user.getWins() + 1);
             user.setCoins(user.getCoins() + 10);
@@ -135,7 +139,36 @@ public class UserService {
             user.setLosses(user.getLosses() + 1);
             user.setCoins(user.getCoins() + 5);
         }
+
+
+        if (user.getLevel() < 20) {
+            int baseXp = 100 + (10 * user.getLevel());
+            int xpGained = isWinner ? baseXp : (baseXp / 2);
+            user.setXp(user.getXp() + xpGained);
+
+            int xpRequiredForNextLevel = user.getLevel() * 100;
+
+            while (user.getLevel() < 20 && user.getXp() >= xpRequiredForNextLevel) {
+                user.setXp(user.getXp() - xpRequiredForNextLevel);
+                user.setLevel(user.getLevel() + 1);
+                xpRequiredForNextLevel = user.getLevel() * 100;
+            }
+
+            if (user.getLevel() >= 20) {
+                user.setLevel(20);
+                user.setXp(0);
+            }
+        }
+
         userRepo.save(user);
+
+        // --- PREPARAMOS LA RESPUESTA PARA REACT ---
+        boolean leveledUp = user.getLevel() > oldLevel;
+        java.util.Map<String, Object> result = new java.util.HashMap<>();
+        result.put("leveledUp", leveledUp);
+        result.put("newLevel", user.getLevel());
+
+        return result;
     }
 
     @Transactional

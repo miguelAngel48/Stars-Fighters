@@ -100,10 +100,15 @@ public class LobbyService {
     }
 
     public void startCharacterSelection(Long leaderId, String guestUsername, String lobbyId) {
+
+        User leader = userRepo.findById(leaderId)
+                .orElseThrow(() -> new RuntimeException("Líder no encontrado"));
+
+
         GameInviteDto startMsg = new GameInviteDto(
                 "START_SELECTION",
                 leaderId,
-                "Líder",
+                leader.getUsername(),
                 lobbyId,
                 null
         );

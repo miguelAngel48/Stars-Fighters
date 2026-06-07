@@ -23,18 +23,18 @@ export const NotificationProvider = ({ children }) => {
         fetch("http://localhost:8080/api/friendships/pending", {
             headers: { "Authorization": `Bearer ${token}` }
         })
-        .then(res => res.json())
-        .then(data => {
-            const items = data.map(req => ({
-                type: 'NEW_REQUEST',
-                friendshipId: req.friendshipId,
-                senderName: req.friendCode,
-                id: Date.now() + Math.random(),
-                text: `${req.friendCode} quiere ser tu amigo.`,
-                hasActions: true
-            }));
-            setBellList(prev => [...items, ...prev]);
-        }).catch(() => {});
+            .then(res => res.json())
+            .then(data => {
+                const items = data.map(req => ({
+                    type: 'NEW_REQUEST',
+                    friendshipId: req.friendshipId,
+                    senderName: req.friendCode,
+                    id: Date.now() + Math.random(),
+                    text: `${req.friendCode} quiere ser tu amigo.`,
+                    hasActions: true
+                }));
+                setBellList(prev => [...items, ...prev]);
+            }).catch(() => { });
     }, [user]);
 
     useEffect(() => {
@@ -46,7 +46,10 @@ export const NotificationProvider = ({ children }) => {
                 setLatestEvent(notif);
 
                 if (notif.type === 'START_SELECTION') {
-                    navigate(`/character-selection?lobbyId=${notif.lobbyId}&role=guest&oppName=Líder`);
+
+                    const realOpponentName = notif.senderName || notif.leaderName;
+
+                    navigate(`/character-selection?lobbyId=${notif.lobbyId}&role=guest&oppName=${realOpponentName}`);
                     return;
                 }
 
@@ -62,7 +65,7 @@ export const NotificationProvider = ({ children }) => {
                 let text = "";
                 let hasActions = false;
 
-                switch(notif.type) {
+                switch (notif.type) {
                     case 'NEW_REQUEST': text = `${notif.senderName} quiere ser tu amigo.`; hasActions = true; break;
                     case 'GAME_INVITE': text = `${notif.senderName} te invita a jugar.`; hasActions = true; break;
                     case 'REQUEST_ACCEPTED': text = `${notif.friendName} aceptó tu solicitud.`; break;
@@ -71,7 +74,7 @@ export const NotificationProvider = ({ children }) => {
                     case 'LOBBY_CLOSED': text = `${notif.senderName} cerró la sala.`; break;
                     case 'GUEST_LEFT': text = `${notif.senderName} abandonó la sala.`; break;
                     case 'GUEST_KICKED': text = `Has sido expulsado de la sala.`; break;
-                    default: return; 
+                    default: return;
                 }
 
                 const newId = Date.now() + Math.random();
@@ -80,13 +83,13 @@ export const NotificationProvider = ({ children }) => {
                 setBellList(prev => [bellItem, ...prev]);
 
                 const pref = user.statusPreference || "ACTIVE";
-                
+
                 if (pref === "ACTIVE" || pref === "DND") {
                     setToastList(prev => [...prev, bellItem]);
-                    
+
                     if (pref === "ACTIVE") {
                         const audio = new Audio(notificationSound);
-                        audio.play().catch(() => {});
+                        audio.play().catch(() => { });
                     }
 
                     setTimeout(() => {
@@ -114,7 +117,7 @@ export const NotificationProvider = ({ children }) => {
             if (accepted) {
                 setLatestEvent({ type: 'REFRESH_FRIENDS' });
             }
-        } catch (e) {}
+        } catch (e) { }
     };
 
     const respondGameInvite = async (item, accepted) => {
@@ -129,7 +132,7 @@ export const NotificationProvider = ({ children }) => {
             if (res.ok && accepted) {
                 navigate(`/lobby?role=guest&lobbyId=${item.lobbyId}&leaderId=${item.senderId}&leaderName=${item.senderName}`);
             }
-        } catch (e) {}
+        } catch (e) { }
     };
 
     const addChatNotification = useCallback((senderName, friendshipId, isChatOpen) => {
@@ -139,10 +142,10 @@ export const NotificationProvider = ({ children }) => {
         chatNotifiedRef.current.add(friendshipId);
 
         const newId = Date.now() + Math.random();
-        const bellItem = { 
-            type: 'CHAT_MESSAGE', 
-            id: newId, 
-            text: `Recibiste un mensaje de ${senderName}.`, 
+        const bellItem = {
+            type: 'CHAT_MESSAGE',
+            id: newId,
+            text: `Recibiste un mensaje de ${senderName}.`,
             hasActions: false,
             friendshipId
         };
@@ -152,10 +155,10 @@ export const NotificationProvider = ({ children }) => {
         const pref = user?.statusPreference || "ACTIVE";
         if (pref === "ACTIVE" || pref === "DND") {
             setToastList(prev => [...prev, bellItem]);
-            
+
             if (pref === "ACTIVE") {
                 const audio = new Audio(notificationSound);
-                audio.play().catch(() => {});
+                audio.play().catch(() => { });
             }
 
             setTimeout(() => {

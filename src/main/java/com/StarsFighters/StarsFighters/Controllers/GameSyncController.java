@@ -22,9 +22,8 @@ public class GameSyncController {
     }
 
     @MessageMapping("/game.hit")
-    public void handleGameHit(java.util.Map<String, Object> payload, java.security.Principal principal) {
+    public void handleGameHit(java.util.Map<String, Object> payload) {
         String targetUsername = (String) payload.get("targetUsername");
-
 
         messagingTemplate.convertAndSendToUser(
                 targetUsername,
