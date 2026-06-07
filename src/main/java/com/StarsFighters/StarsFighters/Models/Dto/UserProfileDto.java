@@ -11,5 +11,7 @@ public record UserProfileDto(
         LocalDateTime sinceCreated,
         String statusPreference,
         String avatarUrl,
-        String role
+        String role,
+        int wins,
+        int losses
 ) {}

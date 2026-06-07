@@ -14,4 +14,5 @@ public interface UserRepo extends JpaRepository<User, Long> {
     Optional<User> findByUsername(String senderUsername);
     Optional<User> findByFriendCode(String receiverFriendCode);
     List<User> findByUsernameContainingIgnoreCase(String query);
+    List<User> findTop10ByOrderByWinsDesc();
 }

@@ -111,13 +111,11 @@ public class FriendshipService {
             throw new RuntimeException("Error");
         }
 
-        // Primero borramos todos los mensajes asociados a esta amistad para evitar errores de clave foránea
         List<ChatMessage> messages = chatMessageRepo.findByFriendshipId(friendshipId);
         if (messages != null && !messages.isEmpty()) {
             chatMessageRepo.deleteAll(messages);
         }
 
-        // Ahora sí podemos borrar la amistad
         friendshipRepo.delete(friendship);
     }
 
@@ -148,7 +146,10 @@ public class FriendshipService {
                             theOtherPlayer.getFriendCode(),
                             friendship.getId(),
                             currentStatus,
-                            theOtherPlayer.getEquippedAvatarUrl()
+                            theOtherPlayer.getEquippedAvatarUrl(),
+                            theOtherPlayer.getWins(),
+                            theOtherPlayer.getLosses(),
+                            theOtherPlayer.getLevel()
                     );
                 })
                 .collect(Collectors.toList());

@@ -15,6 +15,7 @@ import jakarta.transaction.Transactional;
 
 import java.util.List;
 import java.util.Map;
+import java.util.HashMap;
 import java.util.stream.Collectors;
 
 @Service
@@ -28,6 +29,8 @@ public class UserService {
 
     @Autowired
     PasswordEncoder passwordEncoder;
+
+    public record LeaderboardDto(String username, int level, int wins, String avatarUrl) {}
 
     private Cosmetic getOrCreateDefaultAvatar() {
         String defaultUrl = "http://localhost:8080/uploads/cosmetics/avatar.png";
@@ -122,7 +125,9 @@ public class UserService {
                 user.getSinceCreated(),
                 user.getStatusPreference(),
                 user.getEquippedAvatarUrl(),
-                user.getRole()
+                user.getRole(),
+                user.getWins(),
+                user.getLosses()
         );
     }
 
@@ -139,7 +144,6 @@ public class UserService {
             user.setLosses(user.getLosses() + 1);
             user.setCoins(user.getCoins() + 5);
         }
-
 
         if (user.getLevel() < 20) {
             int baseXp = 100 + (10 * user.getLevel());
@@ -162,9 +166,8 @@ public class UserService {
 
         userRepo.save(user);
 
-        // --- PREPARAMOS LA RESPUESTA PARA REACT ---
         boolean leveledUp = user.getLevel() > oldLevel;
-        java.util.Map<String, Object> result = new java.util.HashMap<>();
+        Map<String, Object> result = new HashMap<>();
         result.put("leveledUp", leveledUp);
         result.put("newLevel", user.getLevel());
 
@@ -208,5 +211,11 @@ public class UserService {
 
         user.setPassword(passwordEncoder.encode(newPassword));
         userRepo.save(user);
+    }
+
+    public List<LeaderboardDto> getGlobalLeaderboard() {
+        return userRepo.findTop10ByOrderByWinsDesc().stream()
+                .map(u -> new LeaderboardDto(u.getUsername(), u.getLevel(), u.getWins(), u.getEquippedAvatarUrl()))
+                .collect(Collectors.toList());
     }
 }

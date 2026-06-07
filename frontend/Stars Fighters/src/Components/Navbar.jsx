@@ -49,10 +49,9 @@ export default function Navbar() {
         setIsProfileOpen(false);
         if (userContext?.logout) {
             userContext.logout();
-        } else {
-            localStorage.removeItem("token");
-            window.location.href = "/login";
         }
+        localStorage.removeItem("token");
+        window.location.href = "/";
     };
 
     const renderBell = (ref) => (
@@ -132,9 +131,11 @@ export default function Navbar() {
             </div>
 
             <div className="nav-center">
-                <button className="play-btn" onClick={() => navigate(user ? "/lobby" : "/login")}>
-                    {user ? "JUGAR" : "JUGAR GRATIS"}
-                </button>
+                {user && (
+                    <button className="play-btn" onClick={() => navigate("/lobby")}>
+                        JUGAR
+                    </button>
+                )}
             </div>
 
             <div className="nav-right">
