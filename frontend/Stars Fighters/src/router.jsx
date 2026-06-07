@@ -13,6 +13,8 @@ import CharacterSelection from "./Pages/CharacterSelection";
 import Game from "./Pages/Game";
 import FriendProfile from "./Pages/FriendProfile";
 import RootLayout from "./Components/RootLayout";
+import GameSummary from "./Pages/GameSummary";
+import Champions from "./Pages/Champions";
 
 const router = createBrowserRouter([
     { path: "/", element: <App /> },
@@ -23,6 +25,8 @@ const router = createBrowserRouter([
     {
         element: <RootLayout />,
         children: [
+            { path: "/resumen", element: <GameSummary /> },
+            { path: "/campeones", element: <Champions /> },
             { path: "/dashboard", element: <Dashboard /> },
             { path: "/profile", element: <Profile /> },
             { path: "/lobby", element: <Lobby /> },

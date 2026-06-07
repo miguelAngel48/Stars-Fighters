@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { jwtDecode } from "jwt-decode";
 import googleIcon from '../assets/google.svg';
 import "../Styles/Auth.css";
 
@@ -21,7 +20,6 @@ export default function Login() {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(formData)
-
             });
 
             if (response.ok) {
@@ -29,22 +27,20 @@ export default function Login() {
                 localStorage.setItem("token", data.token);
                 navigate("/dashboard");
             } else {
-
                 const errorMessage = await response.text();
                 setError(errorMessage || "Email o contraseña incorrectos");
             }
         } catch (err) {
-            console.log(err)
             setError("Error de conexión");
         }
     };
+
     const handleGoogleLogin = () => {
         window.location.href = "http://localhost:8080/oauth2/authorization/google";
     };
 
     return (
         <div className="auth-screen">
-
             <div className="auth-box">
                 <h1>Iniciar Sesión</h1>
 

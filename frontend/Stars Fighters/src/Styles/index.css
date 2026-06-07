@@ -1,29 +1,43 @@
-/* src/Styles/index.css */
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Roboto:wght@400;700&display=swap');
+
 :root {
-  --font-main: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --bg-main: #f4f4f9;
-  --bg-surface: #ffffff;
-  --text-main: #333;
-  --color-primary: #aa3bff;
-  --color-primary-hover: #8e2bde;
-  --color-secondary: #007bff;
-  --color-secondary-hover: #0056b3;
-  --color-danger: #ff4d4d;
-  --color-border: #ccc;
+    --font-main: 'Roboto', sans-serif;
+    --font-title: 'Cinzel', serif;
+    --bg-main: #050814;
+    --bg-surface: rgba(5, 8, 20, 0.9);
+    --bg-panel: #0a0f25;
+    --text-main: #ffffff;
+    --text-muted: #94a3b8;
+    --color-primary: #3b82f6;
+    --color-primary-hover: #2563eb;
+    --color-accent: #facc15;
+    --color-accent-hover: #eab308;
+    --color-danger: #ef4444;
+    --color-border: #1e3a8a;
 }
 
 * {
-  box-sizing: border-box;
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
 }
 
 body {
-  margin: 0;
-  font-family: var(--font-main);
-  background-color: var(--bg-main);
-  color: var(--text-main);
+    font-family: var(--font-main);
+    background-color: var(--bg-main);
+    color: var(--text-main);
+    min-height: 100vh;
+    overflow-x: hidden;
 }
 
 button {
-  cursor: pointer;
-  font-family: var(--font-main);
+    cursor: pointer;
+    font-family: var(--font-main);
+    border: none;
+    outline: none;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-title);
+    letter-spacing: 2px;
 }

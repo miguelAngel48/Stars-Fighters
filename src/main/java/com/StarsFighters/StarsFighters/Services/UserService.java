@@ -95,9 +95,15 @@ public class UserService {
         return existUser;
     }
 
-    public void updateStatusPreference(String email, String statusPreference) {
-        User user = userRepo.findByEmail(email)
+    private User findUserByPrincipal(String identifier) {
+        return userRepo.findByEmail(identifier)
+                .or(() -> userRepo.findByUsername(identifier))
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+    }
+
+    @Transactional
+    public void updateStatusPreference(String identifier, String statusPreference) {
+        User user = findUserByPrincipal(identifier);
         user.setStatusPreference(statusPreference);
         userRepo.save(user);
     }
@@ -130,12 +136,6 @@ public class UserService {
             user.setCoins(user.getCoins() + 5);
         }
         userRepo.save(user);
-    }
-
-    private User findUserByPrincipal(String identifier) {
-        return userRepo.findByEmail(identifier)
-                .or(() -> userRepo.findByUsername(identifier))
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
     }
 
     @Transactional

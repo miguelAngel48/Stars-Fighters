@@ -23,9 +23,9 @@ public class CharacterService {
                         c.getJumpForce(),
                         c.getMaxHp(),
                         c.getBaseDamage(),
-                        c.getSpriteIdleUrl(),
+                        c.getDescription(),
+                        c.getSpriteProfileUrl(),
                         c.getSpriteMovesUrl()
-
                 ))
                 .collect(Collectors.toList());
     }

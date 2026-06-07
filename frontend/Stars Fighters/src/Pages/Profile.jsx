@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "../contexts/UserContext";
-import Navbar from "../Components/Navbar";
 import pencilIcon from "../assets/lapiz.svg";
 import "../Styles/Profile.css";
 
@@ -9,6 +8,9 @@ export default function Profile() {
     const { user, refreshUser } = useUser();
     const [copySuccess, setCopySuccess] = useState("");
     const [isStatusMenuOpen, setIsStatusMenuOpen] = useState(false);
+    
+    // Estado local para forzar actualización visual instantánea del estado
+    const [localStatus, setLocalStatus] = useState("ACTIVE");
     
     const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
     const [isNameModalOpen, setIsNameModalOpen] = useState(false);
@@ -28,6 +30,13 @@ export default function Profile() {
         if (!token) navigate("/login");
         else fetchAvatars();
     }, [navigate]);
+
+    // Sincronizar el estado local cuando cambia el usuario global
+    useEffect(() => {
+        if (user?.statusPreference) {
+            setLocalStatus(user.statusPreference);
+        }
+    }, [user]);
 
     useEffect(() => {
         const handleClickOutside = (event) => {
@@ -62,13 +71,15 @@ export default function Profile() {
 
     const handleStatusSelect = async (newStatus) => {
         setIsStatusMenuOpen(false);
+        setLocalStatus(newStatus); // Actualización visual inmediata
+        
         const token = localStorage.getItem("token");
         try {
             await fetch(`http://localhost:8080/api/auth/status?pref=${newStatus}`, {
                 method: "PUT",
                 headers: { "Authorization": `Bearer ${token}` }
             });
-            refreshUser();
+            refreshUser(); // Actualiza en segundo plano
         } catch (error) {}
     };
 
@@ -158,19 +169,24 @@ export default function Profile() {
 
     if (!user) return <div className="loading">Cargando perfil...</div>;
 
-    const currentStatus = getStatusConfig(user.statusPreference);
-    const avatarToDisplay = user.equippedAvatarUrl || user.avatarUrl || "http://localhost:8080/uploads/cosmetics/avatar.png";
+    const currentStatusConfig = getStatusConfig(localStatus);
+    const avatarToDisplay = user.equippedAvatarUrl || user.avatarUrl || "http://localhost:8080/uploads/cosmetics/default-avatar.png";
 
     return (
-        <div className="profile-page-container">
-            <Navbar 
-                leftContent={
-                    <button className="back-btn" onClick={() => navigate("/dashboard")}>← Volver al juego</button>
-                }
-                centerContent={<h1>Mi Perfil</h1>}
-            />
+        <div className="profile-page-container" style={{ padding: '40px' }}>
+            
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px' }}>
+                <button 
+                    onClick={() => navigate(-1)} 
+                    style={{ background: 'transparent', color: 'var(--color-primary)', fontSize: '16px', fontWeight: 'bold', cursor: 'pointer', border: 'none' }}
+                >
+                    ← Volver
+                </button>
+                <h1 style={{ color: 'var(--color-accent)', textTransform: 'uppercase', margin: 0 }}>Mi Perfil</h1>
+                <div style={{ width: '80px' }}></div>
+            </div>
 
-            <div className="profile-content" style={{ marginTop: '40px' }}>
+            <div className="profile-content">
                 <div className="profile-main-card">
                     <div className="avatar-container" onClick={() => setIsAvatarModalOpen(true)}>
                         <img
@@ -204,8 +220,8 @@ export default function Profile() {
                             className="status-dropdown-header" 
                             onClick={() => setIsStatusMenuOpen(!isStatusMenuOpen)}
                         >
-                            <div className={`profile-status-dot ${currentStatus.colorClass}`}></div>
-                            <span>{currentStatus.text}</span>
+                            <div className={`profile-status-dot ${currentStatusConfig.colorClass}`}></div>
+                            <span>{currentStatusConfig.text}</span>
                             <span className="dropdown-arrow">{isStatusMenuOpen ? '▲' : '▼'}</span>
                         </div>
                         
@@ -235,7 +251,7 @@ export default function Profile() {
                         <button className="copy-btn">📋</button>
                     </div>
                     {copySuccess && <span className="copy-msg">{copySuccess}</span>}
-                    <p className="helper-text">Compártelo con tus amigos para que te añadan en Stars Fighters.</p>
+                    <p className="helper-text">Compártelo con tus amigos para que te añadan.</p>
                 </div>
 
                 <div className="account-details">
@@ -247,7 +263,7 @@ export default function Profile() {
                         <label>Estado de Cuenta</label>
                         <p className="status-verified">✓ Verificada</p>
                     </div>
-                    <div className="detail-item">
+                    <div className="detail-item" style={{ borderBottom: 'none' }}>
                         <button className="btn-change-password" onClick={() => {
                             setIsPasswordModalOpen(true);
                             setErrorMessage("");
@@ -259,14 +275,15 @@ export default function Profile() {
                 </div>
             </div>
 
+            {/* MODALES REINCORPORADOS */}
             {isAvatarModalOpen && (
                 <div className="modal-overlay">
                     <div className="modal-content">
-                        <h3>Selecciona tu Avatar</h3>
+                        <h3 style={{ color: 'var(--color-accent)' }}>Selecciona tu Avatar</h3>
                         {availableAvatars.length === 0 ? (
-                            <p style={{ color: "var(--text-main)" }}>No tienes avatares disponibles.</p>
+                            <p style={{ color: "var(--text-muted)" }}>No tienes avatares disponibles.</p>
                         ) : (
-                            <div className="avatar-grid">
+                            <div className="avatar-grid" style={{ display: 'flex', gap: '15px', flexWrap: 'wrap', justifyContent: 'center', margin: '20px 0' }}>
                                 {availableAvatars.map((url, idx) => (
                                     <img 
                                         key={idx} 
@@ -274,11 +291,20 @@ export default function Profile() {
                                         alt={`Avatar ${idx}`} 
                                         className={`avatar-option ${avatarToDisplay === url ? 'selected' : ''}`}
                                         onClick={() => handleAvatarChange(url)}
+                                        style={{ 
+                                            width: '80px', height: '80px', borderRadius: '50%', cursor: 'pointer', 
+                                            border: avatarToDisplay === url ? '3px solid var(--color-primary)' : '2px solid transparent',
+                                            transition: 'transform 0.2s'
+                                        }}
+                                        onMouseEnter={(e) => e.target.style.transform = 'scale(1.1)'}
+                                        onMouseLeave={(e) => e.target.style.transform = 'scale(1)'}
                                     />
                                 ))}
                             </div>
                         )}
-                        <button className="btn-cancel" onClick={() => setIsAvatarModalOpen(false)}>Cancelar</button>
+                        <div className="modal-actions" style={{ justifyContent: 'center' }}>
+                            <button className="btn-cancel" onClick={() => setIsAvatarModalOpen(false)}>Cancelar</button>
+                        </div>
                     </div>
                 </div>
             )}
@@ -286,17 +312,20 @@ export default function Profile() {
             {isNameModalOpen && (
                 <div className="modal-overlay">
                     <div className="modal-content">
-                        <h3>Cambiar Nombre de Usuario</h3>
-                        <input 
-                            type="text" 
-                            value={newName} 
-                            onChange={(e) => setNewName(e.target.value)} 
-                            placeholder="Nuevo nombre"
-                        />
-                        {errorMessage && <span className="error-msg">{errorMessage}</span>}
+                        <h3 style={{ color: 'var(--color-accent)' }}>Cambiar Nombre de Usuario</h3>
+                        <div className="modal-input-container">
+                            <input 
+                                type="text" 
+                                value={newName} 
+                                onChange={(e) => setNewName(e.target.value)} 
+                                placeholder="Nuevo nombre"
+                                className="modal-input"
+                            />
+                        </div>
+                        {errorMessage && <span className="error-message" style={{ display: 'block', marginBottom: '15px' }}>{errorMessage}</span>}
                         <div className="modal-actions">
-                            <button className="btn-save" onClick={handleNameChange}>Guardar</button>
                             <button className="btn-cancel" onClick={() => setIsNameModalOpen(false)}>Cancelar</button>
+                            <button className="btn-add" onClick={handleNameChange}>Guardar</button>
                         </div>
                     </div>
                 </div>
@@ -305,30 +334,42 @@ export default function Profile() {
             {isPasswordModalOpen && (
                 <div className="modal-overlay">
                     <div className="modal-content">
-                        <h3>Cambiar Contraseña</h3>
-                        <input 
-                            type="password" 
-                            placeholder="Contraseña Actual" 
-                            value={passwordData.currentPassword}
-                            onChange={(e) => setPasswordData({...passwordData, currentPassword: e.target.value})}
-                        />
-                        <input 
-                            type="password" 
-                            placeholder="Nueva Contraseña" 
-                            value={passwordData.newPassword}
-                            onChange={(e) => setPasswordData({...passwordData, newPassword: e.target.value})}
-                        />
-                        <input 
-                            type="password" 
-                            placeholder="Confirmar Nueva Contraseña" 
-                            value={passwordData.confirmPassword}
-                            onChange={(e) => setPasswordData({...passwordData, confirmPassword: e.target.value})}
-                        />
-                        {errorMessage && <span className="error-msg">{errorMessage}</span>}
-                        {successMessage && <span className="success-msg">{successMessage}</span>}
+                        <h3 style={{ color: 'var(--color-accent)' }}>Cambiar Contraseña</h3>
+                        
+                        <div className="modal-input-container" style={{ marginBottom: '15px' }}>
+                            <input 
+                                type="password" 
+                                placeholder="Contraseña Actual" 
+                                value={passwordData.currentPassword}
+                                onChange={(e) => setPasswordData({...passwordData, currentPassword: e.target.value})}
+                                className="modal-input"
+                            />
+                        </div>
+                        <div className="modal-input-container" style={{ marginBottom: '15px' }}>
+                            <input 
+                                type="password" 
+                                placeholder="Nueva Contraseña" 
+                                value={passwordData.newPassword}
+                                onChange={(e) => setPasswordData({...passwordData, newPassword: e.target.value})}
+                                className="modal-input"
+                            />
+                        </div>
+                        <div className="modal-input-container" style={{ marginBottom: '20px' }}>
+                            <input 
+                                type="password" 
+                                placeholder="Confirmar Nueva Contraseña" 
+                                value={passwordData.confirmPassword}
+                                onChange={(e) => setPasswordData({...passwordData, confirmPassword: e.target.value})}
+                                className="modal-input"
+                            />
+                        </div>
+
+                        {errorMessage && <span className="error-message" style={{ display: 'block', marginBottom: '15px' }}>{errorMessage}</span>}
+                        {successMessage && <span style={{ color: '#22c55e', display: 'block', marginBottom: '15px', fontWeight: 'bold' }}>{successMessage}</span>}
+                        
                         <div className="modal-actions">
-                            <button className="btn-save" onClick={handlePasswordChange}>Actualizar</button>
                             <button className="btn-cancel" onClick={() => setIsPasswordModalOpen(false)}>Cancelar</button>
+                            <button className="btn-add" onClick={handlePasswordChange}>Actualizar</button>
                         </div>
                     </div>
                 </div>

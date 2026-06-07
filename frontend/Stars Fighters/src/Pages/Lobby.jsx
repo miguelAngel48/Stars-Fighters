@@ -1,9 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { jwtDecode } from "jwt-decode";
 import { useUser } from "../contexts/UserContext";
 import { useNotification } from "../contexts/NotificationContext";
-import Navbar from "../Components/Navbar";
 import "../Styles/Lobby.css";
 
 export default function Lobby() {
@@ -30,9 +28,9 @@ export default function Lobby() {
         fetchFriends(token);
 
         if (role === "guest" && leaderNameUrl) {
-            setPlayer2({ username: user?.username, status: 'joined', avatarUrl: user?.avatarUrl });
+            setPlayer2({ username: user?.username, status: 'joined', avatarUrl: user?.avatarUrl || user?.avatar });
         }
-    }, [navigate, role, user]);
+    }, [navigate, role, user, leaderNameUrl]);
 
     useEffect(() => {
         if (!latestEvent) return;
@@ -164,19 +162,28 @@ export default function Lobby() {
     if (!user) return <div className="loading">Entrando al Lobby...</div>;
 
     return (
-        <div className="lobby-container">
-            <Navbar 
-                leftContent={<button className="nav-btn" onClick={handleLeaveLobby}>Salir al Menu</button>}
-                centerContent={<h2 style={{ margin: 0, color: 'var(--color-primary)' }}>{role === 'guest' ? `SALA DE ${leaderNameUrl?.toUpperCase()}` : "TU SALA DE ESPERA"}</h2>}
-            />
+        <div className="lobby-container" style={{ padding: '20px', height: '100%', display: 'flex', flexDirection: 'column' }}>
+            
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                <button 
+                    onClick={handleLeaveLobby} 
+                    style={{ background: 'transparent', color: 'var(--color-danger)', fontSize: '16px', fontWeight: 'bold' }}
+                >
+                    Abandonar Sala
+                </button>
+                <h2 style={{ margin: 0, color: 'var(--color-primary)', textTransform: 'uppercase' }}>
+                    {role === 'guest' ? `SALA DE ${leaderNameUrl}` : "TU SALA DE ESPERA"}
+                </h2>
+                <div style={{ width: '120px' }}></div>
+            </div>
 
-            <div className="lobby-body">
+            <div className="lobby-body" style={{ flex: 1 }}>
                 <main className="lobby-main">
                     <div className="game-table">
                         <div className="player-slot leader-slot">
                             <div className="crown-icon">👑</div>
                             <img
-                                src={role === 'guest' ? "http://localhost:8080/uploads/cosmetics/default-avatar.png" : (user.avatar || user.avatarUrl)}
+                                src={role === 'guest' ? (friends.find(f => f.username === leaderNameUrl)?.avatarUrl || "http://localhost:8080/uploads/cosmetics/default-avatar.png") : (user.avatar || user.avatarUrl || "http://localhost:8080/uploads/cosmetics/default-avatar.png")}
                                 alt="Líder"
                                 className="slot-avatar"
                             />
@@ -203,7 +210,7 @@ export default function Lobby() {
                                         <button className="kick-btn" onClick={handleKickPlayer} title="Expulsar jugador">✖</button>
                                     )}
                                     <img
-                                        src={role === 'guest' ? (user.avatar || user.avatarUrl) : (player2?.avatarUrl || "http://localhost:8080/uploads/cosmetics/default-avatar.png")}
+                                        src={role === 'guest' ? (user.avatar || user.avatarUrl || "http://localhost:8080/uploads/cosmetics/default-avatar.png") : (player2?.avatarUrl || "http://localhost:8080/uploads/cosmetics/default-avatar.png")}
                                         alt="Jugador 2"
                                         className="slot-avatar"
                                     />

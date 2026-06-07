@@ -1,26 +1,24 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import Navbar from './Components/Navbar';
+import './Styles/App.css';
 
-function App() {
+const App = () => {
+    const navigate = useNavigate();
+
     return (
-        <div className="auth-screen">
-            <div className="auth-box main-menu">
-                <h1 className="game-title">STARS FIGHTERS</h1>
+        <div className="landing-container">
+            <Navbar />
 
-                <div className="menu-options">
-                    <Link to="/login" className="btn-submit">
-                        Entrar al juego
-                    </Link>
-
-                    <Link to="/register" className="btn-secondary">
-                        Crear cuenta
-                    </Link>
+            <main className="hero-section">
+                <div className="hero-content">
+                    <img src="/logo.png" alt="Main Logo" className="main-logo" />
+                    <h1 className="hero-subtitle">UN UNIVERSO DE ESTRATEGIA Y COMBATE</h1>
+                    <button className="play-free-btn" onClick={() => navigate('/register')}>JUGAR GRATIS</button>
                 </div>
-
-                <p className="footer-text">V. 1.0.0 - 2026</p>
-            </div>
+            </main>
         </div>
-    )
-}
+    );
+};
 
 export default App;

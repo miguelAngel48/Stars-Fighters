@@ -10,8 +10,10 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class CreateCharacter implements CommandLineRunner {
-@Autowired
+
+    @Autowired
     private GameMapsRepo mapRepo;
+
     @Autowired
     private CharacteRepo characterRepo;
 
@@ -24,6 +26,7 @@ public class CreateCharacter implements CommandLineRunner {
                     12.0,
                     100,
                     15,
+                    "Un guerrero implacable que sigue el código del Bushido. Sus ataques con espada son precisos, rápidos y devastadores en el combate cuerpo a cuerpo.",
                     "/sprites/samurai_profile.png",
                     "/sprites/samurai.png"
             ));
@@ -34,19 +37,19 @@ public class CreateCharacter implements CommandLineRunner {
                     10.0,
                     100,
                     10,
+                    "Maestro de las sombras y el sigilo. Su increíble velocidad y movilidad le permiten esquivar ataques y golpear cuando el enemigo menos lo espera.",
                     "/sprites/shinobi_profile.png",
                     "/sprites/shinobi.png"
             ));
         }
+
         if (mapRepo.count() == 0) {
             mapRepo.save(new GameMaps(
                     "Bosque Olvido",
                     "Un bosque tranquilo",
                     "/maps/background_field.png",
                     0.8
-
             ));
-
         }
     }
 }
