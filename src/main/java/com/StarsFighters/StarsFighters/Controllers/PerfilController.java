@@ -1,5 +1,6 @@
 package com.StarsFighters.StarsFighters.Controllers;
 
+import com.StarsFighters.StarsFighters.Models.Dto.ApiResponse;
 import com.StarsFighters.StarsFighters.Models.Dto.CreateUser;
 import com.StarsFighters.StarsFighters.Models.Dto.LoginUser;
 import com.StarsFighters.StarsFighters.Models.Dto.UserProfileDto;
@@ -45,9 +46,9 @@ public class PerfilController {
     public ResponseEntity<?> register(@RequestBody CreateUser user){
         try{
             userService.registUser(user);
-            return ResponseEntity.ok("Usuario registrado");
+            return ResponseEntity.ok(new ApiResponse("Usuario registrado"));
         } catch (Exception e){
-            return ResponseEntity.badRequest().body(e.getMessage());
+            return ResponseEntity.badRequest().body(new ApiResponse(e.getMessage()));
         }
     }
 
@@ -62,7 +63,7 @@ public class PerfilController {
                     "email", user.getEmail()
             ));
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ApiResponse(e.getMessage()));
         }
     }
 
@@ -74,7 +75,7 @@ public class PerfilController {
             UserProfileDto profile = userService.getUserProfileById(userId);
             return ResponseEntity.ok(profile);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Error al cargar el perfil: " + e.getMessage());
+            return ResponseEntity.badRequest().body(new ApiResponse("Error al cargar el perfil: " + e.getMessage()));
         }
     }
 
@@ -107,9 +108,9 @@ public class PerfilController {
                 );
             });
 
-            return ResponseEntity.ok("Estado actualizado");
+            return ResponseEntity.ok(new ApiResponse("Estado actualizado"));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Error al actualizar el estado");
+            return ResponseEntity.badRequest().body(new ApiResponse("Error al actualizar el estado"));
         }
     }
 
@@ -120,6 +121,6 @@ public class PerfilController {
         cookie.setPath("/");
         cookie.setMaxAge(0);
         response.addCookie(cookie);
-        return ResponseEntity.ok("Sesión cerrada");
+        return ResponseEntity.ok(new ApiResponse("Sesión cerrada"));
     }
 }

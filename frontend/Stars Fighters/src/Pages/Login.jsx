@@ -27,8 +27,8 @@ export default function Login() {
                 localStorage.setItem("token", data.token);
                 window.location.href = "/dashboard";
             } else {
-                const errorMessage = await response.text();
-                setError(errorMessage || "Email o contraseña incorrectos");
+                const data = await response.json();
+                setError(data.message || "Email o contraseña incorrectos");
             }
         } catch (err) {
             setError("Error de conexión");

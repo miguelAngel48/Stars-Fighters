@@ -1,5 +1,6 @@
 package com.StarsFighters.StarsFighters.Controllers;
 
+import com.StarsFighters.StarsFighters.Models.Dto.ApiResponse;
 import com.StarsFighters.StarsFighters.Services.StoreService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -7,7 +8,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.security.Principal;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/store")
@@ -30,9 +30,9 @@ public class StoreController {
     public ResponseEntity<?> buyCosmetic(@PathVariable Long id, Principal principal) {
         try {
             storeService.buyCosmetic(principal.getName(), id);
-            return ResponseEntity.ok(Map.of("message", "Compra completada con éxito"));
+            return ResponseEntity.ok(new ApiResponse("Compra completada con éxito"));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+            return ResponseEntity.badRequest().body(new ApiResponse(e.getMessage()));
         }
     }
 
@@ -40,9 +40,9 @@ public class StoreController {
     public ResponseEntity<?> equipCosmetic(@PathVariable Long id, Principal principal) {
         try {
             storeService.equipCosmetic(principal.getName(), id);
-            return ResponseEntity.ok(Map.of("message", "Foto de perfil equipada"));
+            return ResponseEntity.ok(new ApiResponse("Foto de perfil equipada"));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+            return ResponseEntity.badRequest().body(new ApiResponse(e.getMessage()));
         }
     }
 
@@ -55,9 +55,9 @@ public class StoreController {
             Principal principal) {
         try {
             storeService.addCosmetic(principal.getName(), name, price, type, imageFile);
-            return ResponseEntity.ok(Map.of("message", "Producto añadido a la tienda"));
+            return ResponseEntity.ok(new ApiResponse("Producto añadido a la tienda"));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+            return ResponseEntity.badRequest().body(new ApiResponse(e.getMessage()));
         }
     }
 }

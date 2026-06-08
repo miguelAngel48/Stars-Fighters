@@ -1,5 +1,6 @@
 package com.StarsFighters.StarsFighters.Controllers;
 
+import com.StarsFighters.StarsFighters.Models.Dto.ApiResponse;
 import com.StarsFighters.StarsFighters.Models.Dto.FriendRequestDto;
 import com.StarsFighters.StarsFighters.Services.FriendshipService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,7 +23,7 @@ public class FriendshipController {
             String username = principal.getName();
             return ResponseEntity.ok(friendshipService.getAcceptedFriends(username));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+            return ResponseEntity.badRequest().body(new ApiResponse(e.getMessage()));
         }
     }
 
@@ -32,9 +33,9 @@ public class FriendshipController {
             String senderUsername = principal.getName();
             String receiverFriendCode = request.friendCode();
             friendshipService.sendFriendRequestByCode(senderUsername, receiverFriendCode);
-            return ResponseEntity.status(HttpStatus.CREATED).body("Solicitud enviada");
+            return ResponseEntity.status(HttpStatus.CREATED).body(new ApiResponse("Solicitud enviada"));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+            return ResponseEntity.badRequest().body(new ApiResponse(e.getMessage()));
         }
     }
 
@@ -44,9 +45,9 @@ public class FriendshipController {
             @RequestParam boolean accepted) {
         try {
             friendshipService.respondToRequest(requestId, accepted);
-            return ResponseEntity.ok(accepted ? "Aceptada" : "Rechazada");
+            return ResponseEntity.ok(new ApiResponse(accepted ? "Aceptada" : "Rechazada"));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+            return ResponseEntity.badRequest().body(new ApiResponse(e.getMessage()));
         }
     }
 
@@ -54,9 +55,9 @@ public class FriendshipController {
     public ResponseEntity<?> removeFriendship(@PathVariable Long friendshipId, Principal principal) {
         try {
             friendshipService.removeFriendship(friendshipId, principal.getName());
-            return ResponseEntity.ok("Amistad cancelada");
+            return ResponseEntity.ok(new ApiResponse("Amistad cancelada"));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+            return ResponseEntity.badRequest().body(new ApiResponse(e.getMessage()));
         }
     }
 
@@ -65,7 +66,7 @@ public class FriendshipController {
         try {
             return ResponseEntity.ok(friendshipService.getPendingRequests(principal.getName()));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+            return ResponseEntity.badRequest().body(new ApiResponse(e.getMessage()));
         }
     }
 }

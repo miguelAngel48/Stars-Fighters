@@ -144,8 +144,8 @@ export default function SocialSidebar() {
                 setSearchResults([]);
                 setTimeout(() => closeModal(), 1500);
             } else {
-                const errorData = await response.text();
-                setAddFriendMessage(errorData || "Error al enviar la solicitud.");
+                const data = await response.json();
+                setAddFriendMessage(data.message || "Error al enviar la solicitud.");
             }
         } catch (error) {
             setAddFriendMessage("Error de conexión con el servidor.");

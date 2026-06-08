@@ -116,8 +116,8 @@ export default function Profile() {
                 setIsNameModalOpen(false);
                 refreshUser();
             } else {
-                const text = await response.text();
-                setErrorMessage(text);
+                const data = await response.json();
+                setErrorMessage(data.message);
             }
         } catch (error) {}
     };
@@ -150,8 +150,8 @@ export default function Profile() {
                     setSuccessMessage("");
                 }, 2000);
             } else {
-                const text = await response.text();
-                setErrorMessage(text);
+                const data = await response.json();
+                setErrorMessage(data.message);
             }
         } catch (error) {}
     };

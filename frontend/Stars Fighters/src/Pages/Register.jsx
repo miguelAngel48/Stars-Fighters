@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import "../Styles/Auth.css"; // Cambiamos registre.css por Auth.css para heredar el diseño
+import "../Styles/Auth.css";
 
 export default function Register() {
     const [formData, setFormData] = useState({ username: "", email: "", password: "" });
@@ -23,12 +23,12 @@ export default function Register() {
             });
 
             if (response.ok) {
-                const responseText = await response.text();
-                setSuccess(responseText);
+                const data = await response.json();
+                setSuccess(data.message);
                 setTimeout(() => navigate("/login"), 2000);
             } else {
-                const errorText = await response.text();
-                setError(errorText || "Error al registrar");
+                const data = await response.json();
+                setError(data.message || "Error al registrar");
             }
         } catch (err) {
             setError("Error de conexión");

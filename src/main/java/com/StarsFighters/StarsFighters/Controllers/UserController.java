@@ -1,5 +1,6 @@
 package com.StarsFighters.StarsFighters.Controllers;
 
+import com.StarsFighters.StarsFighters.Models.Dto.ApiResponse;
 import com.StarsFighters.StarsFighters.Models.Entities.User;
 import com.StarsFighters.StarsFighters.Repositories.UserRepo;
 import com.StarsFighters.StarsFighters.Services.UserService;
@@ -41,7 +42,7 @@ public class UserController {
         try {
             return ResponseEntity.ok(userService.getOwnedAvatars(principal.getName()));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+            return ResponseEntity.badRequest().body(new ApiResponse(e.getMessage()));
         }
     }
 
@@ -50,12 +51,12 @@ public class UserController {
         try {
             String avatarUrl = body.get("avatarUrl");
             if (avatarUrl == null || avatarUrl.trim().isEmpty() || avatarUrl.contains("<") || avatarUrl.contains(">")) {
-                return ResponseEntity.badRequest().body("URL de avatar invalida");
+                return ResponseEntity.badRequest().body(new ApiResponse("URL de avatar invalida"));
             }
             userService.updateAvatar(principal.getName(), avatarUrl);
-            return ResponseEntity.ok("Avatar actualizado");
+            return ResponseEntity.ok(new ApiResponse("Avatar actualizado"));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+            return ResponseEntity.badRequest().body(new ApiResponse(e.getMessage()));
         }
     }
 
@@ -64,15 +65,15 @@ public class UserController {
         try {
             String newUsername = body.get("newUsername");
             if (newUsername == null || newUsername.trim().isEmpty() || newUsername.length() < 3 || newUsername.length() > 20) {
-                return ResponseEntity.badRequest().body("El nombre de usuario debe tener entre 3 y 20 caracteres");
+                return ResponseEntity.badRequest().body(new ApiResponse("El nombre de usuario debe tener entre 3 y 20 caracteres"));
             }
             if (!newUsername.matches("^[a-zA-Z0-9_]+$")) {
-                return ResponseEntity.badRequest().body("El nombre de usuario solo puede contener caracteres alfanumericos y guiones bajos");
+                return ResponseEntity.badRequest().body(new ApiResponse("El nombre de usuario solo puede contener caracteres alfanumericos y guiones bajos"));
             }
             userService.updateUsername(principal.getName(), newUsername);
-            return ResponseEntity.ok("Nombre de usuario actualizado");
+            return ResponseEntity.ok(new ApiResponse("Nombre de usuario actualizado"));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+            return ResponseEntity.badRequest().body(new ApiResponse(e.getMessage()));
         }
     }
 
@@ -82,12 +83,12 @@ public class UserController {
             String currentPassword = body.get("currentPassword");
             String newPassword = body.get("newPassword");
             if (currentPassword == null || newPassword == null || newPassword.trim().isEmpty() || newPassword.length() < 6) {
-                return ResponseEntity.badRequest().body("La nueva contraseña debe tener al menos 6 caracteres");
+                return ResponseEntity.badRequest().body(new ApiResponse("La nueva contraseña debe tener al menos 6 caracteres"));
             }
             userService.updatePassword(principal.getName(), currentPassword, newPassword);
-            return ResponseEntity.ok("Contrasena actualizada");
+            return ResponseEntity.ok(new ApiResponse("Contrasena actualizada"));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+            return ResponseEntity.badRequest().body(new ApiResponse(e.getMessage()));
         }
     }
 }
