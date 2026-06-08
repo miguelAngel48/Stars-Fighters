@@ -12,6 +12,7 @@ export default function Game() {
     const requestRef = useRef(null);
     const keys = useRef({});
     const stompClientRef = useRef(null);
+    const isGameEndedRef = useRef(false);
 
     const [searchParams] = useSearchParams();
     const lobbyId = searchParams.get("lobbyId");
@@ -59,7 +60,6 @@ export default function Game() {
 
             if (response.ok) {
                 const data = await response.json();
-
                 if (data.leveledUp) {
                     setLevelUpData({ newLevel: data.newLevel });
                 }
@@ -128,7 +128,6 @@ export default function Game() {
                         if (elapsedSeconds >= 4) {
                             setCountdown(null);
                             setGameState("PLAYING");
-                            setTimeLeft(Math.max(0, 180 - (elapsedSeconds - 4)));
                         } else {
                             setCountdown(3 - elapsedSeconds);
                             setGameState("STARTING");
@@ -178,6 +177,16 @@ export default function Game() {
                     myKillsRef.current += 1;
                     oppHealthRef.current = 100;
                 });
+
+                client.subscribe('/user/queue/game-opponent-left', () => {
+                    if (!isGameEndedRef.current) {
+                        isGameEndedRef.current = true;
+                        setGameState("ENDED");
+                        if (requestRef.current) cancelAnimationFrame(requestRef.current);
+                        setFinalStats({ myKills: 1, oppKills: 0 }); // Victoria automática
+                        recordMatchInDatabase(true);
+                    }
+                });
             }
         });
 
@@ -187,7 +196,15 @@ export default function Game() {
         loadGameData();
 
         return () => {
-            if (stompClientRef.current) stompClientRef.current.deactivate();
+            if (stompClientRef.current) {
+                if (stompClientRef.current.connected && !isGameEndedRef.current) {
+                    stompClientRef.current.publish({
+                        destination: "/app/game.leave",
+                        body: JSON.stringify({ targetUsername: oppName })
+                    });
+                }
+                stompClientRef.current.deactivate();
+            }
         };
     }, [lobbyId, mapId, myCharId, oppCharId, oppName, navigate]);
 
@@ -229,35 +246,33 @@ export default function Game() {
     }, [gameState]);
 
     useEffect(() => {
-        if (gameState === "PLAYING" && timeLeft > 0) {
+        if (gameState === "PLAYING") {
+            // Reloj infalible basado en la hora absoluta del sistema (previene el fallo al minimizar)
             const matchTimer = setInterval(() => {
-                setTimeLeft((prev) => {
-                    if (prev <= 1) {
-                        clearInterval(matchTimer);
+                const savedStr = localStorage.getItem(`game_start_${lobbyId}`);
+                if (!savedStr) return;
+                
+                const startTime = parseInt(savedStr);
+                const now = Date.now();
+                const elapsedSeconds = Math.floor((now - startTime) / 1000);
+                const matchElapsed = elapsedSeconds - 4; // Quitamos 4s de los preparativos
+                const remaining = Math.max(0, 180 - matchElapsed);
+
+                setTimeLeft(remaining);
+
+                if (remaining <= 0) {
+                    clearInterval(matchTimer);
+                    if (!isGameEndedRef.current) {
+                        isGameEndedRef.current = true;
                         setGameState("ENDED");
-
-                        if (requestRef.current) {
-                            cancelAnimationFrame(requestRef.current);
-                        }
-
-                        const myFinalKills = myKillsRef.current;
-                        const oppFinalKills = oppKillsRef.current;
-
-                        setFinalStats({
-                            myKills: myFinalKills,
-                            oppKills: oppFinalKills
-                        });
-
-                        if (myFinalKills > oppFinalKills) {
-                            recordMatchInDatabase(true);
-                        } else if (myFinalKills < oppFinalKills) {
-                            recordMatchInDatabase(false);
-                        }
-
-                        return 0;
+                        if (requestRef.current) cancelAnimationFrame(requestRef.current);
+                        const mKills = myKillsRef.current;
+                        const oKills = oppKillsRef.current;
+                        setFinalStats({ myKills: mKills, oppKills: oKills });
+                        if (mKills > oKills) recordMatchInDatabase(true);
+                        else if (mKills < oKills) recordMatchInDatabase(false);
                     }
-                    return prev - 1;
-                });
+                }
             }, 1000);
 
             const syncInterval = setInterval(() => {
@@ -281,7 +296,7 @@ export default function Game() {
                 clearInterval(syncInterval);
             };
         }
-    }, [gameState, timeLeft, lobbyId, oppName]);
+    }, [gameState, lobbyId, oppName]);
 
     useEffect(() => {
         if (gameState === "LOADING" || !gameAssets) return;
