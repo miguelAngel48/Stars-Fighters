@@ -9,6 +9,8 @@ import com.StarsFighters.StarsFighters.Repositories.CosmeticRepo;
 import com.StarsFighters.StarsFighters.Repositories.UserRepo;
 import com.StarsFighters.StarsFighters.Utils.FriendCodeGenerator;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import jakarta.transaction.Transactional;
@@ -46,7 +48,7 @@ public class UserService {
     @Transactional
     public void registUser(CreateUser newUser){
         if (userRepo.existsByEmail(newUser.email())) {
-            throw new RuntimeException("El email ya está registrado");
+            throw new RuntimeException("El email ya esta registrado");
         }
         User user = new User();
         user.setEmail(newUser.email());
@@ -65,10 +67,10 @@ public class UserService {
 
     public User loginUser(LoginUser loginData) {
         User user = userRepo.findByEmail(loginData.email())
-                .orElseThrow(() -> new RuntimeException("Credenciales inválidas"));
+                .orElseThrow(() -> new RuntimeException("Credenciales invalidas"));
 
         if (!passwordEncoder.matches(loginData.password(), user.getPassword())) {
-            throw new RuntimeException("Credenciales inválidas");
+            throw new RuntimeException("Credenciales invalidas");
         }
 
         return user;
@@ -116,20 +118,27 @@ public class UserService {
         User user = userRepo.findById(userId)
                 .orElseThrow(() -> new RuntimeException("This user does not exist"));
 
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        boolean isOwner = false;
+        if (auth != null && auth.isAuthenticated()) {
+            String currentPrincipal = auth.getName();
+            isOwner = currentPrincipal.equals(user.getEmail()) || currentPrincipal.equals(user.getUsername());
+        }
+
         return new UserProfileDto(
                 user.getUsername(),
-                user.getEmail(),
+                isOwner ? user.getEmail() : null,
                 user.getFriendCode(),
                 user.getLevel(),
-                user.getCoins(),
+                isOwner ? user.getCoins() : 0,
                 user.getSinceCreated(),
                 user.getStatusPreference(),
                 user.getEquippedAvatarUrl(),
-                user.getRole(),
+                isOwner ? user.getRole() : null,
                 user.getWins(),
                 user.getLosses(),
                 user.getXp(),
-                user.getPassword() != null
+                isOwner && user.getPassword() != null
         );
     }
 
@@ -196,7 +205,7 @@ public class UserService {
     @Transactional
     public void updateUsername(String identifier, String newUsername) {
         if (userRepo.findByUsername(newUsername).isPresent()) {
-            throw new RuntimeException("El nombre de usuario ya está en uso");
+            throw new RuntimeException("El nombre de usuario ya esta en uso");
         }
         User user = findUserByPrincipal(identifier);
         user.setUsername(newUsername);

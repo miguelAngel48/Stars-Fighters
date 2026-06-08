@@ -48,7 +48,11 @@ public class UserController {
     @PutMapping("/avatar")
     public ResponseEntity<?> updateAvatar(@RequestBody Map<String, String> body, Principal principal) {
         try {
-            userService.updateAvatar(principal.getName(), body.get("avatarUrl"));
+            String avatarUrl = body.get("avatarUrl");
+            if (avatarUrl == null || avatarUrl.trim().isEmpty() || avatarUrl.contains("<") || avatarUrl.contains(">")) {
+                return ResponseEntity.badRequest().body("URL de avatar invalida");
+            }
+            userService.updateAvatar(principal.getName(), avatarUrl);
             return ResponseEntity.ok("Avatar actualizado");
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
@@ -58,7 +62,14 @@ public class UserController {
     @PutMapping("/username")
     public ResponseEntity<?> updateUsername(@RequestBody Map<String, String> body, Principal principal) {
         try {
-            userService.updateUsername(principal.getName(), body.get("newUsername"));
+            String newUsername = body.get("newUsername");
+            if (newUsername == null || newUsername.trim().isEmpty() || newUsername.length() < 3 || newUsername.length() > 20) {
+                return ResponseEntity.badRequest().body("El nombre de usuario debe tener entre 3 y 20 caracteres");
+            }
+            if (!newUsername.matches("^[a-zA-Z0-9_]+$")) {
+                return ResponseEntity.badRequest().body("El nombre de usuario solo puede contener caracteres alfanumericos y guiones bajos");
+            }
+            userService.updateUsername(principal.getName(), newUsername);
             return ResponseEntity.ok("Nombre de usuario actualizado");
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
@@ -68,8 +79,13 @@ public class UserController {
     @PutMapping("/password")
     public ResponseEntity<?> updatePassword(@RequestBody Map<String, String> body, Principal principal) {
         try {
-            userService.updatePassword(principal.getName(), body.get("currentPassword"), body.get("newPassword"));
-            return ResponseEntity.ok("Contraseña actualizada");
+            String currentPassword = body.get("currentPassword");
+            String newPassword = body.get("newPassword");
+            if (currentPassword == null || newPassword == null || newPassword.trim().isEmpty() || newPassword.length() < 6) {
+                return ResponseEntity.badRequest().body("La nueva contraseña debe tener al menos 6 caracteres");
+            }
+            userService.updatePassword(principal.getName(), currentPassword, newPassword);
+            return ResponseEntity.ok("Contrasena actualizada");
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
