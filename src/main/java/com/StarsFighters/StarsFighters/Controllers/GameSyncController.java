@@ -22,7 +22,6 @@ public class GameSyncController {
     @MessageMapping("/game.sync")
     public void syncGame(@Payload GameSyncDto syncDto, Principal principal) {
         if (principal != null) {
-            // Guardamos directamente el nombre exacto de la sesión para evitar fallos de mayúsculas
             activePlayersOpponents.put(principal.getName(), syncDto.targetUsername());
         }
         messagingTemplate.convertAndSendToUser(

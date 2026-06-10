@@ -41,7 +41,6 @@ public class PresenceEventListener {
             String username = principal.getName();
             updatePresence(username, false);
 
-            // Avisar al oponente si estábamos en partida
             String opponent = GameSyncController.activePlayersOpponents.get(username);
             if (opponent != null) {
                 messagingTemplate.convertAndSendToUser(

@@ -11,8 +11,6 @@ export default function Dashboard() {
         const fetchLeaderboard = async () => {
             const token = localStorage.getItem("token");
             try {
-                // Puedes llamar a este endpoint incluso sin token si configuras SecurityConfig,
-                // pero por ahora pasamos el token por si acaso.
                 const res = await fetch("http://localhost:8080/api/stats/leaderboard", {
                     headers: token ? { "Authorization": `Bearer ${token}` } : {}
                 });
