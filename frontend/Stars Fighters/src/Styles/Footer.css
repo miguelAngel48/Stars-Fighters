@@ -1,0 +1,11 @@
+.global-footer {
+    width: 100%;
+    background-color: rgba(5, 8, 20, 0.95);
+    border-top: 2px solid var(--color-border);
+    padding: 20px 0;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 14px;
+    margin-top: auto;
+    z-index: 10;
+}

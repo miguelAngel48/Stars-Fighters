@@ -20,4 +20,6 @@ public interface FriendshipRepo extends JpaRepository<Friendship,Long> {
     @Query("SELECT f FROM Friendship f WHERE (f.user = :user OR f.friend = :user) AND f.status = :status")
     List<Friendship> findAcceptedFriendships(@Param("user") User user, @Param("status") FriendshipStatus status);
 
+    @Query("SELECT CASE WHEN COUNT(f) > 0 THEN true ELSE false END FROM Friendship f WHERE (f.user = :user AND f.friend = :friend) OR (f.user = :friend AND f.friend = :user)")
+    boolean existsByUsers(@Param("user") User user, @Param("friend") User friend);
 }

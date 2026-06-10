@@ -5,6 +5,7 @@ import SockJS from 'sockjs-client/dist/sockjs';
 import { jwtDecode } from "jwt-decode";
 import "../Styles/Game.css";
 import LevelUpModal from "./LevelUpModal";
+import corazonIcon from '../assets/corazon.png';
 
 export default function Game() {
 
@@ -24,10 +25,11 @@ export default function Game() {
 
     const [gameState, setGameState] = useState("LOADING");
     const [countdown, setCountdown] = useState(3);
-    const [timeLeft, setTimeLeft] = useState(180);
+    const [timeLeft, setTimeLeft] = useState(null);
     const [gameAssets, setGameAssets] = useState(null);
     const [finalStats, setFinalStats] = useState(null);
     const [levelUpData, setLevelUpData] = useState(null);
+    const [gameSettings, setGameSettings] = useState(null);
 
     const isLeftPlayerRef = useRef(true);
     const myPositionRef = useRef({ x: 0, y: 100 });
@@ -40,6 +42,8 @@ export default function Game() {
 
     const myHealthRef = useRef(100);
     const oppHealthRef = useRef(100);
+    const myLivesRef = useRef(0);
+    const oppLivesRef = useRef(0);
     const myKillsRef = useRef(0);
     const oppKillsRef = useRef(0);
 
@@ -53,7 +57,7 @@ export default function Game() {
     const recordMatchInDatabase = async (isWinner) => {
         const token = localStorage.getItem("token");
         try {
-            const response = await fetch(`${import.meta.env.VITE_API_URL}/api/stats/record?isWinner=${isWinner}`, {
+            const response = await fetch(`${import.meta.env.VITE_API_URL}/api/stats/record?isWinner=${isWinner}&lobbyId=${lobbyId}`, {
                 method: "POST",
                 headers: { "Authorization": `Bearer ${token}` }
             });
@@ -64,8 +68,43 @@ export default function Game() {
                     setLevelUpData({ newLevel: data.newLevel });
                 }
             }
-        } catch (error) {
-            console.error(error);
+        } catch (error) {}
+    };
+
+    const handleEndGame = (myForcedLoss = false, oppForcedLoss = false) => {
+        if (isGameEndedRef.current) return;
+        isGameEndedRef.current = true;
+        setGameState("ENDED");
+        if (requestRef.current) cancelAnimationFrame(requestRef.current);
+
+        let myWins = false;
+        let tie = false;
+
+        if (myForcedLoss) {
+            myWins = false;
+        } else if (oppForcedLoss) {
+            myWins = true;
+        } else {
+            if (gameSettings.lives > 0) {
+                if (myLivesRef.current > oppLivesRef.current) myWins = true;
+                else if (myLivesRef.current === oppLivesRef.current) tie = true;
+            } else {
+                if (myKillsRef.current > oppKillsRef.current) myWins = true;
+                else if (myKillsRef.current === oppKillsRef.current) tie = true;
+            }
+        }
+
+        setFinalStats({
+            myKills: myKillsRef.current,
+            oppKills: oppKillsRef.current,
+            myLives: myLivesRef.current,
+            oppLives: oppLivesRef.current,
+            isWin: myWins,
+            isTie: tie
+        });
+
+        if (gameSettings && gameSettings.mode === "normal") {
+            recordMatchInDatabase(myWins && !tie);
         }
     };
 
@@ -84,12 +123,19 @@ export default function Game() {
 
         const loadGameData = async () => {
             try {
+                const settingsRes = await fetch(`${import.meta.env.VITE_API_URL}/api/lobby/settings/${lobbyId}`, { headers: { "Authorization": `Bearer ${token}` } });
                 const charsRes = await fetch(`${import.meta.env.VITE_API_URL}/api/characters`, { headers: { "Authorization": `Bearer ${token}` } });
                 const mapsRes = await fetch(`${import.meta.env.VITE_API_URL}/api/maps`, { headers: { "Authorization": `Bearer ${token}` } });
 
-                if (charsRes.ok && mapsRes.ok) {
+                if (settingsRes.ok && charsRes.ok && mapsRes.ok) {
+                    const settings = await settingsRes.json();
                     const chars = await charsRes.json();
                     const maps = await mapsRes.json();
+
+                    setGameSettings(settings);
+                    myLivesRef.current = settings.lives;
+                    oppLivesRef.current = settings.lives;
+                    setTimeLeft(settings.timeLimit > 0 ? settings.timeLimit : null);
 
                     const myRawChar = chars.find(c => c.id === Number(myCharId));
                     const oppRawChar = chars.find(c => c.id === Number(oppCharId));
@@ -158,33 +204,58 @@ export default function Game() {
                     myHealthRef.current = Math.max(0, myHealthRef.current - 10);
 
                     if (myHealthRef.current <= 0) {
-                        oppKillsRef.current += 1;
                         myHealthRef.current = 100;
+                        
+                        if (myLivesRef.current > 0) {
+                            myLivesRef.current = Math.max(0, myLivesRef.current - 1);
+                        }
+                        oppKillsRef.current += 1;
 
                         const mySpawnX = isLeftPlayerRef.current ? window.innerWidth * 0.3 : window.innerWidth * 0.7 - 80;
                         myPositionRef.current = { x: mySpawnX, y: 100 };
 
+                        let isOver = false;
+                        setGameSettings(prev => {
+                            if (prev && prev.lives > 0 && myLivesRef.current <= 0) isOver = true;
+                            return prev;
+                        });
+
                         if (stompClientRef.current && stompClientRef.current.connected) {
                             stompClientRef.current.publish({
                                 destination: "/app/game.death",
-                                body: JSON.stringify({ lobbyId: lobbyId, targetUsername: oppName })
+                                body: JSON.stringify({ lobbyId: lobbyId, targetUsername: oppName, isGameOver: isOver })
                             });
+                        }
+
+                        if (isOver) {
+                            handleEndGame(true, false);
                         }
                     }
                 });
 
-                client.subscribe('/user/queue/game-death', () => {
+                client.subscribe('/user/queue/game-death', (msg) => {
+                    const deathData = JSON.parse(msg.body);
                     myKillsRef.current += 1;
+                    
+                    if (oppLivesRef.current > 0) {
+                        oppLivesRef.current = Math.max(0, oppLivesRef.current - 1);
+                    }
                     oppHealthRef.current = 100;
+
+                    let checkIsOver = deathData.isGameOver;
+                    setGameSettings(prev => {
+                        if (prev && prev.lives > 0 && oppLivesRef.current <= 0) checkIsOver = true;
+                        return prev;
+                    });
+
+                    if (checkIsOver) {
+                        handleEndGame(false, true);
+                    }
                 });
 
                 client.subscribe('/user/queue/game-opponent-left', () => {
                     if (!isGameEndedRef.current) {
-                        isGameEndedRef.current = true;
-                        setGameState("ENDED");
-                        if (requestRef.current) cancelAnimationFrame(requestRef.current);
-                        setFinalStats({ myKills: 1, oppKills: 0 }); // Victoria automática
-                        recordMatchInDatabase(true);
+                        handleEndGame(false, true);
                     }
                 });
             }
@@ -246,32 +317,24 @@ export default function Game() {
     }, [gameState]);
 
     useEffect(() => {
-        if (gameState === "PLAYING") {
-            // Reloj infalible basado en la hora absoluta del sistema (previene el fallo al minimizar)
+        if (gameState === "PLAYING" && gameSettings) {
             const matchTimer = setInterval(() => {
+                if (gameSettings.timeLimit <= 0) return;
+
                 const savedStr = localStorage.getItem(`game_start_${lobbyId}`);
                 if (!savedStr) return;
                 
                 const startTime = parseInt(savedStr);
                 const now = Date.now();
                 const elapsedSeconds = Math.floor((now - startTime) / 1000);
-                const matchElapsed = elapsedSeconds - 4; // Quitamos 4s de los preparativos
-                const remaining = Math.max(0, 180 - matchElapsed);
+                const matchElapsed = Math.max(0, elapsedSeconds - 4);
+                const remaining = Math.max(0, gameSettings.timeLimit - matchElapsed);
 
                 setTimeLeft(remaining);
 
-                if (remaining <= 0) {
+                if (remaining <= 0 && !isGameEndedRef.current) {
                     clearInterval(matchTimer);
-                    if (!isGameEndedRef.current) {
-                        isGameEndedRef.current = true;
-                        setGameState("ENDED");
-                        if (requestRef.current) cancelAnimationFrame(requestRef.current);
-                        const mKills = myKillsRef.current;
-                        const oKills = oppKillsRef.current;
-                        setFinalStats({ myKills: mKills, oppKills: oKills });
-                        if (mKills > oKills) recordMatchInDatabase(true);
-                        else if (mKills < oKills) recordMatchInDatabase(false);
-                    }
+                    handleEndGame(false, false);
                 }
             }, 1000);
 
@@ -296,10 +359,10 @@ export default function Game() {
                 clearInterval(syncInterval);
             };
         }
-    }, [gameState, lobbyId, oppName]);
+    }, [gameState, lobbyId, oppName, gameSettings]);
 
     useEffect(() => {
-        if (gameState === "LOADING" || !gameAssets) return;
+        if (gameState === "LOADING" || !gameAssets || !gameSettings) return;
 
         const canvas = canvasRef.current;
         if (!canvas) return;
@@ -467,18 +530,31 @@ export default function Game() {
                 }
 
                 if (myPositionRef.current.y > canvas.height + 50) {
-                    oppKillsRef.current += 1;
                     myHealthRef.current = 100;
+                    
+                    if (gameSettings.lives > 0) {
+                        myLivesRef.current = Math.max(0, myLivesRef.current - 1);
+                    }
+                    oppKillsRef.current += 1;
 
                     const mySpawnX = isLeftPlayerRef.current ? window.innerWidth * 0.3 : window.innerWidth * 0.7 - 80;
                     myPositionRef.current = { x: mySpawnX, y: -50 };
                     myPlayer.velocityY = 0;
 
+                    let isOver = false;
+                    if (gameSettings.lives > 0 && myLivesRef.current <= 0) {
+                        isOver = true;
+                    }
+
                     if (stompClientRef.current && stompClientRef.current.connected) {
                         stompClientRef.current.publish({
                             destination: "/app/game.death",
-                            body: JSON.stringify({ lobbyId: lobbyId, targetUsername: oppName })
+                            body: JSON.stringify({ lobbyId: lobbyId, targetUsername: oppName, isGameOver: isOver })
                         });
+                    }
+
+                    if (isOver) {
+                        handleEndGame(true, false);
                     }
                 }
             }
@@ -559,12 +635,24 @@ export default function Game() {
             window.removeEventListener("resize", resizeCanvas);
             if (requestRef.current) cancelAnimationFrame(requestRef.current);
         };
-    }, [gameState, gameAssets, oppName]);
+    }, [gameState, gameAssets, gameSettings, oppName]);
 
     const formatTime = (seconds) => {
+        if (seconds === null) return "∞";
         const m = Math.floor(seconds / 60);
         const s = seconds % 60;
         return `${m}:${s < 10 ? "0" : ""}${s}`;
+    };
+
+    const renderLivesOrKills = (lives, kills) => {
+        if (gameSettings && gameSettings.lives > 0) {
+            const hearts = [];
+            for (let i = 0; i < lives; i++) {
+                hearts.push(<img key={i} src={corazonIcon} alt="Vida" style={{ width: '22px', height: '22px', marginLeft: '4px', verticalAlign: 'middle' }} />);
+            }
+            return <span style={{ display: 'flex', alignItems: 'center' }}>Vidas: {hearts}</span>;
+        }
+        return `Bajas: ${kills}`;
     };
 
     if (gameState === "LOADING") {
@@ -576,11 +664,14 @@ export default function Game() {
             <canvas ref={canvasRef} className="game-canvas" />
 
             <div className="ui-layer">
-
                 <div className="top-bar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '90%', margin: '0 auto' }}>
-                    <div className="player-deaths" style={{ color: '#4CAF50', fontWeight: 'bold', fontSize: '20px' }}>Mis Bajas: {myKillsRef.current}</div>
+                    <div className="player-deaths" style={{ color: '#4CAF50', fontWeight: 'bold', fontSize: '20px' }}>
+                        {renderLivesOrKills(myLivesRef.current, myKillsRef.current)}
+                    </div>
                     <div className="timer" style={{ fontSize: '28px' }}>{formatTime(timeLeft)}</div>
-                    <div className="opp-deaths" style={{ color: '#ff3333', fontWeight: 'bold', fontSize: '20px' }}>Bajas de {oppName}: {oppKillsRef.current}</div>
+                    <div className="opp-deaths" style={{ color: '#ff3333', fontWeight: 'bold', fontSize: '20px' }}>
+                        <span style={{ marginRight: '8px' }}>{oppName} -</span> {renderLivesOrKills(oppLivesRef.current, oppKillsRef.current)}
+                    </div>
                 </div>
 
                 <div className="center-screen">
@@ -602,53 +693,60 @@ export default function Game() {
                         }}>
                             <h1 style={{ color: 'var(--color-primary)', fontSize: '36px', margin: '0 0 10px 0' }}>FIN DE LA PARTIDA</h1>
 
-                            <h2 style={{ fontSize: '28px', color: finalStats.myKills > finalStats.oppKills ? '#4CAF50' : finalStats.myKills < finalStats.oppKills ? '#ff3333' : '#ffb703', margin: '20px 0' }}>
-                                {finalStats.myKills > finalStats.oppKills
+                            <h2 style={{ fontSize: '28px', color: finalStats.isWin ? '#4CAF50' : finalStats.isTie ? '#ffb703' : '#ff3333', margin: '20px 0' }}>
+                                {finalStats.isWin
                                     ? "🏆 ¡HAS GANADO LA BATALLA! 🏆"
-                                    : finalStats.myKills < finalStats.oppKills
-                                        ? "❌ HAS SIDO DERROTADO ❌"
-                                        : "🤝 ¡UN EMPATE LEGENDARIO! 🤝"}
+                                    : finalStats.isTie
+                                        ? "🤝 ¡UN EMPATE LEGENDARIO! 🤝"
+                                        : "❌ HAS SIDO DERROTADO ❌"}
                             </h2>
 
                             <div className="stats-summary" style={{ display: 'flex', justifyContent: 'space-around', margin: '30px 0', background: '#333', padding: '20px', borderRadius: '8px' }}>
                                 <div>
                                     <h3 style={{ margin: 0, color: '#4CAF50' }}>Tú</h3>
-                                    <p style={{ fontSize: '24px', margin: '10px 0 0 0', fontWeight: 'bold' }}>{finalStats.myKills} Bajas</p>
+                                    <p style={{ fontSize: '18px', margin: '10px 0 0 0', fontWeight: 'bold' }}>Bajas: {finalStats.myKills}</p>
+                                    {gameSettings.lives > 0 && <p style={{ fontSize: '18px', margin: '5px 0 0 0', fontWeight: 'bold' }}>Vidas: {finalStats.myLives}</p>}
                                 </div>
                                 <div style={{ borderLeft: '2px solid #555', height: '50px' }}></div>
                                 <div>
                                     <h3 style={{ margin: 0, color: '#ff3333' }}>{oppName}</h3>
-                                    <p style={{ fontSize: '24px', margin: '10px 0 0 0', fontWeight: 'bold' }}>{finalStats.oppKills} Bajas</p>
+                                    <p style={{ fontSize: '18px', margin: '10px 0 0 0', fontWeight: 'bold' }}>Bajas: {finalStats.oppKills}</p>
+                                    {gameSettings.lives > 0 && <p style={{ fontSize: '18px', margin: '5px 0 0 0', fontWeight: 'bold' }}>Vidas: {finalStats.oppLives}</p>}
                                 </div>
                             </div>
 
                             <p style={{ color: '#aaa', fontStyle: 'italic', marginBottom: '10px' }}>
-                                {finalStats.myKills > finalStats.oppKills
+                                {finalStats.isWin
                                     ? "Has demostrado ser el Star Warrior definitivo."
-                                    : finalStats.myKills < finalStats.oppKills
-                                        ? "Entrena más duro y vuelve a intentarlo."
-                                        : "Ambos guerreros están al mismo nivel."}
+                                    : finalStats.isTie
+                                        ? "Ambos guerreros están al mismo nivel."
+                                        : "Entrena más duro y vuelve a intentarlo."}
                             </p>
 
-                            <div className="rewards-container">
-                                <div className="reward-box reward-coins">
-                                    <span className="reward-coins-text">
-                                        🪙 +{finalStats.myKills > finalStats.oppKills ? 10 : finalStats.myKills < finalStats.oppKills ? 5 : 0} Monedas
-                                    </span>
+                            {gameSettings.mode === "normal" ? (
+                                <div className="rewards-container">
+                                    <div className="reward-box reward-coins">
+                                        <span className="reward-coins-text">
+                                            🪙 +{finalStats.isWin ? 10 : finalStats.isTie ? 0 : 5} Monedas
+                                        </span>
+                                    </div>
+                                    <div className="reward-box reward-xp">
+                                        <span className="reward-xp-text">
+                                            ✨ +{
+                                                (() => {
+                                                    const currentLevel = gameAssets?.myChar?.level || 1;
+                                                    const baseXP = 100 + (10 * currentLevel);
+                                                    return finalStats.isWin ? baseXP : finalStats.isTie ? 0 : Math.floor(baseXP / 2);
+                                                })()
+                                            } XP
+                                        </span>
+                                    </div>
                                 </div>
-
-                                <div className="reward-box reward-xp">
-                                    <span className="reward-xp-text">
-                                        ✨ +{
-                                            (() => {
-                                                const currentLevel = gameAssets?.myChar?.level || 1;
-                                                const baseXP = 100 + (10 * currentLevel);
-                                                return finalStats.myKills > finalStats.oppKills ? baseXP : Math.floor(baseXP / 2);
-                                            })()
-                                        } XP
-                                    </span>
+                            ) : (
+                                <div style={{ margin: '20px 0', padding: '10px', background: 'rgba(255,255,255,0.1)', borderRadius: '6px' }}>
+                                    <p style={{ margin: 0, color: '#ccc', fontSize: '14px' }}>Modo Personalizado: No se otorgan recompensas.</p>
                                 </div>
-                            </div>
+                            )}
 
                             <button
                                 onClick={() => {

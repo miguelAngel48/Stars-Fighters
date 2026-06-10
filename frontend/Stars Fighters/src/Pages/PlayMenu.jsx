@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "../contexts/UserContext";
 import { useNotification } from "../contexts/NotificationContext";
+import "../Styles/PlayMenu.css";
 
 export default function PlayMenu() {
     const { user } = useUser();
@@ -18,7 +19,7 @@ export default function PlayMenu() {
         }
     }, [latestEvent, navigate]);
 
-    const handlePlayFriends = () => {
+    const handlePlayCustom = () => {
         navigate("/lobby");
     };
 
@@ -47,41 +48,24 @@ export default function PlayMenu() {
     if (!user) return null;
 
     return (
-        <div style={{ padding: '40px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
-            <h1 style={{ color: 'var(--color-primary)', marginBottom: '40px', textTransform: 'uppercase' }}>Modo de Juego</h1>
-            
+        <div className="playmenu-container">
+            <h1 className="playmenu-title">Modo de Juego</h1>
             {!isSearching ? (
-                <div style={{ display: 'flex', gap: '30px', flexWrap: 'wrap', justifyContent: 'center' }}>
-                    <div 
-                        className="user-card" 
-                        style={{ width: '300px', textAlign: 'center', cursor: 'pointer', transition: 'transform 0.2s' }}
-                        onClick={handlePlayFriends}
-                        onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
-                        onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
-                    >
-                        <h2 style={{ color: 'var(--color-accent)' }}>Jugar con Amigos</h2>
-                        <p style={{ color: 'var(--text-muted)' }}>Crea una sala privada e invita a tus amigos a combatir.</p>
+                <div className="modes-grid">
+                    <div className="mode-card normal-card" onClick={handleSearchMatch}>
+                        <h2 className="mode-name normal-title">Partida Normal</h2>
+                        <p className="mode-description">Encuentra un oponente aleatorio en línea. Modo clasificatorio de 3 minutos y 5 vidas con obtención de recompensas.</p>
                     </div>
-
-                    <div 
-                        className="user-card" 
-                        style={{ width: '300px', textAlign: 'center', cursor: 'pointer', transition: 'transform 0.2s', border: '2px solid var(--color-primary)' }}
-                        onClick={handleSearchMatch}
-                        onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
-                        onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
-                    >
-                        <h2 style={{ color: 'var(--color-primary)' }}>Buscar Partida</h2>
-                        <p style={{ color: 'var(--text-muted)' }}>Encuentra un oponente aleatorio en línea.</p>
+                    <div className="mode-card custom-card" onClick={handlePlayCustom}>
+                        <h2 className="mode-name custom-title">Partida Personalizada</h2>
+                        <p className="mode-description">Crea una sala privada, configura las reglas a tu gusto e invita a tus amigos a entrenar o combatir.</p>
                     </div>
                 </div>
             ) : (
-                <div className="user-card" style={{ width: '400px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px' }}>
-                    <h2 style={{ color: 'var(--color-primary)' }}>Buscando Oponente...</h2>
-                    <div style={{ width: '50px', height: '50px', border: '5px solid rgba(255,255,255,0.1)', borderTopColor: 'var(--color-primary)', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
-                    <button className="btn-cancel" onClick={handleCancelSearch}>Cancelar Búsqueda</button>
-                    <style>{`
-                        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-                    `}</style>
+                <div className="searching-panel">
+                    <h2 className="searching-title">Buscando Oponente...</h2>
+                    <div className="loading-spinner"></div>
+                    <button className="btn-cancel-search" onClick={handleCancelSearch}>Cancelar Búsqueda</button>
                 </div>
             )}
         </div>

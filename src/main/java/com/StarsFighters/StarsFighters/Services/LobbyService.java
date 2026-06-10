@@ -20,10 +20,14 @@ public class LobbyService {
     private UserRepo userRepo;
 
     @Autowired
+    private UserService userService;
+
+    @Autowired
     private SimpMessagingTemplate messagingTemplate;
 
     private final Queue<Long> matchmakingQueue = new ConcurrentLinkedQueue<>();
     private final java.util.Map<String, java.util.Map<String, Object>> activeMatches = new java.util.concurrent.ConcurrentHashMap<>();
+    private final java.util.Map<String, java.util.Map<String, Object>> lobbySettings = new java.util.concurrent.ConcurrentHashMap<>();
 
     public void joinMatchmaking(Long userId) {
         if (matchmakingQueue.contains(userId)) return;
@@ -33,6 +37,12 @@ public class LobbyService {
             User player1 = userRepo.findById(waitingUserId).orElseThrow();
             User player2 = userRepo.findById(userId).orElseThrow();
             String lobbyId = UUID.randomUUID().toString();
+
+            java.util.Map<String, Object> settings = new java.util.concurrent.ConcurrentHashMap<>();
+            settings.put("mode", "normal");
+            settings.put("timeLimit", 180);
+            settings.put("lives", 5);
+            lobbySettings.put(lobbyId, settings);
 
             GameInviteDto p1Msg = new GameInviteDto(
                     "MATCH_FOUND_LEADER",
@@ -66,6 +76,12 @@ public class LobbyService {
 
         String lobbyId = UUID.randomUUID().toString();
 
+        java.util.Map<String, Object> settings = new java.util.concurrent.ConcurrentHashMap<>();
+        settings.put("mode", "custom");
+        settings.put("timeLimit", 180);
+        settings.put("lives", 5);
+        lobbySettings.put(lobbyId, settings);
+
         GameInviteDto invite = new GameInviteDto(
                 "GAME_INVITE",
                 leader.getId(),
@@ -80,6 +96,17 @@ public class LobbyService {
                 invite
         );
         return lobbyId;
+    }
+
+    public void updateLobbySettings(String lobbyId, int timeLimit, int lives) {
+        java.util.Map<String, Object> settings = lobbySettings.getOrDefault(lobbyId, new java.util.concurrent.ConcurrentHashMap<>());
+        settings.put("timeLimit", timeLimit);
+        settings.put("lives", lives);
+        lobbySettings.put(lobbyId, settings);
+    }
+
+    public java.util.Map<String, Object> getLobbySettings(String lobbyId) {
+        return lobbySettings.getOrDefault(lobbyId, java.util.Map.of("mode", "custom", "timeLimit", 180, "lives", 5));
     }
 
     public void respondToInvite(Long friendId, Long leaderId, boolean accepted, String lobbyId) {
@@ -181,6 +208,8 @@ public class LobbyService {
             Long finalMapId = (Long) matchData.getOrDefault("mapId", 1L);
             Long leaderCharId = (Long) matchData.get("leaderCharId");
             Long guestCharId = (Long) matchData.get("guestCharId");
+            String leaderName = (String) matchData.get("leaderUsername");
+            String guestName = (String) matchData.get("guestUsername");
 
             GameStartDto startGameMsg = new GameStartDto(
                     "START_GAME",
@@ -190,8 +219,13 @@ public class LobbyService {
                     lobbyId
             );
 
-            messagingTemplate.convertAndSendToUser((String) matchData.get("leaderUsername"), "/queue/notifications", startGameMsg);
-            messagingTemplate.convertAndSendToUser((String) matchData.get("guestUsername"), "/queue/notifications", startGameMsg);
+            messagingTemplate.convertAndSendToUser(leaderName, "/queue/notifications", startGameMsg);
+            messagingTemplate.convertAndSendToUser(guestName, "/queue/notifications", startGameMsg);
+
+            java.util.Map<String, Object> settings = lobbySettings.get(lobbyId);
+            if (settings != null && "normal".equals(settings.get("mode"))) {
+                userService.registerNormalMatch(lobbyId, leaderName, guestName);
+            }
 
             activeMatches.remove(lobbyId);
         }

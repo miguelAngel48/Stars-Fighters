@@ -36,11 +36,15 @@ public class FriendshipService {
 
     @Transactional
     public void sendFriendRequestByCode(String senderUsername, String receiverFriendCode) {
-        User sender = userRepo.findByUsername(senderUsername).orElseThrow();
-        User receiver = userRepo.findByFriendCode(receiverFriendCode).orElseThrow();
+        User sender = userRepo.findByUsername(senderUsername).orElseThrow(() -> new RuntimeException("Emisor no encontrado"));
+        User receiver = userRepo.findByFriendCode(receiverFriendCode).orElseThrow(() -> new RuntimeException("Código de amigo no encontrado"));
 
         if (sender.getId().equals(receiver.getId())) {
-            throw new RuntimeException("Error");
+            throw new RuntimeException("No puedes enviarte una solicitud a ti mismo");
+        }
+
+        if (friendshipRepo.existsByUsers(sender, receiver)) {
+            throw new RuntimeException("Ya existe una amistad o solicitud pendiente con este usuario");
         }
 
         Friendship request = new Friendship(sender, receiver, FriendshipStatus.PENDING);
@@ -60,8 +64,16 @@ public class FriendshipService {
 
     @Transactional
     public void sendFriendRequest(Long senderId, Long receiverId) {
-        User sender = userRepo.findById(senderId).orElseThrow();
-        User receiver = userRepo.findById(receiverId).orElseThrow();
+        User sender = userRepo.findById(senderId).orElseThrow(() -> new RuntimeException("Emisor no encontrado"));
+        User receiver = userRepo.findById(receiverId).orElseThrow(() -> new RuntimeException("Receptor no encontrado"));
+
+        if (sender.getId().equals(receiver.getId())) {
+            throw new RuntimeException("No puedes enviarte una solicitud a ti mismo");
+        }
+
+        if (friendshipRepo.existsByUsers(sender, receiver)) {
+            throw new RuntimeException("Ya existe una amistad o solicitud pendiente con este usuario");
+        }
 
         Friendship request = new Friendship(sender, receiver, FriendshipStatus.PENDING);
         friendshipRepo.save(request);
@@ -108,7 +120,7 @@ public class FriendshipService {
 
         if (!friendship.getUser().getId().equals(currentUser.getId()) &&
                 !friendship.getFriend().getId().equals(currentUser.getId())) {
-            throw new RuntimeException("Error");
+            throw new RuntimeException("Error al cancelar la amistad");
         }
 
         List<ChatMessage> messages = chatMessageRepo.findByFriendshipId(friendshipId);

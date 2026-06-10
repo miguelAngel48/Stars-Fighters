@@ -23,7 +23,7 @@ public class LobbyController {
     ) {
         try {
             Long leaderId = jwtService.extractId(authHeader.substring(7));
-            String lobbyId =  lobbyService.sendGameInvite(leaderId, friendId);
+            String lobbyId = lobbyService.sendGameInvite(leaderId, friendId);
             return ResponseEntity.ok(java.util.Map.of("lobbyId", lobbyId));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
@@ -131,5 +131,19 @@ public class LobbyController {
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
+    }
+
+    @PostMapping("/settings")
+    public ResponseEntity<?> updateSettings(
+            @RequestParam String lobbyId,
+            @RequestParam int timeLimit,
+            @RequestParam int lives) {
+        lobbyService.updateLobbySettings(lobbyId, timeLimit, lives);
+        return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/settings/{lobbyId}")
+    public ResponseEntity<?> getSettings(@PathVariable String lobbyId) {
+        return ResponseEntity.ok(lobbyService.getLobbySettings(lobbyId));
     }
 }

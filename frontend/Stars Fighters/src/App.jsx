@@ -2,6 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from './Components/Navbar';
 import SocialSidebar from './Components/SocialSidebar';
+import Footer from './Components/Footer';
 import { NotificationProvider, useNotification } from './contexts/NotificationContext';
 import { useUser } from './contexts/UserContext';
 import './Styles/App.css';
@@ -36,14 +37,17 @@ const AppContent = () => {
         <div className="dashboard-container landing-container">
             <Navbar />
             <div className="dashboard-body" style={{ display: 'flex', flex: 1, overflow: 'hidden', position: 'relative' }}>
-                <main className="hero-section main-content" style={{ padding: '0', display: 'flex', flexDirection: 'column', flex: 1 }}>
-                    <div className="hero-content">
-                        <img src="/logo.png" alt="Main Logo" className="main-logo" />
-                        <h1 className="hero-subtitle">UN UNIVERSO DE ESTRATEGIA Y COMBATE</h1>
-                        <button className="play-free-btn" onClick={() => navigate(user ? '/play' : '/register')}>
-                            {user ? 'JUGAR' : 'JUGAR GRATIS'}
-                        </button>
+                <main className="main-content" style={{ padding: '0', display: 'flex', flexDirection: 'column', flex: 1, overflowY: 'auto' }}>
+                    <div className="hero-section" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <div className="hero-content">
+                            <img src="/logo.png" alt="Main Logo" className="main-logo" />
+                            <h1 className="hero-subtitle">UN UNIVERSO DE ESTRATEGIA Y COMBATE</h1>
+                            <button className="play-free-btn" onClick={() => navigate(user ? '/play' : '/register')}>
+                                {user ? 'JUGAR' : 'JUGAR GRATIS'}
+                            </button>
+                        </div>
                     </div>
+                    <Footer />
                 </main>
                 {user && <SocialSidebar />}
             </div>

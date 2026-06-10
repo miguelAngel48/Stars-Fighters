@@ -3,6 +3,7 @@ import { Outlet, useLocation } from "react-router-dom";
 import { NotificationProvider, useNotification } from "../contexts/NotificationContext";
 import Navbar from "./Navbar";
 import SocialSidebar from "./SocialSidebar";
+import Footer from "./Footer";
 
 function ToastsRenderer() {
     const { toastList, removeToast, respondFriendRequest, respondGameInvite } = useNotification();
@@ -27,17 +28,21 @@ function ToastsRenderer() {
 
 export default function RootLayout() {
     const location = useLocation();
-    const hideUI = ["/lobby", "/game", "/character-selection"].includes(location.pathname);
+    const hideNavbarSidebar = ["/lobby", "/game", "/character-selection"].includes(location.pathname);
+    const hideFooter = ["/game"].includes(location.pathname);
 
     return (
         <NotificationProvider>
             <div className="dashboard-container">
-                {!hideUI && <Navbar />}
-                <div className="dashboard-body" style={hideUI ? { height: '100vh', width: '100vw', display: 'flex' } : { display: 'flex', flex: 1, overflow: 'hidden', position: 'relative' }}>
-                    <div className="main-content" style={{ padding: '0', display: 'flex', flexDirection: 'column', flex: 1 }}>
-                        <Outlet />
+                {!hideNavbarSidebar && <Navbar />}
+                <div className="dashboard-body" style={hideNavbarSidebar ? { display: 'flex', flex: 1, overflow: 'hidden' } : { display: 'flex', flex: 1, overflow: 'hidden', position: 'relative' }}>
+                    <div className="main-content" style={{ padding: '0', display: 'flex', flexDirection: 'column', flex: 1, overflowY: 'auto' }}>
+                        <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+                            <Outlet />
+                        </div>
+                        {!hideFooter && <Footer />}
                     </div>
-                    {!hideUI && <SocialSidebar />}
+                    {!hideNavbarSidebar && <SocialSidebar />}
                 </div>
             </div>
             <ToastsRenderer />

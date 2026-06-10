@@ -129,6 +129,18 @@ export default function SocialSidebar() {
 
     const handleAddFriend = async () => {
         if (!newFriendIdentifier.trim()) return;
+
+        if (newFriendIdentifier === user.friendCode || newFriendIdentifier === user.username) {
+            setAddFriendMessage("No puedes añadirte a ti mismo.");
+            return;
+        }
+
+        const isDuplicate = friends.some(f => f.friendCode === newFriendIdentifier || f.username === newFriendIdentifier);
+        if (isDuplicate) {
+            setAddFriendMessage("Ya eres amigo de este usuario.");
+            return;
+        }
+
         const token = localStorage.getItem("token");
 
         try {

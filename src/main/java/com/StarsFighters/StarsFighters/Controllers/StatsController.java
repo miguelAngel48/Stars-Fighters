@@ -16,9 +16,12 @@ public class StatsController {
     private UserService userService;
 
     @PostMapping("/record")
-    public ResponseEntity<?> recordMatchResult(@RequestParam boolean isWinner, Principal principal) {
+    public ResponseEntity<?> recordMatchResult(
+            @RequestParam boolean isWinner,
+            @RequestParam String lobbyId,
+            Principal principal) {
         try {
-            Map<String, Object> result = userService.recordMatchResult(principal.getName(), isWinner);
+            Map<String, Object> result = userService.recordMatchResult(principal.getName(), isWinner, lobbyId);
             return ResponseEntity.ok(result);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());

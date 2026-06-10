@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useUser } from "../contexts/UserContext";
 import { useNotification } from "../contexts/NotificationContext";
+import coronaIcon from '../assets/corona.png';
 import "../Styles/Lobby.css";
 
 export default function Lobby() {
@@ -10,6 +11,8 @@ export default function Lobby() {
     const [friends, setFriends] = useState([]);
     const [player2, setPlayer2] = useState(null);
     const [isDraggingOver, setIsDraggingOver] = useState(false);
+    const [timeLimit, setTimeLimit] = useState(180);
+    const [lives, setLives] = useState(5);
 
     const [searchParams] = useSearchParams();
     const role = searchParams.get("role");
@@ -29,8 +32,9 @@ export default function Lobby() {
 
         if (role === "guest" && leaderNameUrl) {
             setPlayer2({ username: user?.username, status: 'joined', avatarUrl: user?.avatarUrl || user?.avatar });
+            fetchSettings(lobbyIdUrl);
         }
-    }, [navigate, role, user, leaderNameUrl]);
+    }, [navigate, role, user, leaderNameUrl, lobbyIdUrl]);
 
     useEffect(() => {
         if (!latestEvent) return;
@@ -51,6 +55,17 @@ export default function Lobby() {
             navigate("/dashboard");
         }
     }, [latestEvent, navigate]);
+
+    const fetchSettings = async (id) => {
+        try {
+            const response = await fetch(`http://localhost:8080/api/lobby/settings/${id}`);
+            if (response.ok) {
+                const data = await response.json();
+                setTimeLimit(data.timeLimit);
+                setLives(data.lives);
+            }
+        } catch (err) {}
+    };
 
     const handleStartGame = async () => {
         if (!player2 || !currentLobbyId) return;
@@ -159,108 +174,152 @@ export default function Lobby() {
         }
     };
 
-    if (!user) return <div className="loading">Entrando al Lobby...</div>;
+    const handleSettingsChange = async (newTime, newLives) => {
+        setTimeLimit(newTime);
+        setLives(newLives);
+        if (currentLobbyId) {
+            const token = localStorage.getItem("token");
+            try {
+                await fetch(`http://localhost:8080/api/lobby/settings?lobbyId=${currentLobbyId}&timeLimit=${newTime}&lives=${newLives}`, {
+                    method: "POST",
+                    headers: { "Authorization": `Bearer ${token}` }
+                });
+            } catch (err) {}
+        }
+    };
+
+    if (!user) return <div className="loading-screen">Entrando al Lobby...</div>;
 
     return (
-        <div className="lobby-container" style={{ padding: '20px', height: '100%', display: 'flex', flexDirection: 'column' }}>
-            
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                <button 
-                    onClick={handleLeaveLobby} 
-                    style={{ background: 'transparent', color: 'var(--color-danger)', fontSize: '16px', fontWeight: 'bold' }}
-                >
+        <div className="lobby-wrapper">
+            <div className="lobby-top-bar">
+                <button onClick={handleLeaveLobby} className="lobby-btn-leave">
                     Abandonar Sala
                 </button>
-                <h2 style={{ margin: 0, color: 'var(--color-primary)', textTransform: 'uppercase' }}>
-                    {role === 'guest' ? `SALA DE ${leaderNameUrl}` : "TU SALA DE ESPERA"}
+                <h2 className="lobby-title">
+                    {role === 'guest' ? `SALA DE ${leaderNameUrl}` : "SALA PERSONALIZADA"}
                 </h2>
-                <div style={{ width: '120px' }}></div>
+                <div className="lobby-top-spacer"></div>
             </div>
 
-            <div className="lobby-body" style={{ flex: 1 }}>
-                <main className="lobby-main">
-                    <div className="game-table">
-                        <div className="player-slot leader-slot">
-                            <div className="crown-icon">👑</div>
+            <div className="lobby-main-body">
+                <div className="lobby-game-section">
+                    <div className="lobby-table">
+                        <div className="lobby-slot slot-leader">
+                            <div className="slot-crown">
+                                <img src={coronaIcon} alt="Corona" className="crown-img" />
+                            </div>
                             <img
                                 src={role === 'guest' ? (friends.find(f => f.username === leaderNameUrl)?.avatarUrl || "http://localhost:8080/uploads/cosmetics/default-avatar.png") : (user.avatar || user.avatarUrl || "http://localhost:8080/uploads/cosmetics/default-avatar.png")}
                                 alt="Líder"
-                                className="slot-avatar"
+                                className="slot-portrait"
                             />
-                            <h3>{role === 'guest' ? leaderNameUrl : user.username}</h3>
-                            <span className="slot-status ready">Líder</span>
+                            <h3 className="slot-username">{role === 'guest' ? leaderNameUrl : user.username}</h3>
+                            <span className="slot-badge badge-leader">Líder</span>
                         </div>
 
-                        <div className="vs-badge">VS</div>
+                        <div className="lobby-vs">VS</div>
 
                         <div
-                            className={`player-slot empty-slot ${isDraggingOver ? 'drag-over' : ''} ${player2 ? 'filled' : ''}`}
+                            className={`lobby-slot slot-opponent ${isDraggingOver ? 'drag-active' : ''} ${player2 ? 'slot-filled' : 'slot-empty'}`}
                             onDragOver={handleDragOver}
                             onDragLeave={() => setIsDraggingOver(false)}
                             onDrop={handleDrop}
                         >
                             {!player2 ? (
-                                <div className="empty-content">
-                                    <span className="plus-icon">+</span>
-                                    <p>Arrastra un amigo aquí<br />para invitarlo</p>
+                                <div className="slot-empty-msg">
+                                    <span className="slot-plus-icon">+</span>
+                                    <p>Arrastra un amigo aquí para invitarlo</p>
                                 </div>
                             ) : (
-                                <div className="filled-content">
+                                <div className="slot-filled-content">
                                     {role !== 'guest' && (
-                                        <button className="kick-btn" onClick={handleKickPlayer} title="Expulsar jugador">✖</button>
+                                        <button className="slot-kick-btn" onClick={handleKickPlayer}>✖</button>
                                     )}
                                     <img
                                         src={role === 'guest' ? (user.avatar || user.avatarUrl || "http://localhost:8080/uploads/cosmetics/default-avatar.png") : (player2?.avatarUrl || "http://localhost:8080/uploads/cosmetics/default-avatar.png")}
                                         alt="Jugador 2"
-                                        className="slot-avatar"
+                                        className="slot-portrait"
                                     />
-                                    <h3>{player2.username}</h3>
-                                    <span className={`slot-status ${player2.status}`}>
-                                        {player2.status === 'inviting' ? 'Esperando respuesta...' : '¡Listo para pelear!'}
+                                    <h3 className="slot-username">{player2.username}</h3>
+                                    <span className={`slot-badge badge-${player2.status}`}>
+                                        {player2.status === 'inviting' ? 'Esperando...' : '¡Listo!'}
                                     </span>
                                 </div>
                             )}
                         </div>
                     </div>
 
-                    <div className="lobby-actions">
+                    <div className="lobby-config-panel">
+                        <h3 className="config-title">Configuración de la Partida</h3>
+                        <div className="config-row">
+                            <label className="config-label">Tiempo de Juego:</label>
+                            <select 
+                                value={timeLimit} 
+                                disabled={role === 'guest'} 
+                                onChange={(e) => handleSettingsChange(Number(e.target.value), lives)}
+                                className="config-select"
+                            >
+                                <option value={60}>1 Minuto</option>
+                                <option value={120}>2 Minutos</option>
+                                <option value={180}>3 Minutos</option>
+                                <option value={0}>Infinito</option>
+                            </select>
+                        </div>
+                        <div className="config-row">
+                            <label className="config-label">Vidas Máximas:</label>
+                            <select 
+                                value={lives} 
+                                disabled={role === 'guest'} 
+                                onChange={(e) => handleSettingsChange(timeLimit, Number(e.target.value))}
+                                className="config-select"
+                            >
+                                <option value={1}>1 Vida</option>
+                                <option value={3}>3 Vidas</option>
+                                <option value={5}>5 Vidas</option>
+                                <option value={0}>Infinitas</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div className="lobby-execution">
                         {role !== 'guest' ? (
-                            <button className="btn-start-game" disabled={!player2 || player2.status !== 'joined'} onClick={handleStartGame}>
+                            <button className="lobby-btn-start" disabled={!player2 || player2.status !== 'joined'} onClick={handleStartGame}>
                                 INICIAR PARTIDA
                             </button>
                         ) : (
-                            <p style={{ color: '#888', fontStyle: 'italic', marginTop: '20px' }}>
+                            <p className="lobby-waiting-text">
                                 Esperando a que el líder inicie la batalla...
                             </p>
                         )}
                     </div>
-                </main>
+                </div>
 
-                <aside className="lobby-sidebar">
-                    <h3 className="sidebar-title">{role === 'guest' ? "Espectadores" : "Invitar Amigos"}</h3>
-                    <ul className="friends-drag-list">
-                        {role === 'guest' ? (
-                            <li className="no-friends" style={{ color: '#666' }}>No hay nadie más mirando.</li>
-                        ) : friends.length === 0 ? (
-                            <li className="no-friends">No tienes amigos conectados.</li>
-                        ) : (
-                            friends.map((friend) => (
-                                <li
-                                    key={friend.id}
-                                    className="friend-drag-item"
-                                    draggable={!player2}
-                                    onDragStart={(e) => handleDragStart(e, friend)}
-                                    style={{ opacity: player2 ? 0.5 : 1, cursor: player2 ? 'not-allowed' : 'grab' }}
-                                >
-                                    <div className="drag-handle">⠿</div>
-                                    <img src={friend.avatarUrl || "http://localhost:8080/uploads/cosmetics/default-avatar.png"} alt="Avatar" className="tiny-avatar" />
-                                    <span>{friend.username}</span>
-                                </li>
-                            ))
-                        )}
-                    </ul>
-                    {role !== 'guest' && <p className="drag-hint">Arrastra un amigo al cuadro del centro</p>}
-                </aside>
+                {role !== 'guest' && (
+                    <div className="lobby-sidebar-friends">
+                        <h3 className="sidebar-friends-title">Invitar Amigos</h3>
+                        <ul className="friends-drag-container">
+                            {friends.length === 0 ? (
+                                <li className="friends-empty-item">No tienes amigos conectados.</li>
+                            ) : (
+                                friends.map((friend) => (
+                                    <li
+                                        key={friend.id}
+                                        className="friend-drag-card"
+                                        draggable={!player2}
+                                        onDragStart={(e) => handleDragStart(e, friend)}
+                                        style={{ opacity: player2 ? 0.4 : 1, cursor: player2 ? 'not-allowed' : 'grab' }}
+                                    >
+                                        <div className="drag-icon-handle">⠿</div>
+                                        <img src={friend.avatarUrl || "http://localhost:8080/uploads/cosmetics/default-avatar.png"} alt="Avatar" className="friend-drag-img" />
+                                        <span className="friend-drag-name">{friend.username}</span>
+                                    </li>
+                                ))
+                            )}
+                        </ul>
+                        <p className="drag-helper-text">Arrastra a un amigo al cuadro de la derecha</p>
+                    </div>
+                )}
             </div>
         </div>
     );

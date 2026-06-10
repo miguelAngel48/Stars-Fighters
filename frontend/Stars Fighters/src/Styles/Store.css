@@ -11,15 +11,24 @@
     width: 100%;
 }
 
-.store-header-container {
+.store-header-card {
     display: flex;
     justify-content: space-between;
     align-items: center;
     width: 100%;
     max-width: 1000px;
     margin-bottom: 40px;
-    border-bottom: 2px solid var(--color-border);
-    padding-bottom: 20px;
+    background-color: var(--bg-panel);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    padding: 30px 40px;
+    box-shadow: 0 0 15px rgba(59, 130, 246, 0.2);
+}
+
+.store-header-info {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
 }
 
 .store-title {
@@ -29,9 +38,36 @@
 }
 
 .store-coins {
+    display: flex;
+    align-items: center;
     font-weight: bold;
-    margin-top: 10px;
     color: var(--text-muted);
+    font-size: 16px;
+    margin: 0;
+}
+
+.coin-icon {
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
+    margin-right: 8px;
+}
+
+.btn-add-admin {
+    padding: 12px 24px;
+    background-color: var(--color-primary);
+    color: var(--text-main);
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    text-transform: uppercase;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.btn-add-admin:hover {
+    background-color: var(--color-primary-hover);
+    box-shadow: 0 0 15px rgba(59, 130, 246, 0.4);
 }
 
 .store-alert {
@@ -40,7 +76,7 @@
     border-left: 4px solid var(--color-primary);
     color: var(--text-main);
     padding: 15px 25px;
-    border-radius: 4px;
+    border-radius: 8px;
     margin-bottom: 30px;
     font-weight: bold;
     width: 100%;
@@ -57,7 +93,7 @@
 }
 
 .store-card {
-    background: var(--bg-panel);
+    background-color: var(--bg-panel);
     border: 1px solid var(--color-border);
     border-radius: 8px;
     padding: 25px 20px;

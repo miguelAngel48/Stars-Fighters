@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "../contexts/UserContext";
+import monedasIcon from "../assets/monedas.png";
 import "../Styles/Store.css";
 
 export default function Store() {
@@ -108,16 +109,20 @@ export default function Store() {
     return (
         <div className="store-page-container">
             <div className="store-content">
-                <div className="store-header-container">
-                    <div>
+                <div className="store-header-card">
+                    <div className="store-header-info">
                         <h1 className="store-title">Tienda de Cosméticos</h1>
-                        {user && <p className="store-coins">💰 Monedas disponibles: {user.coins}</p>}
+                        {user && (
+                            <div className="store-coins">
+                                <img src={monedasIcon} alt="Monedas" className="coin-icon" />
+                                <span>Monedas disponibles: {user.coins}</span>
+                            </div>
+                        )}
                     </div>
                     
                     {user && user.role === 'ADMIN' && (
                         <button 
-                            className="btn-add" 
-                            style={{ padding: '10px 20px', backgroundColor: 'var(--color-primary)', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}
+                            className="btn-add-admin" 
                             onClick={() => setIsAdminModalOpen(true)}
                         >
                             + Añadir Cosmético

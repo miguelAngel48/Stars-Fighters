@@ -32,6 +32,22 @@ public class UserService {
     @Autowired
     PasswordEncoder passwordEncoder;
 
+    public static class ActiveMatch {
+        public String player1;
+        public String player2;
+        public long startTime;
+        public boolean p1Processed = false;
+        public boolean p2Processed = false;
+
+        public ActiveMatch(String p1, String p2) {
+            this.player1 = p1;
+            this.player2 = p2;
+            this.startTime = System.currentTimeMillis();
+        }
+    }
+
+    private final Map<String, ActiveMatch> activeMatches = new java.util.concurrent.ConcurrentHashMap<>();
+
     public record LeaderboardDto(String username, int level, int wins, String avatarUrl) {}
 
     private Cosmetic getOrCreateDefaultAvatar() {
@@ -142,7 +158,41 @@ public class UserService {
         );
     }
 
-    public Map<String, Object> recordMatchResult(String username, boolean isWinner) {
+    public void registerNormalMatch(String lobbyId, String player1, String player2) {
+        long now = System.currentTimeMillis();
+        activeMatches.entrySet().removeIf(entry -> now - entry.getValue().startTime > 3600000);
+        activeMatches.put(lobbyId, new ActiveMatch(player1, player2));
+    }
+
+    public Map<String, Object> recordMatchResult(String username, boolean isWinner, String lobbyId) {
+        ActiveMatch match = activeMatches.get(lobbyId);
+
+        if (match == null) {
+            throw new RuntimeException("Partida no valida, expirada o no es modo normal");
+        }
+
+        boolean isP1 = username.equals(match.player1);
+        boolean isP2 = username.equals(match.player2);
+
+        if (!isP1 && !isP2) {
+            throw new RuntimeException("El usuario no pertenece a esta partida");
+        }
+
+        if ((isP1 && match.p1Processed) || (isP2 && match.p2Processed)) {
+            throw new RuntimeException("El resultado de esta partida ya ha sido procesado");
+        }
+
+        if (System.currentTimeMillis() - match.startTime < 10000) {
+            throw new RuntimeException("La partida termino demasiado rapido");
+        }
+
+        if (isP1) match.p1Processed = true;
+        if (isP2) match.p2Processed = true;
+
+        if (match.p1Processed && match.p2Processed) {
+            activeMatches.remove(lobbyId);
+        }
+
         User user = userRepo.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado en la base de datos"));
 
