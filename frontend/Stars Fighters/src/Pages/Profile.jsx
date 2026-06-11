@@ -8,13 +8,14 @@ export default function Profile() {
     const { user, refreshUser } = useUser();
     const [copySuccess, setCopySuccess] = useState("");
     const [isStatusMenuOpen, setIsStatusMenuOpen] = useState(false);
-    
+    const ApiUrl = import.env.VITE_API_URL
+
     const [localStatus, setLocalStatus] = useState("ACTIVE");
-    
+
     const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
     const [isNameModalOpen, setIsNameModalOpen] = useState(false);
     const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
-    
+
     const [newName, setNewName] = useState("");
     const [passwordData, setPasswordData] = useState({ currentPassword: "", newPassword: "", confirmPassword: "" });
     const [errorMessage, setErrorMessage] = useState("");
@@ -49,14 +50,14 @@ export default function Profile() {
     const fetchAvatars = async () => {
         const token = localStorage.getItem("token");
         try {
-            const response = await fetch("http://localhost:8080/api/users/avatars", {
+            const response = await fetch(`${ApiUrl}/api/users/avatars`, {
                 headers: { "Authorization": `Bearer ${token}` }
             });
             if (response.ok) {
                 const data = await response.json();
                 setAvailableAvatars(data);
             }
-        } catch (error) {}
+        } catch (error) { }
     };
 
     const copyToClipboard = () => {
@@ -69,24 +70,24 @@ export default function Profile() {
 
     const handleStatusSelect = async (newStatus) => {
         setIsStatusMenuOpen(false);
-        setLocalStatus(newStatus); 
-        
+        setLocalStatus(newStatus);
+
         const token = localStorage.getItem("token");
         try {
-            await fetch(`http://localhost:8080/api/auth/status?pref=${newStatus}`, {
+            await fetch(`${ApiUrl}/api/auth/status?pref=${newStatus}`, {
                 method: "PUT",
                 headers: { "Authorization": `Bearer ${token}` }
             });
             refreshUser();
-        } catch (error) {}
+        } catch (error) { }
     };
 
     const handleAvatarChange = async (url) => {
         const token = localStorage.getItem("token");
         try {
-            const response = await fetch("http://localhost:8080/api/users/avatar", {
+            const response = await fetch(`${ApiUrl}/api/users/avatar`, {
                 method: "PUT",
-                headers: { 
+                headers: {
                     "Authorization": `Bearer ${token}`,
                     "Content-Type": "application/json"
                 },
@@ -96,7 +97,7 @@ export default function Profile() {
                 setIsAvatarModalOpen(false);
                 refreshUser();
             }
-        } catch (error) {}
+        } catch (error) { }
     };
 
     const handleNameChange = async () => {
@@ -104,9 +105,9 @@ export default function Profile() {
         if (!newName.trim()) return;
         const token = localStorage.getItem("token");
         try {
-            const response = await fetch("http://localhost:8080/api/users/username", {
+            const response = await fetch(`${ApiUrl}/api/users/username`, {
                 method: "PUT",
-                headers: { 
+                headers: {
                     "Authorization": `Bearer ${token}`,
                     "Content-Type": "application/json"
                 },
@@ -119,7 +120,7 @@ export default function Profile() {
                 const data = await response.json();
                 setErrorMessage(data.message);
             }
-        } catch (error) {}
+        } catch (error) { }
     };
 
     const handlePasswordChange = async () => {
@@ -131,13 +132,13 @@ export default function Profile() {
         }
         const token = localStorage.getItem("token");
         try {
-            const response = await fetch("http://localhost:8080/api/users/password", {
+            const response = await fetch(`${ApiUrl}/api/users/password`, {
                 method: "PUT",
-                headers: { 
+                headers: {
                     "Authorization": `Bearer ${token}`,
                     "Content-Type": "application/json"
                 },
-                body: JSON.stringify({ 
+                body: JSON.stringify({
                     currentPassword: passwordData.currentPassword,
                     newPassword: passwordData.newPassword
                 })
@@ -153,11 +154,11 @@ export default function Profile() {
                 const data = await response.json();
                 setErrorMessage(data.message);
             }
-        } catch (error) {}
+        } catch (error) { }
     };
 
     const getStatusConfig = (status) => {
-        switch(status) {
+        switch (status) {
             case 'ACTIVE': return { text: 'Activo', colorClass: 'status-online' };
             case 'DND': return { text: 'No molestar', colorClass: 'status-dnd' };
             case 'INVISIBLE': return { text: 'Invisible', colorClass: 'status-offline' };
@@ -168,14 +169,14 @@ export default function Profile() {
     if (!user) return <div className="loading">Cargando perfil...</div>;
 
     const currentStatusConfig = getStatusConfig(localStatus);
-    const avatarToDisplay = user.equippedAvatarUrl || user.avatarUrl || "http://localhost:8080/uploads/cosmetics/default-avatar.png";
+    const avatarToDisplay = user.equippedAvatarUrl || user.avatarUrl || `${ApiUrl}/uploads/cosmetics/default-avatar.png`;
 
     return (
         <div className="profile-page-container" style={{ padding: '40px' }}>
-            
+
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px' }}>
-                <button 
-                    onClick={() => navigate(-1)} 
+                <button
+                    onClick={() => navigate(-1)}
                     style={{ background: 'transparent', color: 'var(--color-primary)', fontSize: '16px', fontWeight: 'bold', cursor: 'pointer', border: 'none' }}
                 >
                     ← Volver
@@ -199,10 +200,10 @@ export default function Profile() {
 
                     <div className="username-container">
                         <h2>{user.username}</h2>
-                        <img 
-                            src={pencilIcon} 
-                            alt="Editar nombre" 
-                            className="edit-icon" 
+                        <img
+                            src={pencilIcon}
+                            alt="Editar nombre"
+                            className="edit-icon"
                             onClick={() => {
                                 setNewName(user.username);
                                 setIsNameModalOpen(true);
@@ -210,19 +211,19 @@ export default function Profile() {
                             }}
                         />
                     </div>
-                    
+
                     <span className="badge-level">Nivel {user.level}</span>
-                    
+
                     <div className="custom-status-dropdown" ref={dropdownRef}>
-                        <div 
-                            className="status-dropdown-header" 
+                        <div
+                            className="status-dropdown-header"
                             onClick={() => setIsStatusMenuOpen(!isStatusMenuOpen)}
                         >
                             <div className={`profile-status-dot ${currentStatusConfig.colorClass}`}></div>
                             <span>{currentStatusConfig.text}</span>
                             <span className="dropdown-arrow">{isStatusMenuOpen ? '▲' : '▼'}</span>
                         </div>
-                        
+
                         {isStatusMenuOpen && (
                             <ul className="status-dropdown-list">
                                 <li className="status-dropdown-item" onClick={() => handleStatusSelect('ACTIVE')}>
@@ -284,14 +285,14 @@ export default function Profile() {
                         ) : (
                             <div className="avatar-grid" style={{ display: 'flex', gap: '15px', flexWrap: 'wrap', justifyContent: 'center', margin: '20px 0' }}>
                                 {availableAvatars.map((url, idx) => (
-                                    <img 
-                                        key={idx} 
-                                        src={url} 
-                                        alt={`Avatar ${idx}`} 
+                                    <img
+                                        key={idx}
+                                        src={url}
+                                        alt={`Avatar ${idx}`}
                                         className={`avatar-option ${avatarToDisplay === url ? 'selected' : ''}`}
                                         onClick={() => handleAvatarChange(url)}
-                                        style={{ 
-                                            width: '80px', height: '80px', borderRadius: '50%', cursor: 'pointer', 
+                                        style={{
+                                            width: '80px', height: '80px', borderRadius: '50%', cursor: 'pointer',
                                             border: avatarToDisplay === url ? '3px solid var(--color-primary)' : '2px solid transparent',
                                             transition: 'transform 0.2s'
                                         }}
@@ -313,10 +314,10 @@ export default function Profile() {
                     <div className="modal-content">
                         <h3 style={{ color: 'var(--color-accent)' }}>Cambiar Nombre de Usuario</h3>
                         <div className="modal-input-container">
-                            <input 
-                                type="text" 
-                                value={newName} 
-                                onChange={(e) => setNewName(e.target.value)} 
+                            <input
+                                type="text"
+                                value={newName}
+                                onChange={(e) => setNewName(e.target.value)}
                                 placeholder="Nuevo nombre"
                                 className="modal-input"
                             />
@@ -334,38 +335,38 @@ export default function Profile() {
                 <div className="modal-overlay">
                     <div className="modal-content">
                         <h3 style={{ color: 'var(--color-accent)' }}>Cambiar Contraseña</h3>
-                        
+
                         <div className="modal-input-container" style={{ marginBottom: '15px' }}>
-                            <input 
-                                type="password" 
-                                placeholder="Contraseña Actual" 
+                            <input
+                                type="password"
+                                placeholder="Contraseña Actual"
                                 value={passwordData.currentPassword}
-                                onChange={(e) => setPasswordData({...passwordData, currentPassword: e.target.value})}
+                                onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
                                 className="modal-input"
                             />
                         </div>
                         <div className="modal-input-container" style={{ marginBottom: '15px' }}>
-                            <input 
-                                type="password" 
-                                placeholder="Nueva Contraseña" 
+                            <input
+                                type="password"
+                                placeholder="Nueva Contraseña"
                                 value={passwordData.newPassword}
-                                onChange={(e) => setPasswordData({...passwordData, newPassword: e.target.value})}
+                                onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
                                 className="modal-input"
                             />
                         </div>
                         <div className="modal-input-container" style={{ marginBottom: '20px' }}>
-                            <input 
-                                type="password" 
-                                placeholder="Confirmar Nueva Contraseña" 
+                            <input
+                                type="password"
+                                placeholder="Confirmar Nueva Contraseña"
                                 value={passwordData.confirmPassword}
-                                onChange={(e) => setPasswordData({...passwordData, confirmPassword: e.target.value})}
+                                onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
                                 className="modal-input"
                             />
                         </div>
 
                         {errorMessage && <span className="error-message" style={{ display: 'block', marginBottom: '15px' }}>{errorMessage}</span>}
                         {successMessage && <span style={{ color: '#22c55e', display: 'block', marginBottom: '15px', fontWeight: 'bold' }}>{successMessage}</span>}
-                        
+
                         <div className="modal-actions">
                             <button className="btn-cancel" onClick={() => setIsPasswordModalOpen(false)}>Cancelar</button>
                             <button className="btn-add" onClick={handlePasswordChange}>Actualizar</button>

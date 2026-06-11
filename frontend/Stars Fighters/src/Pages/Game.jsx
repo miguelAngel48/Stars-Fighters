@@ -14,7 +14,7 @@ export default function Game() {
     const keys = useRef({});
     const stompClientRef = useRef(null);
     const isGameEndedRef = useRef(false);
-
+    const ApiUrl = import.env.VITE_API_URL
     const [searchParams] = useSearchParams();
     const lobbyId = searchParams.get("lobbyId");
     const mapId = searchParams.get("mapId");
@@ -57,7 +57,7 @@ export default function Game() {
     const recordMatchInDatabase = async (isWinner) => {
         const token = localStorage.getItem("token");
         try {
-            const response = await fetch(`${import.meta.env.VITE_API_URL}/api/stats/record?isWinner=${isWinner}&lobbyId=${lobbyId}`, {
+            const response = await fetch(`${ApiUrl}/api/stats/record?isWinner=${isWinner}&lobbyId=${lobbyId}`, {
                 method: "POST",
                 headers: { "Authorization": `Bearer ${token}` }
             });
@@ -68,7 +68,7 @@ export default function Game() {
                     setLevelUpData({ newLevel: data.newLevel });
                 }
             }
-        } catch (error) {}
+        } catch (error) { }
     };
 
     const handleEndGame = (myForcedLoss = false, oppForcedLoss = false) => {
@@ -123,9 +123,9 @@ export default function Game() {
 
         const loadGameData = async () => {
             try {
-                const settingsRes = await fetch(`${import.meta.env.VITE_API_URL}/api/lobby/settings/${lobbyId}`, { headers: { "Authorization": `Bearer ${token}` } });
-                const charsRes = await fetch(`${import.meta.env.VITE_API_URL}/api/characters`, { headers: { "Authorization": `Bearer ${token}` } });
-                const mapsRes = await fetch(`${import.meta.env.VITE_API_URL}/api/maps`, { headers: { "Authorization": `Bearer ${token}` } });
+                const settingsRes = await fetch(`${ApiUrl}/api/lobby/settings/${lobbyId}`, { headers: { "Authorization": `Bearer ${token}` } });
+                const charsRes = await fetch(`${ApiUrl}/api/characters`, { headers: { "Authorization": `Bearer ${token}` } });
+                const mapsRes = await fetch(`${ApiUrl}/api/maps`, { headers: { "Authorization": `Bearer ${token}` } });
 
                 if (settingsRes.ok && charsRes.ok && mapsRes.ok) {
                     const settings = await settingsRes.json();
@@ -205,7 +205,7 @@ export default function Game() {
 
                     if (myHealthRef.current <= 0) {
                         myHealthRef.current = 100;
-                        
+
                         if (myLivesRef.current > 0) {
                             myLivesRef.current = Math.max(0, myLivesRef.current - 1);
                         }
@@ -236,7 +236,7 @@ export default function Game() {
                 client.subscribe('/user/queue/game-death', (msg) => {
                     const deathData = JSON.parse(msg.body);
                     myKillsRef.current += 1;
-                    
+
                     if (oppLivesRef.current > 0) {
                         oppLivesRef.current = Math.max(0, oppLivesRef.current - 1);
                     }
@@ -323,7 +323,7 @@ export default function Game() {
 
                 const savedStr = localStorage.getItem(`game_start_${lobbyId}`);
                 if (!savedStr) return;
-                
+
                 const startTime = parseInt(savedStr);
                 const now = Date.now();
                 const elapsedSeconds = Math.floor((now - startTime) / 1000);
@@ -531,7 +531,7 @@ export default function Game() {
 
                 if (myPositionRef.current.y > canvas.height + 50) {
                     myHealthRef.current = 100;
-                    
+
                     if (gameSettings.lives > 0) {
                         myLivesRef.current = Math.max(0, myLivesRef.current - 1);
                     }

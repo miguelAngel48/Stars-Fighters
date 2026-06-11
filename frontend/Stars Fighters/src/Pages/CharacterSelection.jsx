@@ -11,7 +11,7 @@ export default function CharacterSelection() {
     const [isLoading, setIsLoading] = useState(true);
     const [maps, setMaps] = useState([]);
     const [selectedMap, setSelectedMap] = useState("");
-
+    const ApiUrl = import.meta.VITE_API_URL
     const [isMyReady, setIsMyReady] = useState(false);
     const [isOpponentReady, setIsOpponentReady] = useState(false);
     const [opponentCharName, setOpponentCharName] = useState("");
@@ -60,7 +60,7 @@ export default function CharacterSelection() {
 
     const fetchCharacters = async (token) => {
         try {
-            const response = await fetch("http://localhost:8080/api/characters", {
+            const response = await fetch(`${ApiUrl}/api/characters`, {
                 headers: { "Authorization": `Bearer ${token}` }
             });
             if (response.ok) {
@@ -75,7 +75,7 @@ export default function CharacterSelection() {
 
     const fetchMaps = async (token) => {
         try {
-            const response = await fetch("http://localhost:8080/api/maps", {
+            const response = await fetch(`${ApiUrl}/api/maps`, {
                 headers: { "Authorization": `Bearer ${token}` }
             });
             if (response.ok) {
@@ -91,7 +91,7 @@ export default function CharacterSelection() {
 
     const connectSelectionWebSocket = (token) => {
         const client = new Client({
-            webSocketFactory: () => new SockJS('http://localhost:8080/ws-stars'),
+            webSocketFactory: () => new SockJS(`${ApiUrl}/ws-stars`),
             connectHeaders: { Authorization: `Bearer ${token}` },
             onConnect: () => {
                 client.subscribe('/user/queue/notifications', (message) => {
@@ -125,7 +125,7 @@ export default function CharacterSelection() {
         if (!selectedChar || isMyReady) return;
 
         const token = localStorage.getItem("token");
-        let url = `http://localhost:8080/api/lobby/ready?lobbyId=${lobbyId}&role=${role}&characterId=${selectedChar.id}&characterName=${selectedChar.name}&targetUsername=${opponentUsername}`;
+        let url = `${ApiUrl}/api/lobby/ready?lobbyId=${lobbyId}&role=${role}&characterId=${selectedChar.id}&characterName=${selectedChar.name}&targetUsername=${opponentUsername}`;
 
         if (role === "leader") {
             url += `&mapId=${selectedMap}`;
@@ -154,8 +154,8 @@ export default function CharacterSelection() {
     return (
         <div className="cs-container">
             <div style={{ width: '100%', maxWidth: '1100px', display: 'flex', justifyContent: 'flex-start', marginBottom: '10px' }}>
-                <button 
-                    onClick={handleManualLeave} 
+                <button
+                    onClick={handleManualLeave}
                     style={{ background: 'transparent', color: 'var(--color-danger)', border: '1px solid var(--color-danger)', padding: '8px 16px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}
                 >
                     Abandonar

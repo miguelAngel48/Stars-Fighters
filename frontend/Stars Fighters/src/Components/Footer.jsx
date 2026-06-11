@@ -5,7 +5,7 @@ export default function Footer() {
     return (
         <footer className="global-footer">
             <div className="footer-content">
-                <p>&copy; 2024 Stars Fighters. Todos los derechos reservados.</p>
+                <p>&copy; 2026 Stars Fighters. Todos los derechos reservados.</p>
             </div>
         </footer>
     );

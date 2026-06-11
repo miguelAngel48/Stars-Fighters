@@ -18,7 +18,7 @@ export default function Lobby() {
     const role = searchParams.get("role");
     const lobbyIdUrl = searchParams.get("lobbyId");
     const leaderNameUrl = searchParams.get("leaderName");
-
+    const ApiUrl = import.env.VITE_API_URL
     const [currentLobbyId, setCurrentLobbyId] = useState(lobbyIdUrl || null);
     const navigate = useNavigate();
 
@@ -58,13 +58,13 @@ export default function Lobby() {
 
     const fetchSettings = async (id) => {
         try {
-            const response = await fetch(`http://localhost:8080/api/lobby/settings/${id}`);
+            const response = await fetch(`${ApiUrl}/api/lobby/settings/${id}`);
             if (response.ok) {
                 const data = await response.json();
                 setTimeLimit(data.timeLimit);
                 setLives(data.lives);
             }
-        } catch (err) {}
+        } catch (err) { }
     };
 
     const handleStartGame = async () => {
@@ -72,7 +72,7 @@ export default function Lobby() {
 
         const token = localStorage.getItem("token");
         try {
-            const response = await fetch(`http://localhost:8080/api/lobby/start?guestUsername=${player2.username}&lobbyId=${currentLobbyId}`, {
+            const response = await fetch(`${ApiUrl}/api/lobby/start?guestUsername=${player2.username}&lobbyId=${currentLobbyId}`, {
                 method: "POST",
                 headers: { "Authorization": `Bearer ${token}` }
             });
@@ -88,7 +88,7 @@ export default function Lobby() {
 
         const token = localStorage.getItem("token");
         try {
-            const response = await fetch(`http://localhost:8080/api/lobby/kick?guestUsername=${player2.username}&lobbyId=${currentLobbyId}`, {
+            const response = await fetch(`${ApiUrl}/api/lobby/kick?guestUsername=${player2.username}&lobbyId=${currentLobbyId}`, {
                 method: "POST",
                 headers: { "Authorization": `Bearer ${token}` }
             });
@@ -101,7 +101,7 @@ export default function Lobby() {
 
     const fetchFriends = async (token) => {
         try {
-            const response = await fetch("http://localhost:8080/api/friendships", {
+            const response = await fetch(`${ApiUrl}/api/friendships`, {
                 headers: { "Authorization": `Bearer ${token}` }
             });
             if (response.ok) {
@@ -128,7 +128,7 @@ export default function Lobby() {
 
         if (targetUsername && currentLobbyId) {
             try {
-                fetch(`http://localhost:8080/api/lobby/leave?targetUsername=${targetUsername}&lobbyId=${currentLobbyId}&isLeader=${role !== "guest"}`, {
+                fetch(`${ApiUrl}/api/lobby/leave?targetUsername=${targetUsername}&lobbyId=${currentLobbyId}&isLeader=${role !== "guest"}`, {
                     method: "POST",
                     headers: { "Authorization": `Bearer ${token}` }
                 });
@@ -157,7 +157,7 @@ export default function Lobby() {
 
             const token = localStorage.getItem("token");
             try {
-                const response = await fetch(`http://localhost:8080/api/lobby/invite/${friendDropped.id}`, {
+                const response = await fetch(`${ApiUrl}/api/lobby/invite/${friendDropped.id}`, {
                     method: "POST",
                     headers: { "Authorization": `Bearer ${token}` }
                 });
@@ -180,11 +180,11 @@ export default function Lobby() {
         if (currentLobbyId) {
             const token = localStorage.getItem("token");
             try {
-                await fetch(`http://localhost:8080/api/lobby/settings?lobbyId=${currentLobbyId}&timeLimit=${newTime}&lives=${newLives}`, {
+                await fetch(`${ApiUrl}/api/lobby/settings?lobbyId=${currentLobbyId}&timeLimit=${newTime}&lives=${newLives}`, {
                     method: "POST",
                     headers: { "Authorization": `Bearer ${token}` }
                 });
-            } catch (err) {}
+            } catch (err) { }
         }
     };
 
@@ -254,9 +254,9 @@ export default function Lobby() {
                         <h3 className="config-title">Configuración de la Partida</h3>
                         <div className="config-row">
                             <label className="config-label">Tiempo de Juego:</label>
-                            <select 
-                                value={timeLimit} 
-                                disabled={role === 'guest'} 
+                            <select
+                                value={timeLimit}
+                                disabled={role === 'guest'}
                                 onChange={(e) => handleSettingsChange(Number(e.target.value), lives)}
                                 className="config-select"
                             >
@@ -268,9 +268,9 @@ export default function Lobby() {
                         </div>
                         <div className="config-row">
                             <label className="config-label">Vidas Máximas:</label>
-                            <select 
-                                value={lives} 
-                                disabled={role === 'guest'} 
+                            <select
+                                value={lives}
+                                disabled={role === 'guest'}
                                 onChange={(e) => handleSettingsChange(timeLimit, Number(e.target.value))}
                                 className="config-select"
                             >

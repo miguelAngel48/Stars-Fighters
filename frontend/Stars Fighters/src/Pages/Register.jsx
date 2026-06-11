@@ -7,7 +7,7 @@ export default function Register() {
     const [error, setError] = useState("");
     const [success, setSuccess] = useState("");
     const navigate = useNavigate();
-
+    const ApiUrl = import.env.VITE_API_URL
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
@@ -16,7 +16,7 @@ export default function Register() {
         e.preventDefault();
         setError(""); setSuccess("");
         try {
-            const response = await fetch("http://localhost:8080/api/auth/register", {
+            const response = await fetch(`${ApiUrl}/api/auth/register`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(formData),
@@ -44,32 +44,32 @@ export default function Register() {
                 {success && <p className="success-message">{success}</p>}
 
                 <form onSubmit={handleSubmit} className="login-form">
-                    <input 
-                        type="text" 
-                        name="username" 
-                        placeholder="Usuario" 
-                        value={formData.username} 
-                        onChange={handleChange} 
+                    <input
+                        type="text"
+                        name="username"
+                        placeholder="Usuario"
+                        value={formData.username}
+                        onChange={handleChange}
                         className="login-input"
-                        required 
+                        required
                     />
-                    <input 
-                        type="email" 
-                        name="email" 
-                        placeholder="Email" 
-                        value={formData.email} 
-                        onChange={handleChange} 
+                    <input
+                        type="email"
+                        name="email"
+                        placeholder="Email"
+                        value={formData.email}
+                        onChange={handleChange}
                         className="login-input"
-                        required 
+                        required
                     />
-                    <input 
-                        type="password" 
-                        name="password" 
-                        placeholder="Contraseña" 
-                        value={formData.password} 
-                        onChange={handleChange} 
+                    <input
+                        type="password"
+                        name="password"
+                        placeholder="Contraseña"
+                        value={formData.password}
+                        onChange={handleChange}
                         className="login-input"
-                        required 
+                        required
                     />
                     <button type="submit" className="btn-submit">Crear cuenta</button>
                 </form>

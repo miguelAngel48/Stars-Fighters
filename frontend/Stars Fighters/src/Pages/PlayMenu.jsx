@@ -9,6 +9,7 @@ export default function PlayMenu() {
     const { latestEvent } = useNotification();
     const navigate = useNavigate();
     const [isSearching, setIsSearching] = useState(false);
+    const ApiUrl = import.env.VITE_API_URL
 
     useEffect(() => {
         if (!latestEvent) return;
@@ -27,22 +28,22 @@ export default function PlayMenu() {
         setIsSearching(true);
         const token = localStorage.getItem("token");
         try {
-            await fetch("http://localhost:8080/api/lobby/matchmaking/join", {
+            await fetch(`${ApiUrl}/api/lobby/matchmaking/join`, {
                 method: "POST",
                 headers: { "Authorization": `Bearer ${token}` }
             });
-        } catch (e) {}
+        } catch (e) { }
     };
 
     const handleCancelSearch = async () => {
         setIsSearching(false);
         const token = localStorage.getItem("token");
         try {
-            await fetch("http://localhost:8080/api/lobby/matchmaking/leave", {
+            await fetch(`${ApiUrl}/api/lobby/matchmaking/leave`, {
                 method: "POST",
                 headers: { "Authorization": `Bearer ${token}` }
             });
-        } catch (e) {}
+        } catch (e) { }
     };
 
     if (!user) return null;

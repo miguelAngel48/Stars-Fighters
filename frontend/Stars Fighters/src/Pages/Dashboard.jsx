@@ -6,12 +6,12 @@ export default function Dashboard() {
     const { user } = useUser();
     const navigate = useNavigate();
     const [leaderboard, setLeaderboard] = useState([]);
-
+    const ApiUrl = import.meta.VITE_API_URL
     useEffect(() => {
         const fetchLeaderboard = async () => {
             const token = localStorage.getItem("token");
             try {
-                const res = await fetch("http://localhost:8080/api/stats/leaderboard", {
+                const res = await fetch(`${ApiUrl}/api/stats/leaderboard`, {
                     headers: token ? { "Authorization": `Bearer ${token}` } : {}
                 });
                 if (res.ok) {
@@ -31,7 +31,7 @@ export default function Dashboard() {
     return (
         <div style={{ padding: '40px' }}>
             <h1 style={{ color: 'var(--color-accent)', marginBottom: '30px', textTransform: 'uppercase' }}>Comunidad y Estadísticas</h1>
-            
+
             {user ? (
                 <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
                     <div className="user-card" style={{ flex: '1', minWidth: '300px' }}>
