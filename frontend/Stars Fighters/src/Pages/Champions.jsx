@@ -3,9 +3,9 @@ import '../Styles/Champions.css';
 
 const Champions = () => {
     const [champions, setChampions] = useState([]);
-
+    const ApiUrl = import.meta.env.VITE_API_URL
     useEffect(() => {
-        fetch("http://localhost:8080/api/characters")
+        fetch(`${ApiUrl}/api/characters`)
             .then(res => res.json())
             .then(data => setChampions(data))
             .catch(err => console.error("Error fetching champions:", err));
@@ -22,15 +22,15 @@ const Champions = () => {
                 {champions.map(champ => (
                     <div key={champ.id} className="champion-card">
                         <div className="champion-avatar-wrapper">
-                            <img 
-                                src={champ.spriteProfileUrl} 
-                                alt={champ.name} 
+                            <img
+                                src={champ.spriteProfileUrl}
+                                alt={champ.name}
                                 className="champion-avatar"
                             />
                         </div>
                         <h2 className="champion-name">{champ.name}</h2>
                         <p className="champion-description">{champ.description}</p>
-                        
+
                         <div className="champion-stats">
                             <div className="stat-item">
                                 <span className="stat-label">Salud</span>

@@ -12,24 +12,24 @@ export default function Store() {
     const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
     const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
     const [newItem, setNewItem] = useState({ name: "", price: 0, type: "AVATAR", image: null });
-
+    const ApiUrl = import.meta.env.VITE_API_URL
     const navigate = useNavigate();
     const token = localStorage.getItem("token");
 
     const fetchData = async () => {
         try {
             const headers = token ? { "Authorization": `Bearer ${token}` } : {};
-            const resItems = await fetch("http://localhost:8080/api/store/items", { headers });
-            
+            const resItems = await fetch(`${ApiUrl}/api/store/items`, { headers });
+
             if (resItems.ok) {
                 setStoreItems(await resItems.json());
             }
 
             if (token) {
-                const resInv = await fetch("http://localhost:8080/api/store/inventory", { headers });
+                const resInv = await fetch(`${ApiUrl}/api/store/inventory`, { headers });
                 if (resInv.ok) setInventory(await resInv.json());
             }
-        } catch (error) {}
+        } catch (error) { }
     };
 
     useEffect(() => {
@@ -43,12 +43,12 @@ export default function Store() {
         }
 
         try {
-            const url = type === 'buy' ? `http://localhost:8080/api/store/buy/${id}` : `http://localhost:8080/api/store/equip/${id}`;
+            const url = type === 'buy' ? `${ApiUrl}/api/store/buy/${id}` : `${ApiUrl}/api/store/equip/${id}`;
             const response = await fetch(url, {
                 method: "POST",
                 headers: { "Authorization": `Bearer ${token}` }
             });
-            
+
             if (response.ok) {
                 const data = await response.json();
                 setMessage(data.message || (type === 'buy' ? "Comprado con éxito" : "Equipado con éxito"));
@@ -67,7 +67,7 @@ export default function Store() {
 
     const handleAdminSubmit = async (e) => {
         e.preventDefault();
-        
+
         if (!newItem.name || !newItem.image) {
             setMessage("Nombre e imagen son obligatorios");
             setTimeout(() => setMessage(""), 3000);
@@ -81,10 +81,10 @@ export default function Store() {
         formData.append("image", newItem.image);
 
         try {
-            const response = await fetch("http://localhost:8080/api/store/admin/items", {
+            const response = await fetch(`${ApiUrl}/api/store/admin/items`, {
                 method: "POST",
-                headers: { 
-                    "Authorization": `Bearer ${token}` 
+                headers: {
+                    "Authorization": `Bearer ${token}`
                 },
                 body: formData
             });
@@ -119,10 +119,10 @@ export default function Store() {
                             </div>
                         )}
                     </div>
-                    
+
                     {user && user.role === 'ADMIN' && (
-                        <button 
-                            className="btn-add-admin" 
+                        <button
+                            className="btn-add-admin"
                             onClick={() => setIsAdminModalOpen(true)}
                         >
                             + Añadir Cosmético
@@ -138,7 +138,7 @@ export default function Store() {
                             <img src={item.imageUrl} alt={item.name} className="store-item-img" />
                             <h3>{item.name}</h3>
                             <p className="store-item-price">{item.price} Monedas</p>
-                            
+
                             {isOwned(item.id) ? (
                                 <button className="btn-equip" onClick={() => handleAction(item.id, 'equip')}>
                                     Equipar
@@ -170,36 +170,36 @@ export default function Store() {
                 <div className="modal-overlay">
                     <div className="modal-content">
                         <h3 style={{ color: 'var(--color-accent)', marginBottom: '15px' }}>Añadir Nuevo Cosmético</h3>
-                        
+
                         <form onSubmit={handleAdminSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '15px', textAlign: 'left' }}>
                             <div>
                                 <label style={{ display: 'block', marginBottom: '5px' }}>Nombre:</label>
-                                <input 
-                                    type="text" 
-                                    required 
-                                    value={newItem.name} 
-                                    onChange={(e) => setNewItem({...newItem, name: e.target.value})}
+                                <input
+                                    type="text"
+                                    required
+                                    value={newItem.name}
+                                    onChange={(e) => setNewItem({ ...newItem, name: e.target.value })}
                                     style={{ width: '100%', padding: '10px', backgroundColor: 'var(--bg-main)', color: 'white', border: '1px solid var(--color-border)', borderRadius: '4px' }}
                                 />
                             </div>
 
                             <div>
                                 <label style={{ display: 'block', marginBottom: '5px' }}>Precio (Monedas):</label>
-                                <input 
-                                    type="number" 
-                                    required 
+                                <input
+                                    type="number"
+                                    required
                                     min="0"
-                                    value={newItem.price} 
-                                    onChange={(e) => setNewItem({...newItem, price: e.target.value})}
+                                    value={newItem.price}
+                                    onChange={(e) => setNewItem({ ...newItem, price: e.target.value })}
                                     style={{ width: '100%', padding: '10px', backgroundColor: 'var(--bg-main)', color: 'white', border: '1px solid var(--color-border)', borderRadius: '4px' }}
                                 />
                             </div>
 
                             <div>
                                 <label style={{ display: 'block', marginBottom: '5px' }}>Tipo:</label>
-                                <select 
-                                    value={newItem.type} 
-                                    onChange={(e) => setNewItem({...newItem, type: e.target.value})}
+                                <select
+                                    value={newItem.type}
+                                    onChange={(e) => setNewItem({ ...newItem, type: e.target.value })}
                                     style={{ width: '100%', padding: '10px', backgroundColor: 'var(--bg-main)', color: 'white', border: '1px solid var(--color-border)', borderRadius: '4px' }}
                                 >
                                     <option value="AVATAR">Avatar</option>
@@ -209,11 +209,11 @@ export default function Store() {
 
                             <div>
                                 <label style={{ display: 'block', marginBottom: '5px' }}>Imagen (.png, .jpg):</label>
-                                <input 
-                                    type="file" 
-                                    accept=".png, .jpg, .jpeg" 
-                                    required 
-                                    onChange={(e) => setNewItem({...newItem, image: e.target.files[0]})}
+                                <input
+                                    type="file"
+                                    accept=".png, .jpg, .jpeg"
+                                    required
+                                    onChange={(e) => setNewItem({ ...newItem, image: e.target.files[0] })}
                                     style={{ width: '100%', color: 'white' }}
                                 />
                             </div>
