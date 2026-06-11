@@ -1,3 +1,5 @@
+version: '3.8'
+
 services:
   db:
     image: mysql:8.0
@@ -12,18 +14,49 @@ services:
       - "3306:3306"
     volumes:
       - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
 
   phpmyadmin:
     image: phpmyadmin:latest
     container_name: pma_starsfighters
     restart: always
-    links:
+    depends_on:
       - db
     environment:
       PMA_HOST: db
       PMA_ARBITRARY: 1
     ports:
       - "8085:80"
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: starsfighters_backend
+    restart: always
+    ports:
+      - "8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/stars_fighters?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: Miguel
+      SPRING_DATASOURCE_PASSWORD: miguel
+
+  frontend:
+    build:
+      context: "./frontend/Stars Fighters"
+      dockerfile: Dockerfile
+    container_name: starsfighters_frontend
+    restart: always
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
 
 volumes:
   db_data:

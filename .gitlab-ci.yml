@@ -1,0 +1,52 @@
+stages:
+  - build
+  - test
+  - e2e
+  - deploy
+
+build_backend:
+  stage: build
+  image: maven:3.9.6-eclipse-temurin-17
+  script:
+    - mvn clean compile
+
+test_backend_unit:
+  stage: test
+  image: maven:3.9.6-eclipse-temurin-17
+  script:
+    - mvn test
+
+build_frontend:
+  stage: build
+  image: node:20-alpine
+  script:
+    - cd "frontend/Stars Fighters"
+    - npm ci
+    - npm run build
+
+test_frontend_unit:
+  stage: test
+  image: node:20-alpine
+  script:
+    - cd "frontend/Stars Fighters"
+    - npm ci
+    - npm test
+
+test_e2e:
+  stage: e2e
+  image: node:20
+  script:
+    - cd "frontend/Stars Fighters"
+    - npm ci
+    - npm run test:e2e
+  allow_failure: true
+
+deploy_vm:
+  stage: deploy
+  script:
+    - docker compose down
+    - docker compose up -d --build
+  only:
+    - main
+  tags:
+    - shell
