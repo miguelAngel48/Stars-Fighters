@@ -6,7 +6,7 @@ export default function Dashboard() {
     const { user } = useUser();
     const navigate = useNavigate();
     const [leaderboard, setLeaderboard] = useState([]);
-    const ApiUrl = import.meta.VITE_API_URL
+    const ApiUrl = import.meta.env.VITE_API_URL
     useEffect(() => {
         const fetchLeaderboard = async () => {
             const token = localStorage.getItem("token");
@@ -89,7 +89,7 @@ export default function Dashboard() {
                                     <tr key={index} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
                                         <td style={{ padding: '15px', fontWeight: 'bold', color: index < 3 ? 'var(--color-primary)' : 'inherit' }}>{index + 1}</td>
                                         <td style={{ padding: '15px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                            <img src={player.avatarUrl || "http://localhost:8080/uploads/cosmetics/default-avatar.png"} alt="avatar" style={{ width: '30px', height: '30px', borderRadius: '50%' }} />
+                                            <img src={player.avatarUrl || `${ApiUrl}/uploads/cosmetics/default-avatar.png`} alt="avatar" style={{ width: '30px', height: '30px', borderRadius: '50%' }} />
                                             {player.username}
                                         </td>
                                         <td style={{ padding: '15px' }}>{player.level}</td>

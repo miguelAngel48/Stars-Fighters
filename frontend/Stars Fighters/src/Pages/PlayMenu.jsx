@@ -9,7 +9,7 @@ export default function PlayMenu() {
     const { latestEvent } = useNotification();
     const navigate = useNavigate();
     const [isSearching, setIsSearching] = useState(false);
-    const ApiUrl = import.meta.VITE_API_URL
+    const ApiUrl = import.meta.env.VITE_API_URL
 
     useEffect(() => {
         if (!latestEvent) return;

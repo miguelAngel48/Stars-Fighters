@@ -7,7 +7,7 @@ export default function Login() {
     const [formData, setFormData] = useState({ email: "", password: "" });
     const [error, setError] = useState("");
     const navigate = useNavigate();
-    const ApiUrl = import.env.VITE_API_URL
+    const ApiUrl = import.meta.env.VITE_API_URL
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };

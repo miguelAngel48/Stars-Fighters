@@ -6,7 +6,7 @@ export default function FriendProfile() {
     const location = useLocation();
     const navigate = useNavigate();
     const friend = location.state?.friend;
-    const ApiUrl = import.meta.VITE_API_URL
+    const ApiUrl = import.meta.env.VITE_API_URL
     if (!friend) {
         return (
             <div style={{ padding: '40px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>

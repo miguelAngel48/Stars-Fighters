@@ -11,7 +11,7 @@ export default function CharacterSelection() {
     const [isLoading, setIsLoading] = useState(true);
     const [maps, setMaps] = useState([]);
     const [selectedMap, setSelectedMap] = useState("");
-    const ApiUrl = import.meta.VITE_API_URL
+    const ApiUrl = import.meta.env.VITE_API_URL
     const [isMyReady, setIsMyReady] = useState(false);
     const [isOpponentReady, setIsOpponentReady] = useState(false);
     const [opponentCharName, setOpponentCharName] = useState("");

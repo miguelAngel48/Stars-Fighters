@@ -3,7 +3,7 @@ import '../Styles/Champions.css';
 
 const Champions = () => {
     const [champions, setChampions] = useState([]);
-    const ApiUrl = import.meta.VITE_API_URL
+    const ApiUrl = import.meta.env.VITE_API_URL
     useEffect(() => {
         fetch(`${ApiUrl}/api/characters`)
             .then(res => res.json())
