@@ -8,7 +8,7 @@ export default function Profile() {
     const { user, refreshUser } = useUser();
     const [copySuccess, setCopySuccess] = useState("");
     const [isStatusMenuOpen, setIsStatusMenuOpen] = useState(false);
-    const ApiUrl = import.env.VITE_API_URL
+    const ApiUrl = import.meta.VITE_API_URL
 
     const [localStatus, setLocalStatus] = useState("ACTIVE");
 

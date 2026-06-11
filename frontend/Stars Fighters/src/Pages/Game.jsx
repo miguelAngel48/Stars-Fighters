@@ -14,7 +14,7 @@ export default function Game() {
     const keys = useRef({});
     const stompClientRef = useRef(null);
     const isGameEndedRef = useRef(false);
-    const ApiUrl = import.env.VITE_API_URL
+    const ApiUrl = import.meta.VITE_API_URL
     const [searchParams] = useSearchParams();
     const lobbyId = searchParams.get("lobbyId");
     const mapId = searchParams.get("mapId");

@@ -12,7 +12,7 @@ export default function Store() {
     const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
     const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
     const [newItem, setNewItem] = useState({ name: "", price: 0, type: "AVATAR", image: null });
-    const ApiUrl = import.env.VITE_API_URL
+    const ApiUrl = import.meta.VITE_API_URL
     const navigate = useNavigate();
     const token = localStorage.getItem("token");
 
