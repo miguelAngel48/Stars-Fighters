@@ -38,24 +38,21 @@ test_e2e:
     name: cypress/included:latest
     entrypoint: [""]
   script:
-    - rm -rf node_modules package.json package-lock.json
     - cd "frontend/Stars Fighters"
-    - rm -rf node_modules
-    - npm ci
+    - npm install
     - npm run test:e2e
   allow_failure: true
 
 deploy_vm:
   stage: deploy
-  image: alpine:latest
-  before_script:
-    - apk add --no-cache openssh-client rsync
+  image: ubuntu:latest
+  script:
+    - apt-get update -y && apt-get install openssh-client rsync -y
     - eval $(ssh-agent -s)
-    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add - > /dev/null
     - mkdir -p ~/.ssh
     - chmod 700 ~/.ssh
-    - ssh-keyscan $VM_HOST >> ~/.ssh/known_hosts
-  script:
+    - echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config
     - rsync -avz --exclude='.git' --exclude='node_modules' --exclude='target' ./ root@$VM_HOST:~/stars-fighters/
     - ssh root@$VM_HOST "cd ~/stars-fighters && docker compose down && docker compose up -d --build"
   only:
