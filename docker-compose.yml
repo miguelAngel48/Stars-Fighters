@@ -33,12 +33,11 @@ services:
 
   backend:
     build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: starsfighters_backend
+      context: ./backend
+    container_name: backend
     restart: always
-    ports:
-      - "8090:8080"
+    expose:
+      - "8090"
     depends_on:
       db:
         condition: service_healthy
@@ -51,7 +50,7 @@ services:
     build:
       context: "./frontend/Stars Fighters"
       dockerfile: Dockerfile
-    container_name: starsfighters_frontend
+    container_name: frontend
     restart: always
     ports:
       - "8080:80"
