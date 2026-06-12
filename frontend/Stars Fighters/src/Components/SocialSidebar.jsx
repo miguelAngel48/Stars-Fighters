@@ -145,7 +145,7 @@ const fetchSearchResults = async (query) => {
         const token = localStorage.getItem("token");
 
         try {
-            const response = await fetch(${ApiUrl}/api/friendships/request, {
+            const response = await fetch(`${ApiUrl}/api/friendships/request`, {
                 method: "POST",
                 headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
                 body: JSON.stringify({ friendCode: newFriendIdentifier })
