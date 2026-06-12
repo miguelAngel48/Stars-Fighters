@@ -35,7 +35,7 @@ public class UserServiceTest {
     @Test
     void registUser_LanzaExcepcion_SiElEmailYaExiste() {
         CreateUser newUser = new CreateUser("test@test.com", "usuario", "password123", "password123");
-        when(userRepo.existsByEmail("test@test.com")).thenReturn(true);
+        when(userRepo.existsByEmail(anyString())).thenReturn(true);
         Exception exception = assertThrows(RuntimeException.class, () -> {
             userService.registUser(newUser);
         });
