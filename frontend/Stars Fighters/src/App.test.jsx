@@ -1,6 +1,6 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, cleanup } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 import App from './App';
 
 vi.mock('./contexts/UserContext', () => ({
@@ -13,6 +13,11 @@ vi.mock('./contexts/NotificationContext', () => ({
 }));
 
 describe('App Component', () => {
+
+    afterEach(() => {
+        cleanup();
+    });
+
     it('debe renderizar el titulo principal de la landing page', () => {
         render(
             <BrowserRouter>
