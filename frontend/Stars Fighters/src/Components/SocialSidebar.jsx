@@ -169,7 +169,7 @@ const fetchSearchResults = async (query) => {
         setActiveChat(friend);
         const token = localStorage.getItem("token");
         try {
-            const response = await fetch(${ApiUrl}/api/chat/${friend.friendshipId}, {
+            const response = await fetch(`${ApiUrl}/api/chat/${friend.friendshipId}`, {
                 headers: { "Authorization": `Bearer ${token}` }
             });
             if (response.ok) {
@@ -210,7 +210,7 @@ const fetchSearchResults = async (query) => {
 
         const token = localStorage.getItem("token");
         try {
-            const response = await fetch(${ApiUrl}/api/friendships/${friendshipId}, {
+            const response = await fetch(`${ApiUrl}/api/friendships/${friendshipId}`, {
                 method: "DELETE",
                 headers: { "Authorization": `Bearer ${token}` }
             });
@@ -246,7 +246,11 @@ const fetchSearchResults = async (query) => {
                                 <li key={friend.id} className="friend-item" onClick={() => handleFriendClick(friend)}>
                                     <div className="friend-info-left">
                                         <div className="friend-avatar-container">
-                                            <img src={friend.avatarUrl || `${ApiUrl}/uploads/cosmetics/default-avatar.png`} alt="Avatar" className="friend-avatar} />
+                                            <img
+                                                src={friend.avatarUrl || `${ApiUrl}/uploads/cosmetics/default-avatar.png`}
+                                                alt="Avatar"
+                                                className="friend-avatar"
+                                            />
                                             <div className={`status-dot ${friend.currentStatus || 'OFFLINE'}`}></div>
                                         </div>
                                         <span>{friend.username}</span>
