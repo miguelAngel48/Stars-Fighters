@@ -51,7 +51,7 @@ public class UserService {
     public record LeaderboardDto(String username, int level, int wins, String avatarUrl) {}
 
     private Cosmetic getOrCreateDefaultAvatar() {
-        String defaultUrl = "http://localhost:8080/uploads/cosmetics/avatar.png";
+        String defaultUrl = "/uploads/cosmetics/avatar.png";
         return cosmeticRepo.findAll().stream()
                 .filter(c -> defaultUrl.equals(c.getImageUrl()))
                 .findFirst()

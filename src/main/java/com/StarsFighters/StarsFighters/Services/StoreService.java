@@ -98,7 +98,7 @@ public class StoreService {
         Path filePath = uploadPath.resolve(fileName);
         Files.copy(imageFile.getInputStream(), filePath);
 
-        String fileUrl = "http://localhost:8080/uploads/cosmetics/" + fileName;
+        String fileUrl = "/uploads/cosmetics/" + fileName;
 
         Cosmetic cosmetic = new Cosmetic(name, price, fileUrl, type.toUpperCase());
         cosmeticRepo.save(cosmetic);

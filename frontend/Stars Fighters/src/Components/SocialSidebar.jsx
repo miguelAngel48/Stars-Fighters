@@ -27,6 +27,7 @@ export default function SocialSidebar() {
     const messagesEndRef = useRef(null);
     const { clientRef, isConnected } = useWebSocket();
     const { latestEvent, addChatNotification, clearChatNotification } = useNotification();
+    const ApiUrl = import.meta.env.VITE_API_URL
 
     useEffect(() => {
         const handleClickOutside = () => setOpenDropdownId(null);
@@ -77,7 +78,7 @@ export default function SocialSidebar() {
 
     const fetchFriends = async (token) => {
         try {
-            const response = await fetch("http://localhost:8080/api/friendships", {
+            const response = await fetch(${ApiUrl}/api/friendships, {
                 headers: { "Authorization": `Bearer ${token}` }
             });
             if (response.ok) {
@@ -105,7 +106,7 @@ export default function SocialSidebar() {
     const fetchSearchResults = async (query) => {
         const token = localStorage.getItem("token");
         try {
-            const response = await fetch(`http://localhost:8080/api/users/search?query=${query}`, {
+            const response = await fetch(${ApiUrl}/api/users/search?query=${query}, {
                 headers: { "Authorization": `Bearer ${token}` }
             });
             if (response.ok) {
@@ -144,7 +145,7 @@ export default function SocialSidebar() {
         const token = localStorage.getItem("token");
 
         try {
-            const response = await fetch("http://localhost:8080/api/friendships/request", {
+            const response = await fetch(${ApiUrl}/api/friendships/request, {
                 method: "POST",
                 headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
                 body: JSON.stringify({ friendCode: newFriendIdentifier })
@@ -168,7 +169,7 @@ export default function SocialSidebar() {
         setActiveChat(friend);
         const token = localStorage.getItem("token");
         try {
-            const response = await fetch(`http://localhost:8080/api/chat/${friend.friendshipId}`, {
+            const response = await fetch(${ApiUrl}/api/chat/${friend.friendshipId}, {
                 headers: { "Authorization": `Bearer ${token}` }
             });
             if (response.ok) {
@@ -209,7 +210,7 @@ export default function SocialSidebar() {
 
         const token = localStorage.getItem("token");
         try {
-            const response = await fetch(`http://localhost:8080/api/friendships/${friendshipId}`, {
+            const response = await fetch(${ApiUrl}/api/friendships/${friendshipId}, {
                 method: "DELETE",
                 headers: { "Authorization": `Bearer ${token}` }
             });
@@ -245,7 +246,7 @@ export default function SocialSidebar() {
                                 <li key={friend.id} className="friend-item" onClick={() => handleFriendClick(friend)}>
                                     <div className="friend-info-left">
                                         <div className="friend-avatar-container">
-                                            <img src={friend.avatarUrl || "http://localhost:8080/uploads/cosmetics/default-avatar.png"} alt="Avatar" className="friend-avatar" />
+                                            <img src={friend.avatarUrl || ${ApiUrl}/uploads/cosmetics/default-avatar.png"} alt="Avatar" className="friend-avatar} />
                                             <div className={`status-dot ${friend.currentStatus || 'OFFLINE'}`}></div>
                                         </div>
                                         <span>{friend.username}</span>

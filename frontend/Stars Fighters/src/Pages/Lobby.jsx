@@ -210,7 +210,7 @@ export default function Lobby() {
                                 <img src={coronaIcon} alt="Corona" className="crown-img" />
                             </div>
                             <img
-                                src={role === 'guest' ? (friends.find(f => f.username === leaderNameUrl)?.avatarUrl || `${ApiUrl}/uploads/cosmetics/default-avatar.png`) : (user.avatar || user.avatarUrl || "http://localhost:8080/uploads/cosmetics/default-avatar.png")}
+                                src={role === 'guest' ? (friends.find(f => f.username === leaderNameUrl)?.avatarUrl || `${ApiUrl}/uploads/cosmetics/default-avatar.png`) : (user.avatar || user.avatarUrl || `${ApiUrl}:8080/uploads/cosmetics/default-avatar.png`)}
                                 alt="Líder"
                                 className="slot-portrait"
                             />

@@ -26,6 +26,7 @@ export default function Navbar() {
     const mobileBellRef = useRef(null);
     const mobileProfileRef = useRef(null);
     const mobileMenuRef = useRef(null);
+    const ApiUrl = import.meta.env.VITE_API_URL
 
     useEffect(() => {
         const handleClickOutside = (e) => {
@@ -99,7 +100,7 @@ export default function Navbar() {
     const renderProfile = (ref) => (
         <div className="profile-dropdown-container" ref={ref}>
             <button className="profile-btn" onClick={() => setIsProfileOpen(!isProfileOpen)}>
-                <img src={user.avatar || user.avatarUrl || "http://localhost:8080/uploads/cosmetics/default-avatar.png"} alt="Perfil" className="profile-img" />
+                <img src={user.avatar  user.avatarUrl${ApiUrl}/uploads/cosmetics/default-avatar.png"} alt="Perfil" className="profile-img} />
                 <div className="profile-info" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '4px' }}>
                     <span className="profile-name">{user.username}</span>
                     <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "12px" }}>
