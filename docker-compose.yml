@@ -40,6 +40,7 @@ services:
       - "8090:8080" #
     environment:
       - DB_URL=jdbc:mysql://db:3306/stars_fighters?allowPublicKeyRetrieval=true&useSSL=false
+      - SERVER_FORWARD_HEADERS_STRATEGY=framework
     depends_on:
       db:
         condition: service_healthy
@@ -51,7 +52,7 @@ services:
     container_name: frontend
     restart: always
     ports:
-      - "80:80" #
+      - "8081:80" #
     depends_on:
       - backend
 
