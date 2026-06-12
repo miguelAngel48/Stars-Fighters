@@ -1,8 +1,8 @@
 stages:
   - build
   - test
-  - e2e
   - deploy
+  - e2e
 
 build_backend:
   stage: build
