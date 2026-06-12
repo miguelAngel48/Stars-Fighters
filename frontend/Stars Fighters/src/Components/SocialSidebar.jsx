@@ -76,17 +76,17 @@ export default function SocialSidebar() {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [messages]);
 
-    const fetchFriends = async (token) => {
-        try {
-            const response = await fetch(${ApiUrl}/api/friendships, {
-                headers: { "Authorization": `Bearer ${token}` }
-            });
-            if (response.ok) {
-                const data = await response.json();
-                setFriends(data);
-            }
-        } catch (error) {}
-    };
+const fetchFriends = async (token) => {
+    try {
+        const response = await fetch(`${ApiUrl}/api/friendships`, {
+            headers: { "Authorization": `Bearer ${token}` }
+        });
+        if (response.ok) {
+            const data = await response.json();
+            setFriends(data);
+        }
+    } catch (error) {}
+}
 
     const handleSearchChange = (e) => {
         const val = e.target.value;
