@@ -53,7 +53,7 @@ deploy_vm:
     - mkdir -p ~/.ssh
     - chmod 700 ~/.ssh
     - echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config
-    - rsync -avz --exclude='.git' --exclude='node_modules' --exclude='target' ./ root@$VM_HOST:~/stars-fighters/
-    - ssh root@$VM_HOST "cd ~/stars-fighters && docker compose down && docker compose up -d --build"
+    - rsync -avz -e "ssh -p $SSH_PORT" --exclude='.git' --exclude='node_modules' --exclude='target' ./ $SSH_HOST:~/stars-fighters/
+    - ssh -p $SSH_PORT $SSH_HOST "cd ~/stars-fighters && docker compose down && docker compose up -d --build"
   only:
     - main
