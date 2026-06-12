@@ -14,7 +14,9 @@ export const WebSocketProvider = ({ children }) => {
         if (stompClientRef.current && stompClientRef.current.connected) return;
 
         const client = new Client({
-            webSocketFactory: () => new SockJS("http://localhost:8080/ws-stars"),
+            const WS_URL = import.meta.env.VITE_WS_URL || "http://localhost:8080";
+            const client = new Client({
+                webSocketFactory: () => new SockJS(`${WS_URL}/ws-stars`),
             connectHeaders: { Authorization: `Bearer ${token}` },
             onConnect: () => setIsConnected(true),
             onDisconnect: () => setIsConnected(false),
