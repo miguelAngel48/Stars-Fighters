@@ -1,34 +1,28 @@
 describe('Flujo completo de la aplicacion', () => {
-  const uniqueId = new Date().getTime();
-  const testEmail = `jugador${uniqueId}@esliceu.com`;
-  const testUsername = `Jugador${uniqueId}`;
-  const testPassword = 'Password123!';
 
-  it('Registro, inicio de sesion y acceso al panel', () => {
-    cy.visit('/');
+  it('Debe permitir registrar a un usuario nuevo', () => {
+    const randomId = Date.now();
+    const testEmail = `piloto${randomId}@test.com`;
+    const testUser = `Jugador${randomId}`;
 
-    cy.contains('JUGAR GRATIS').click();
-    cy.url().should('include', '/register');
+    cy.visit('/registro');
 
-    cy.contains('h1', 'Registro').should('be.visible');
-
+    cy.get('input[name="username"]').type(testUser);
     cy.get('input[name="email"]').type(testEmail);
-    cy.get('input[name="username"]').type(testUsername);
-    cy.get('input[name="password"]').type(testPassword);
+    cy.get('input[name="password"]').type('Password123!');
+    cy.get('button[type="submit"]').click();
 
-    cy.contains('button', 'Crear cuenta').click();
-
-    cy.contains('Usuario registrado', { timeout: 8000 }).should('be.visible');
-
-    cy.url({ timeout: 5000 }).should('include', '/login');
-
-    cy.get('input[name="email"]').should('be.visible').type(testEmail);
-    cy.get('input[name="password"]').type(testPassword);
-
-    cy.get('form').find('button[type="submit"]').click();
-
-    cy.url().should('not.include', '/login');
-    cy.url().should('not.include', '/register');
-    cy.get('nav').should('be.visible');
+    cy.contains('Usuario registrado').should('be.visible');
   });
+
+  it('Debe permitir iniciar sesion con una cuenta existente', () => {
+    cy.visit('/login');
+
+    cy.get('input[name="username"]').type('test@test.com');
+    cy.get('input[name="password"]').type('Password123!');
+    cy.get('button[type="submit"]').click();
+
+    cy.url().should('include', '/dashboard');
+  });
+
 });
