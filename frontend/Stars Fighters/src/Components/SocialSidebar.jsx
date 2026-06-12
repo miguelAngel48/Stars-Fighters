@@ -246,7 +246,7 @@ export default function SocialSidebar() {
                                 <li key={friend.id} className="friend-item" onClick={() => handleFriendClick(friend)}>
                                     <div className="friend-info-left">
                                         <div className="friend-avatar-container">
-                                            <img src={friend.avatarUrl || ${ApiUrl}/uploads/cosmetics/default-avatar.png"} alt="Avatar" className="friend-avatar} />
+                                            <img src={friend.avatarUrl || `${ApiUrl}/uploads/cosmetics/default-avatar.png`} alt="Avatar" className="friend-avatar} />
                                             <div className={`status-dot ${friend.currentStatus || 'OFFLINE'}`}></div>
                                         </div>
                                         <span>{friend.username}</span>
