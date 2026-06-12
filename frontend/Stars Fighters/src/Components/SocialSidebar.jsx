@@ -103,18 +103,18 @@ const fetchFriends = async (token) => {
         }
     };
 
-    const fetchSearchResults = async (query) => {
-        const token = localStorage.getItem("token");
-        try {
-            const response = await fetch(${ApiUrl}/api/users/search?query=${query}, {
-                headers: { "Authorization": `Bearer ${token}` }
-            });
-            if (response.ok) {
-                const data = await response.json();
-                setSearchResults(data);
-            }
-        } catch (error) {}
-    };
+const fetchSearchResults = async (query) => {
+    const token = localStorage.getItem("token");
+    try {
+        const response = await fetch(`${ApiUrl}/api/users/search?query=${query}`, {
+            headers: { "Authorization": `Bearer ${token}` }
+        });
+        if (response.ok) {
+            const data = await response.json();
+            setSearchResults(data);
+        }
+    } catch (error) {}
+};
 
     const selectUser = (friendCode) => {
         setNewFriendIdentifier(friendCode);
