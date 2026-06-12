@@ -10,13 +10,13 @@ export const WebSocketProvider = ({ children }) => {
     const stompClientRef = useRef(null);
     const [isConnected, setIsConnected] = useState(false);
 
-    const connect = useCallback((token) => {
+        const connect = useCallback((token) => {
         if (stompClientRef.current && stompClientRef.current.connected) return;
 
+        const WS_URL = import.meta.env.VITE_WS_URL || "http://localhost:8080";
+
         const client = new Client({
-            const WS_URL = import.meta.env.VITE_WS_URL || "http://localhost:8080";
-            const client = new Client({
-                webSocketFactory: () => new SockJS(`${WS_URL}/ws-stars`),
+            webSocketFactory: () => new SockJS(`${WS_URL}/ws-stars`),
             connectHeaders: { Authorization: `Bearer ${token}` },
             onConnect: () => setIsConnected(true),
             onDisconnect: () => setIsConnected(false),
