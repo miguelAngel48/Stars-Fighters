@@ -38,7 +38,9 @@ test_e2e:
     name: cypress/included:latest
     entrypoint: [""]
   script:
+    - rm -rf node_modules package.json package-lock.json
     - cd "frontend/Stars Fighters"
+    - rm -rf node_modules
     - npm ci
     - npm run test:e2e
   allow_failure: true
