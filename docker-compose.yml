@@ -38,7 +38,7 @@ services:
     container_name: starsfighters_backend
     restart: always
     ports:
-      - "8080:8080"
+      - "8090:8080"
     depends_on:
       db:
         condition: service_healthy
