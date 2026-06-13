@@ -38,7 +38,9 @@ public class SecurityConfig {
                         .anyRequest().authenticated()
                 )
                 .oauth2Login(oauth2 -> oauth2
-                        .successHandler(oAuth2LoginSuccessHandler)
+                                .redirectionEndpoint(redirection -> redirection
+                                        .baseUri("/api/login/oauth2/code/*")
+                                )
                 )
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
