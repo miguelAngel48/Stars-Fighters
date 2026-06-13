@@ -37,7 +37,7 @@ export default function Dashboard() {
                     <div className="user-card" style={{ flex: '1', minWidth: '300px' }}>
                         <h3>Tu Perfil</h3>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '15px' }}>
-                            <img src={user.avatarUrl || user.equippedAvatarUrl} alt="Avatar" style={{ width: '60px', height: '60px', borderRadius: '50%' }} />
+                            <img src={user.avatarUrl || user.equippedAvatarUrl || /default/avatar.png} alt="Avatar" style={{ width: '60px', height: '60px', borderRadius: '50%' }} />
                             <div>
                                 <p style={{ fontSize: '1.2em', margin: 0 }}><strong>{user.username}</strong></p>
                                 <p style={{ color: 'var(--text-muted)', margin: 0 }}>Nivel {user.level}</p>
@@ -89,7 +89,7 @@ export default function Dashboard() {
                                     <tr key={index} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
                                         <td style={{ padding: '15px', fontWeight: 'bold', color: index < 3 ? 'var(--color-primary)' : 'inherit' }}>{index + 1}</td>
                                         <td style={{ padding: '15px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                            <img src={player.avatarUrl || `${ApiUrl}/uploads/cosmetics/avatar.png`} alt="avatar" style={{ width: '30px', height: '30px', borderRadius: '50%' }} />
+                                            <img src={player.avatarUrl || /default/avatar.png} alt="avatar" style={{ width: '30px', height: '30px', borderRadius: '50%' }} />
                                             {player.username}
                                         </td>
                                         <td style={{ padding: '15px' }}>{player.level}</td>

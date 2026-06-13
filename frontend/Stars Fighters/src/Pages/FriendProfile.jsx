@@ -38,7 +38,7 @@ export default function FriendProfile() {
             <div className="user-card" style={{ maxWidth: '500px', width: '100%', textAlign: 'center', height: 'fit-content' }}>
                 <div style={{ position: 'relative', display: 'inline-block', marginBottom: '10px' }}>
                     <img
-                        src={friend.avatarUrl || `${ApiUrl}/uploads/cosmetics/avatar.png`}
+                        src={friend.avatarUrl || /default/avatar.png}
                         alt="Avatar"
                         style={{ width: '120px', height: '120px', borderRadius: '50%', objectFit: 'cover', border: '3px solid var(--color-primary)' }}
                     />

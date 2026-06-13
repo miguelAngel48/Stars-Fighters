@@ -169,7 +169,7 @@ export default function Profile() {
     if (!user) return <div className="loading">Cargando perfil...</div>;
 
     const currentStatusConfig = getStatusConfig(localStatus);
-    const avatarToDisplay = user.equippedAvatarUrl || user.avatarUrl || `${ApiUrl}/uploads/cosmetics/avatar.png`;
+    const avatarToDisplay = user.equippedAvatarUrl || user.avatarUrl || /default/avatar.png;
 
     return (
         <div className="profile-page-container" style={{ padding: '40px' }}>
