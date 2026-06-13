@@ -14,6 +14,8 @@ export default function Game() {
     const stompClientRef = useRef(null);
     const isGameEndedRef = useRef(false);
     const opponentLeftTimeoutRef = useRef(null);
+    const gameSettingsRef = useRef(null);
+
     const ApiUrl = import.meta.env.VITE_API_URL;
     const [searchParams] = useSearchParams();
     const lobbyId = searchParams.get("lobbyId");
@@ -79,13 +81,14 @@ export default function Game() {
 
         let myWins = false;
         let tie = false;
+        const currentSettings = gameSettingsRef.current;
 
         if (myForcedLoss) {
             myWins = false;
         } else if (oppForcedLoss) {
             myWins = true;
         } else {
-            if (gameSettings.lives > 0) {
+            if (currentSettings && currentSettings.lives > 0) {
                 if (myLivesRef.current > oppLivesRef.current) myWins = true;
                 else if (myLivesRef.current === oppLivesRef.current) tie = true;
             } else {
@@ -103,7 +106,7 @@ export default function Game() {
             isTie: tie
         });
 
-        if (gameSettings && gameSettings.mode === "normal") {
+        if (currentSettings && currentSettings.mode === "normal") {
             recordMatchInDatabase(myWins && !tie);
         }
     };
@@ -133,6 +136,8 @@ export default function Game() {
                     const maps = await mapsRes.json();
 
                     setGameSettings(settings);
+                    gameSettingsRef.current = settings;
+
                     myLivesRef.current = settings.lives;
                     oppLivesRef.current = settings.lives;
                     setTimeLeft(settings.timeLimit > 0 ? settings.timeLimit : null);
@@ -219,10 +224,10 @@ export default function Game() {
                         myPositionRef.current = { x: mySpawnX, y: 100 };
 
                         let isOver = false;
-                        setGameSettings(prev => {
-                            if (prev && prev.lives > 0 && myLivesRef.current <= 0) isOver = true;
-                            return prev;
-                        });
+                        const currentSettings = gameSettingsRef.current;
+                        if (currentSettings && currentSettings.lives > 0 && myLivesRef.current <= 0) {
+                            isOver = true;
+                        }
 
                         if (stompClientRef.current && stompClientRef.current.connected) {
                             stompClientRef.current.publish({
@@ -247,10 +252,11 @@ export default function Game() {
                     oppHealthRef.current = 100;
 
                     let checkIsOver = deathData.isGameOver;
-                    setGameSettings(prev => {
-                        if (prev && prev.lives > 0 && oppLivesRef.current <= 0) checkIsOver = true;
-                        return prev;
-                    });
+                    const currentSettings = gameSettingsRef.current;
+
+                    if (currentSettings && currentSettings.lives > 0 && oppLivesRef.current <= 0) {
+                        checkIsOver = true;
+                    }
 
                     if (checkIsOver) {
                         handleEndGame(false, true);
@@ -545,7 +551,8 @@ export default function Game() {
                 if (myPositionRef.current.y > canvas.height + 50) {
                     myHealthRef.current = 100;
 
-                    if (gameSettings.lives > 0) {
+                    const currentSettings = gameSettingsRef.current;
+                    if (currentSettings && currentSettings.lives > 0) {
                         myLivesRef.current = Math.max(0, myLivesRef.current - 1);
                     }
                     oppKillsRef.current += 1;
@@ -555,7 +562,7 @@ export default function Game() {
                     myPlayer.velocityY = 0;
 
                     let isOver = false;
-                    if (gameSettings.lives > 0 && myLivesRef.current <= 0) {
+                    if (currentSettings && currentSettings.lives > 0 && myLivesRef.current <= 0) {
                         isOver = true;
                     }
 
@@ -727,14 +734,6 @@ export default function Game() {
                                     {gameSettings.lives > 0 && <p style={{ fontSize: '18px', margin: '5px 0 0 0', fontWeight: 'bold' }}>Vidas: {finalStats.oppLives}</p>}
                                 </div>
                             </div>
-
-                            <p style={{ color: '#aaa', fontStyle: 'italic', marginBottom: '10px' }}>
-                                {finalStats.isWin
-                                    ? "Has demostrado ser el Star Warrior definitivo."
-                                    : finalStats.isTie
-                                        ? "Ambos guerreros están al mismo nivel."
-                                        : "Entrena más duro y vuelve a intentarlo."}
-                            </p>
 
                             {gameSettings.mode === "normal" ? (
                                 <div className="rewards-container">
