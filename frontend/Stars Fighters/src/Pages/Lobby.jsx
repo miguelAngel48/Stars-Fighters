@@ -210,7 +210,7 @@ export default function Lobby() {
                                 <img src={coronaIcon} alt="Corona" className="crown-img" />
                             </div>
                             <img
-                                src={role === 'guest' ? (friends.find(f => f.username === leaderNameUrl)?.avatarUrl || /default/avatar.png) : (user.avatar || user.avatarUrl || /default/avatar.png)}
+                                src={role === 'guest' ? (friends.find(f => f.username === leaderNameUrl)?.avatarUrl || "/default/avatar.png") : (user.avatar || user.avatarUrl || "/default/avatar.png")}
                                 alt="Líder"
                                 className="slot-portrait"
                             />
@@ -237,7 +237,7 @@ export default function Lobby() {
                                         <button className="slot-kick-btn" onClick={handleKickPlayer}>✖</button>
                                     )}
                                     <img
-                                        src={role === 'guest' ? (user.avatar || user.avatarUrl || /default/avatar.png) : (player2?.avatarUrl || /default/avatar.png)}
+                                        src={role === 'guest' ? (user.avatar || user.avatarUrl || "/default/avatar.png") : (player2?.avatarUrl || "/default/avatar.png")}
                                         alt="Jugador 2"
                                         className="slot-portrait"
                                     />
@@ -311,7 +311,7 @@ export default function Lobby() {
                                         style={{ opacity: player2 ? 0.4 : 1, cursor: player2 ? 'not-allowed' : 'grab' }}
                                     >
                                         <div className="drag-icon-handle">⠿</div>
-                                        <img src={friend.avatarUrl || /default/avatar.png} alt="Avatar" className="friend-drag-img" />
+                                        <img src={friend.avatarUrl || "/default/avatar.png"} alt="Avatar" className="friend-drag-img" />
                                         <span className="friend-drag-name">{friend.username}</span>
                                     </li>
                                 ))
