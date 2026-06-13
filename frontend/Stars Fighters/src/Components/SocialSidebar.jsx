@@ -247,7 +247,7 @@ const fetchSearchResults = async (query) => {
                                     <div className="friend-info-left">
                                         <div className="friend-avatar-container">
                                             <img
-                                                src={friend.avatarUrl || `${ApiUrl}/uploads/cosmetics/default-avatar.png`}
+                                                src={friend.avatarUrl || `${ApiUrl}/uploads/cosmetics/avatar.png`}
                                                 alt="Avatar"
                                                 className="friend-avatar"
                                             />

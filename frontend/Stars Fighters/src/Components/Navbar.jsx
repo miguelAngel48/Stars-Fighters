@@ -101,7 +101,7 @@ export default function Navbar() {
         <div className="profile-dropdown-container" ref={ref}>
             <button className="profile-btn" onClick={() => setIsProfileOpen(!isProfileOpen)}>
                 <img
-                  src={user.avatar || user.avatarUrl || `${ApiUrl}/uploads/cosmetics/default-avatar.png`}
+                  src={user.avatar || user.avatarUrl || `${ApiUrl}/uploads/cosmetics/avatar.png`}
                   alt="Perfil"
                   className="profile-img"
                 />
