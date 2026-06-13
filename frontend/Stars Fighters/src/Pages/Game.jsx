@@ -8,13 +8,13 @@ import LevelUpModal from "./LevelUpModal";
 import corazonIcon from '../assets/corazon.png';
 
 export default function Game() {
-
     const canvasRef = useRef(null);
     const requestRef = useRef(null);
     const keys = useRef({});
     const stompClientRef = useRef(null);
     const isGameEndedRef = useRef(false);
-    const ApiUrl = import.meta.env.VITE_API_URL
+    const opponentLeftTimeoutRef = useRef(null);
+    const ApiUrl = import.meta.env.VITE_API_URL;
     const [searchParams] = useSearchParams();
     const lobbyId = searchParams.get("lobbyId");
     const mapId = searchParams.get("mapId");
@@ -68,7 +68,7 @@ export default function Game() {
                     setLevelUpData({ newLevel: data.newLevel });
                 }
             }
-        } catch (error) { }
+        } catch (error) {}
     };
 
     const handleEndGame = (myForcedLoss = false, oppForcedLoss = false) => {
@@ -189,13 +189,17 @@ export default function Game() {
             webSocketFactory: () => new SockJS(`${import.meta.env.VITE_WS_URL}/ws-stars`),
             connectHeaders: { Authorization: `Bearer ${token}` },
             onConnect: () => {
-
                 client.subscribe('/user/queue/game-sync', (msg) => {
                     const data = JSON.parse(msg.body);
                     oppPositionRef.current.x = data.x;
                     oppPositionRef.current.y = data.y;
                     oppActionRef.current = data.action || "IDLE";
                     oppDirectionRef.current = data.direction || -1;
+
+                    if (opponentLeftTimeoutRef.current) {
+                        clearTimeout(opponentLeftTimeoutRef.current);
+                        opponentLeftTimeoutRef.current = null;
+                    }
                 });
 
                 client.subscribe('/user/queue/game-hit', (msg) => {
@@ -255,7 +259,13 @@ export default function Game() {
 
                 client.subscribe('/user/queue/game-opponent-left', () => {
                     if (!isGameEndedRef.current) {
-                        handleEndGame(false, true);
+                        if (!opponentLeftTimeoutRef.current) {
+                            opponentLeftTimeoutRef.current = setTimeout(() => {
+                                if (!isGameEndedRef.current) {
+                                    handleEndGame(false, true);
+                                }
+                            }, 10000);
+                        }
                     }
                 });
             }
@@ -267,6 +277,9 @@ export default function Game() {
         loadGameData();
 
         return () => {
+            if (opponentLeftTimeoutRef.current) {
+                clearTimeout(opponentLeftTimeoutRef.current);
+            }
             if (stompClientRef.current) {
                 if (stompClientRef.current.connected && !isGameEndedRef.current) {
                     stompClientRef.current.publish({
