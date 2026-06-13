@@ -8,7 +8,7 @@ export default function Profile() {
     const { user, refreshUser } = useUser();
     const [copySuccess, setCopySuccess] = useState("");
     const [isStatusMenuOpen, setIsStatusMenuOpen] = useState(false);
-    const ApiUrl = import.meta.env.VITE_API_URL
+    const ApiUrl = import.meta.env.VITE_API_URL;
 
     const [localStatus, setLocalStatus] = useState("ACTIVE");
 
@@ -169,7 +169,14 @@ export default function Profile() {
     if (!user) return <div className="loading">Cargando perfil...</div>;
 
     const currentStatusConfig = getStatusConfig(localStatus);
-    const avatarToDisplay = user.equippedAvatarUrl || user.avatarUrl || "/default/default-avatar.png";
+
+    // Helper function para formatear la URL del avatar correctamente
+    const getAvatarUrl = (url) => {
+        if (!url) return `${ApiUrl}/uploads/cosmetics/default-avatar.png`;
+        return url.startsWith('http') ? url : `${ApiUrl}${url}`;
+    };
+
+    const avatarToDisplay = getAvatarUrl(user.equippedAvatarUrl || user.avatarUrl);
 
     return (
         <div className="profile-page-container" style={{ padding: '40px' }}>
@@ -284,22 +291,25 @@ export default function Profile() {
                             <p style={{ color: "var(--text-muted)" }}>No tienes avatares disponibles.</p>
                         ) : (
                             <div className="avatar-grid" style={{ display: 'flex', gap: '15px', flexWrap: 'wrap', justifyContent: 'center', margin: '20px 0' }}>
-                                {availableAvatars.map((url, idx) => (
-                                    <img
-                                        key={idx}
-                                        src={url}
-                                        alt={`Avatar ${idx}`}
-                                        className={`avatar-option ${avatarToDisplay === url ? 'selected' : ''}`}
-                                        onClick={() => handleAvatarChange(url)}
-                                        style={{
-                                            width: '80px', height: '80px', borderRadius: '50%', cursor: 'pointer',
-                                            border: avatarToDisplay === url ? '3px solid var(--color-primary)' : '2px solid transparent',
-                                            transition: 'transform 0.2s'
-                                        }}
-                                        onMouseEnter={(e) => e.target.style.transform = 'scale(1.1)'}
-                                        onMouseLeave={(e) => e.target.style.transform = 'scale(1)'}
-                                    />
-                                ))}
+                                {availableAvatars.map((url, idx) => {
+                                    const displayUrl = getAvatarUrl(url);
+                                    return (
+                                        <img
+                                            key={idx}
+                                            src={displayUrl}
+                                            alt={`Avatar ${idx}`}
+                                            className={`avatar-option ${avatarToDisplay === displayUrl ? 'selected' : ''}`}
+                                            onClick={() => handleAvatarChange(url)}
+                                            style={{
+                                                width: '80px', height: '80px', borderRadius: '50%', cursor: 'pointer',
+                                                border: avatarToDisplay === displayUrl ? '3px solid var(--color-primary)' : '2px solid transparent',
+                                                transition: 'transform 0.2s'
+                                            }}
+                                            onMouseEnter={(e) => e.target.style.transform = 'scale(1.1)'}
+                                            onMouseLeave={(e) => e.target.style.transform = 'scale(1)'}
+                                        />
+                                    );
+                                })}
                             </div>
                         )}
                         <div className="modal-actions" style={{ justifyContent: 'center' }}>
