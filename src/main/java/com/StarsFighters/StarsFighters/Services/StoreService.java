@@ -25,7 +25,7 @@ public class StoreService {
     @Autowired
     private UserRepo userRepo;
 
-    private final String UPLOAD_DIR = "uploads/cosmetics/";
+    private final String UPLOAD_DIR = "frontend/Stars Fighters/public/default/";
 
     public List<Cosmetic> getStoreItems() {
         return cosmeticRepo.findAll();
@@ -98,7 +98,7 @@ public class StoreService {
         Path filePath = uploadPath.resolve(fileName);
         Files.copy(imageFile.getInputStream(), filePath);
 
-        String fileUrl = "/uploads/cosmetics/" + fileName;
+        String fileUrl = "/default/" + fileName;
 
         Cosmetic cosmetic = new Cosmetic(name, price, fileUrl, type.toUpperCase());
         cosmeticRepo.save(cosmetic);

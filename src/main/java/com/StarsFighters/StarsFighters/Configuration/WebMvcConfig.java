@@ -13,8 +13,11 @@ public class WebMvcConfig implements WebMvcConfigurer {
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
-        registry.addResourceHandler("/uploads/**")
-                .addResourceLocations("file:/app/uploads/");
+        Path uploadDir = Paths.get("frontend/Stars Fighters/public/default");
+        String uploadPath = uploadDir.toFile().getAbsolutePath();
+
+        registry.addResourceHandler("/default/**")
+                .addResourceLocations("file:" + uploadPath + "/");
     }
 
     public void addCorsMappings(CorsRegistry registry) {
