@@ -33,14 +33,21 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**", "/api/login/oauth2/**", "/oauth2/**", "/ws-stars/**", "/uploads/**", "/api/characters").permitAll()
+                        .requestMatchers("/api/auth/**", "/api/login/oauth2/**", "/api/oauth2/**", "/oauth2/**", "/ws-stars/**", "/uploads/**", "/api/characters").permitAll()
                         .anyRequest().authenticated()
                 )
                 .oauth2Login(oauth2 -> oauth2
+                        .authorizationEndpoint(auth -> auth
+                                .baseUri("/api/oauth2/authorization")
+                        )
                         .redirectionEndpoint(redirection -> redirection
                                 .baseUri("/api/login/oauth2/code/*")
                         )
                         .successHandler(oAuth2LoginSuccessHandler)
+                        .failureHandler((request, response, exception) -> {
+                            System.err.println("Error en OAuth2: " + exception.getMessage());
+                            response.sendRedirect("http://stars-fighters.z110.alumnes-esliceu.info/login?error=oauth2_failed");
+                        })
                 )
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
