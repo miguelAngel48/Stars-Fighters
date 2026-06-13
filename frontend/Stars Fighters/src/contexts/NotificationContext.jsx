@@ -16,11 +16,12 @@ export const NotificationProvider = ({ children }) => {
     const { clientRef, isConnected } = useWebSocket();
     const { user } = useUser();
     const navigate = useNavigate();
+    const ApiUrl = import.meta.env.VITE_API_URL;
 
     useEffect(() => {
         if (!user) return;
         const token = localStorage.getItem("token");
-        fetch("http://localhost:8080/api/friendships/pending", {
+        fetch(`${ApiUrl}/api/friendships/pending`, {
             headers: { "Authorization": `Bearer ${token}` }
         })
             .then(res => res.json())
@@ -35,7 +36,7 @@ export const NotificationProvider = ({ children }) => {
                 }));
                 setBellList(prev => [...items, ...prev]);
             }).catch(() => { });
-    }, [user]);
+    }, [user, ApiUrl]);
 
     useEffect(() => {
         if (!isConnected || !clientRef.current || !user) return;
@@ -110,7 +111,7 @@ export const NotificationProvider = ({ children }) => {
         removeToast(item.id);
         const token = localStorage.getItem("token");
         try {
-            await fetch(`http://localhost:8080/api/friendships/respond/${item.friendshipId}?accepted=${accepted}`, {
+            await fetch(`${ApiUrl}/api/friendships/respond/${item.friendshipId}?accepted=${accepted}`, {
                 method: "PUT",
                 headers: { "Authorization": `Bearer ${token}` }
             });
@@ -125,7 +126,7 @@ export const NotificationProvider = ({ children }) => {
         removeToast(item.id);
         const token = localStorage.getItem("token");
         try {
-            const res = await fetch(`http://localhost:8080/api/lobby/respond/${item.senderId}?accepted=${accepted}&lobbyId=${item.lobbyId}`, {
+            const res = await fetch(`${ApiUrl}/api/lobby/respond/${item.senderId}?accepted=${accepted}&lobbyId=${item.lobbyId}`, {
                 method: "POST",
                 headers: { "Authorization": `Bearer ${token}` }
             });

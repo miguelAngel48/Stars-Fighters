@@ -13,7 +13,7 @@ export const WebSocketProvider = ({ children }) => {
         const connect = useCallback((token) => {
         if (stompClientRef.current && stompClientRef.current.connected) return;
 
-        const WS_URL = import.meta.env.VITE_WS_URL || "http://localhost:8080";
+        const WS_URL = import.meta.env.VITE_WS_URL;
 
         const client = new Client({
             webSocketFactory: () => new SockJS(`${WS_URL}/ws-stars`),

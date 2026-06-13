@@ -7,6 +7,7 @@ export const useUser = () => useContext(UserContext);
 export const UserProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [loadingUser, setLoadingUser] = useState(true);
+    const ApiUrl = import.meta.env.VITE_API_URL;
 
     const fetchUser = useCallback(async () => {
         const token = localStorage.getItem("token");
@@ -16,8 +17,7 @@ export const UserProvider = ({ children }) => {
         }
 
         try {
-            const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
-            const response = await fetch(`${API_URL}/api/auth/profile`, {
+            const response = await fetch(`${ApiUrl}/api/auth/profile`, {
                 headers: { "Authorization": `Bearer ${token}` }
             });
 
@@ -33,8 +33,7 @@ export const UserProvider = ({ children }) => {
         } finally {
             setLoadingUser(false);
         }
-    }, []);
-
+    }, [ApiUrl]);
     useEffect(() => {
         fetchUser();
     }, [fetchUser]);

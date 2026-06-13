@@ -38,7 +38,7 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
 
 
         String token = jwtService.generateToken(user);
-        String frontendUrl = "http://localhost:5173/oauth2/redirect?token=" + token;
+        String frontendUrl = "http://stars-fighters.z110.alumnes-esliceu.info/oauth2/redirect?token=" + token;
 
         response.sendRedirect(frontendUrl);
     }
