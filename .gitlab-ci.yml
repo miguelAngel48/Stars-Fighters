@@ -34,12 +34,10 @@ test_frontend_unit:
 
 test_e2e:
   stage: e2e
-  image:
-    name: cypress/included:latest
-    entrypoint: [""]
+  image: cypress/included:15.17.0
   script:
     - cd "frontend/Stars Fighters"
-    - npm install
+    - npm ci
     - npm run test:e2e
   allow_failure: true
 
