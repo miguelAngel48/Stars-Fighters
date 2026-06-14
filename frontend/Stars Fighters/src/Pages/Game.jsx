@@ -3,11 +3,13 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import { Client } from '@stomp/stompjs';
 import SockJS from 'sockjs-client/dist/sockjs';
 import { jwtDecode } from "jwt-decode";
+import { useUser } from "../contexts/UserContext";
 import "../Styles/Game.css";
 import LevelUpModal from "./LevelUpModal";
 import corazonIcon from '../assets/corazon.png';
 
 export default function Game() {
+    const { refreshUser } = useUser();
     const canvasRef = useRef(null);
     const requestRef = useRef(null);
     const keys = useRef({});
@@ -68,6 +70,9 @@ export default function Game() {
                 const data = await response.json();
                 if (data.leveledUp) {
                     setLevelUpData({ newLevel: data.newLevel });
+                }
+                if (refreshUser) {
+                    refreshUser();
                 }
             }
         } catch (error) {}
