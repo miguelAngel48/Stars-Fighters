@@ -20,11 +20,13 @@ public class WebMvcConfig implements WebMvcConfigurer {
                 .addResourceLocations("file:" + uploadPath + "/");
     }
 
+    @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**")
                 .allowedOrigins(
                         "http://localhost:5173",
-                        "http://stars-fighters.z110.alumnes-esliceu.info"
+                        "http://stars-fighters.z110.alumnes-esliceu.info",
+                        "http://192.168.50.110:3001"
                 )
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                 .allowedHeaders("*")
