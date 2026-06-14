@@ -104,6 +104,28 @@ export default function Store() {
         setTimeout(() => setMessage(""), 3000);
     };
 
+    const handleDeleteCosmetic = async (id) => {
+        if (!window.confirm("¿Estás seguro de que deseas eliminar este cosmético?")) return;
+
+        try {
+            const response = await fetch(`${ApiUrl}/api/store/admin/items/${id}`, {
+                method: "DELETE",
+                headers: { "Authorization": `Bearer ${token}` }
+            });
+
+            if (response.ok) {
+                setMessage("Cosmético eliminado con éxito");
+                fetchData();
+            } else {
+                const errorData = await response.text();
+                setMessage(errorData || "Error al eliminar el cosmético");
+            }
+        } catch (error) {
+            setMessage("Error de conexión al servidor");
+        }
+        setTimeout(() => setMessage(""), 3000);
+    };
+
     const isOwned = (itemId) => inventory.some(item => item.id === itemId);
 
     return (
@@ -137,6 +159,14 @@ export default function Store() {
                         const imageUrl = item.imageUrl.startsWith('http') ? item.imageUrl : `${ApiUrl}${item.imageUrl}`;
                         return (
                             <div key={item.id} className="store-card">
+                                {user && user.role === 'ADMIN' && (
+                                    <button
+                                        className="btn-delete-cosmetic"
+                                        onClick={() => handleDeleteCosmetic(item.id)}
+                                    >
+                                        X
+                                    </button>
+                                )}
                                 <img src={imageUrl} alt={item.name} className="store-item-img" />
                                 <h3>{item.name}</h3>
                                 <p className="store-item-price">{item.price} Monedas</p>

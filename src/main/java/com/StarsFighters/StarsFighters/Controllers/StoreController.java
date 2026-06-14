@@ -60,4 +60,14 @@ public class StoreController {
             return ResponseEntity.badRequest().body(new ApiResponse(e.getMessage()));
         }
     }
+
+    @DeleteMapping("/admin/items/{id}")
+    public ResponseEntity<?> deleteCosmetic(@PathVariable Long id, Principal principal) {
+        try {
+            storeService.deleteCosmetic(principal.getName(), id);
+            return ResponseEntity.ok(new ApiResponse("Cosmético eliminado con éxito"));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(new ApiResponse(e.getMessage()));
+        }
+    }
 }

@@ -93,6 +93,7 @@
 }
 
 .store-card {
+    position: relative;
     background-color: var(--bg-panel);
     border: 1px solid var(--color-border);
     border-radius: 8px;
@@ -165,4 +166,28 @@
 .btn-equip:hover {
     background-color: var(--color-accent);
     color: var(--bg-main);
+}
+
+.btn-delete-cosmetic {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background-color: #e74c3c;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    cursor: pointer;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.btn-delete-cosmetic:hover {
+    background-color: #c0392b;
+    transform: scale(1.1);
 }

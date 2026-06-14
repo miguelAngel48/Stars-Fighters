@@ -103,4 +103,39 @@ public class StoreService {
         Cosmetic cosmetic = new Cosmetic(name, price, fileUrl, type.toUpperCase());
         cosmeticRepo.save(cosmetic);
     }
+
+    @Transactional
+    public void deleteCosmetic(String username, Long cosmeticId) {
+        User user = userRepo.findByUsername(username).orElseThrow();
+        if (!"ADMIN".equals(user.getRole())) {
+            throw new RuntimeException("No tienes permisos para eliminar cosméticos");
+        }
+
+        Cosmetic cosmetic = cosmeticRepo.findById(cosmeticId)
+                .orElseThrow(() -> new RuntimeException("Cosmético no encontrado"));
+
+        try {
+            String imageUrl = cosmetic.getImageUrl();
+            if (imageUrl != null && imageUrl.contains("/")) {
+                String fileName = imageUrl.substring(imageUrl.lastIndexOf("/") + 1);
+                Path filePath = Paths.get(UPLOAD_DIR).resolve(fileName);
+                Files.deleteIfExists(filePath);
+            }
+        } catch (IOException e) {
+            System.err.println(e.getMessage());
+        }
+
+        List<User> allUsers = userRepo.findAll();
+        for (User u : allUsers) {
+            if (u.getOwnedCosmetics().contains(cosmetic)) {
+                u.getOwnedCosmetics().remove(cosmetic);
+            }
+            if (cosmetic.getImageUrl().equals(u.getEquippedAvatarUrl())) {
+                u.setEquippedAvatarUrl(null);
+            }
+            userRepo.save(u);
+        }
+
+        cosmeticRepo.delete(cosmetic);
+    }
 }
