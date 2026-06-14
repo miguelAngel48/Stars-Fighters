@@ -5,7 +5,7 @@ describe('Flujo completo de la aplicacion', () => {
     const testEmail = `piloto${randomId}@test.com`;
     const testUser = `Jugador${randomId}`;
 
-    cy.visit('/registro');
+    cy.visit('/register');
 
     cy.get('input[name="username"]').type(testUser);
     cy.get('input[name="email"]').type(testEmail);
@@ -18,7 +18,7 @@ describe('Flujo completo de la aplicacion', () => {
   it('Debe permitir iniciar sesion con una cuenta existente', () => {
     cy.visit('/login');
 
-    cy.get('input[name="username"]').type('test@test.com');
+    cy.get('input[name="email"]').type('test@test.com');
     cy.get('input[name="password"]').type('Password123!');
     cy.get('button[type="submit"]').click();
 
