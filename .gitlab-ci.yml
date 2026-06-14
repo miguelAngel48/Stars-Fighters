@@ -40,7 +40,7 @@ test_e2e:
   script:
     - cd "frontend/Stars Fighters"
     - npm install
-    - CYPRESS_BASE_URL=http://192.168.50.110:3001 npm run test:e2e
+    - CYPRESS_BASE_URL=http://stars-fighters.z110.alumnes-esliceu.info npm run test:e2e
   allow_failure: true
 
 deploy_vm:
