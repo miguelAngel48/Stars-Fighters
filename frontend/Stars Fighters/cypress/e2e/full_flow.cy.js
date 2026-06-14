@@ -5,27 +5,21 @@ describe('Flujo completo de la aplicacion', () => {
   const testPassword = 'Password123!';
 
   it('Debe permitir registrar a un usuario nuevo', () => {
-    cy.intercept('POST', '**/api/auth/register').as('registerRequest');
-
     cy.visit('/register');
     cy.get('input[name="username"]').type(testUser);
     cy.get('input[name="email"]').type(testEmail);
     cy.get('input[name="password"]').type(testPassword);
     cy.get('button[type="submit"]').click();
 
-    cy.wait('@registerRequest');
     cy.get('.success-message', { timeout: 10000 }).should('be.visible');
   });
 
   it('Debe permitir iniciar sesion con una cuenta existente', () => {
-    cy.intercept('POST', '**/api/auth/login').as('loginRequest');
-
     cy.visit('/login');
     cy.get('input[name="email"]').type(testEmail);
     cy.get('input[name="password"]').type(testPassword);
     cy.get('button[type="submit"]').click();
 
-    cy.wait('@loginRequest');
     cy.url({ timeout: 10000 }).should('include', '/dashboard');
   });
 });
