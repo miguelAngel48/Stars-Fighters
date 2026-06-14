@@ -41,7 +41,7 @@ public class UserServiceTest {
         });
 
         assertEquals("El email ya esta registrado", exception.getMessage());
-        verify(userRepo, never()).save(any(User.class)); // Verificamos que NO se ha guardado
+        verify(userRepo, never()).save(any(User.class));
     }
 
     @Test
@@ -60,7 +60,7 @@ public class UserServiceTest {
         LoginUser loginData = new LoginUser("test@test.com", "correctPassword");
         User mockUser = new User();
         mockUser.setEmail("test@test.com");
-        mockUser.setPassword("encodedPassword"); // Contraseña simulada en BD
+        mockUser.setPassword("encodedPassword");
 
         when(userRepo.findByEmail("test@test.com")).thenReturn(Optional.of(mockUser));
         when(passwordEncoder.matches("correctPassword", "encodedPassword")).thenReturn(true);
