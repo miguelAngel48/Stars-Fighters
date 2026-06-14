@@ -34,11 +34,13 @@ test_frontend_unit:
 
 test_e2e:
   stage: e2e
-  image: cypress/included:15.17.0
+  image:
+    name: cypress/included:latest
+    entrypoint: [""]
   script:
     - cd "frontend/Stars Fighters"
-    - npm ci
-    - npm run test:e2e
+    - npm install
+    - CYPRESS_BASE_URL=http://192.168.50.110:3001 npm run test:e2e
   allow_failure: true
 
 deploy_vm:
