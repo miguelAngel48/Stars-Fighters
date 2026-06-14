@@ -1,9 +1,8 @@
-const { defineConfig } = require("cypress");
-
-module.exports = defineConfig({
+export default {
   e2e: {
-    baseUrl: 'http://192.168.50.110:3001',
-    setupNodeEvents(on, config) {
-    },
-  },
-});
+    baseUrl: 'http://localhost:3000',
+    supportFile: false,
+    video: false,
+    screenshotOnRunFailure: false
+  }
+};
