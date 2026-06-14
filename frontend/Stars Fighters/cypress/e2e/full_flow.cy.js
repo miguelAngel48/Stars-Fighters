@@ -4,6 +4,17 @@ describe('Flujo completo de la aplicacion', () => {
   const testUser = `Jugador${randomId}`;
   const testPassword = 'Password123!';
 
+  beforeEach(() => {
+    cy.intercept('**/api/**', (req) => {
+      if (req.url.includes('stars-fighters.z110.alumnes-esliceu.info')) {
+        req.url = req.url.replace(
+          'http://stars-fighters.z110.alumnes-esliceu.info',
+          'http://192.168.50.110:8090'
+        );
+      }
+    });
+  });
+
   it('Debe permitir registrar a un usuario nuevo', () => {
     cy.visit('/register');
 
