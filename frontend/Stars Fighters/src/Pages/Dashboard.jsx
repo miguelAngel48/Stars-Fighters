@@ -30,8 +30,9 @@ export default function Dashboard() {
 
     return (
         <div style={{ padding: '40px' }}>
-            <h1 style={{ color: 'var(--color-accent)', marginBottom: '30px', textTransform: 'uppercase' }}>Comunidad y Estadísticas</h1>
-
+            <div className="dashboard-header-card">
+                <h1 className="dashboard-title">Comunidad y Estadísticas</h1>
+            </div>
             {user ? (
                 <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
                     <div className="user-card" style={{ flex: '1', minWidth: '300px' }}>
@@ -72,7 +73,7 @@ export default function Dashboard() {
             )}
 
             <div className="general-stats-placeholder" style={{ marginTop: '40px' }}>
-                <h2 style={{ color: 'var(--color-accent)' }}>Ranking Global (Top Victorias)</h2>
+                <h2 className="dashboard-header-card" style={{ color: 'var(--color-accent)' }}>Ranking Global (Top Victorias)</h2>
                 <div className="user-card" style={{ marginTop: '20px', padding: 0, overflow: 'hidden' }}>
                     {leaderboard.length > 0 ? (
                         <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>

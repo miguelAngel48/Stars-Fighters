@@ -41,6 +41,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         registry.addEndpoint("/ws-stars")
                 .setAllowedOrigins(
                         "http://localhost:5173",
+                        "http://localhost:3001",
                         "http://stars-fighters.z110.alumnes-esliceu.info",
                         "https://stars-fighters.z110.alumnes-esliceu.info"
                 )

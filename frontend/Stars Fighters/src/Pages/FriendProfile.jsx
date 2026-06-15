@@ -88,12 +88,6 @@ export default function FriendProfile() {
                     >
                         Cancelar amistad
                     </button>
-                    <button
-                        className="btn-cancel"
-                        onClick={() => navigate(-1)}
-                    >
-                        Volver
-                    </button>
                 </div>
             </div>
         </div>

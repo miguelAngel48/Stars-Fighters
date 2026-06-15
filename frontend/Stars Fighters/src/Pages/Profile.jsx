@@ -170,7 +170,6 @@ export default function Profile() {
 
     const currentStatusConfig = getStatusConfig(localStatus);
 
-    // Helper function para formatear la URL del avatar correctamente
     const getAvatarUrl = (url) => {
         if (!url) return `${ApiUrl}/uploads/cosmetics/default-avatar.png`;
         return url.startsWith('http') ? url : `${ApiUrl}${url}`;
@@ -180,18 +179,6 @@ export default function Profile() {
 
     return (
         <div className="profile-page-container" style={{ padding: '40px' }}>
-
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px' }}>
-                <button
-                    onClick={() => navigate(-1)}
-                    style={{ background: 'transparent', color: 'var(--color-primary)', fontSize: '16px', fontWeight: 'bold', cursor: 'pointer', border: 'none' }}
-                >
-                    ← Volver
-                </button>
-                <h1 style={{ color: 'var(--color-accent)', textTransform: 'uppercase', margin: 0 }}>Mi Perfil</h1>
-                <div style={{ width: '80px' }}></div>
-            </div>
-
             <div className="profile-content">
                 <div className="profile-main-card">
                     <div className="avatar-container" onClick={() => setIsAvatarModalOpen(true)}>

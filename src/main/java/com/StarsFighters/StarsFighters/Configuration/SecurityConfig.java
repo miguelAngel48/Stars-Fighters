@@ -60,6 +60,7 @@ public class SecurityConfig {
         configuration.setAllowedOrigins(Arrays.asList(
                 "http://localhost:3000",
                 "http://localhost:5173",
+                "http://localhost:3001",
                 "http://server110.cfgs.esliceu.net",
                 "http://192.168.50.110",
                 "http://stars-fighters.z110.alumnes-esliceu.info"
