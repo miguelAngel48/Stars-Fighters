@@ -9,7 +9,6 @@ describe('Flujo completo de la aplicacion', () => {
       if (req.url.includes('stars-fighters.z110.alumnes-esliceu.info')) {
         req.url = req.url.replace(
           'http://stars-fighters.z110.alumnes-esliceu.info',
-          'http://192.168.50.110:8090'
         );
       }
     });
