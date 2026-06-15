@@ -8,7 +8,7 @@ describe('Flujo completo de la aplicacion', () => {
     cy.intercept('**/api/**', (req) => {
       if (req.url.includes('stars-fighters.z110.alumnes-esliceu.info')) {
         req.url = req.url.replace(
-          'http://stars-fighters.z110.alumnes-esliceu.info',
+          'http://stars-fighters.z110.alumnes-esliceu.info'
         );
       }
     });

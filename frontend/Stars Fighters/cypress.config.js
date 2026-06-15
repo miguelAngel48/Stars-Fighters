@@ -1,6 +1,6 @@
 export default {
   e2e: {
-    baseUrl: 'http://localhost:3000',
+    baseUrl: 'http://localhost:3001',
     supportFile: false,
     video: false,
     screenshotOnRunFailure: false
