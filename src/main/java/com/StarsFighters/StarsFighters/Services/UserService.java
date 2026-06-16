@@ -99,7 +99,14 @@ public class UserService {
         if (existUser == null) {
             User newUser = new User();
             newUser.setEmail(email);
-            newUser.setUsername(nombre);
+            
+            String safeUsername = nombre.replaceAll("\\s+", "").toLowerCase();
+            
+            if (userRepo.findByUsername(safeUsername).isPresent()) {
+                safeUsername = safeUsername + (int)(Math.random() * 1000);
+            }
+            newUser.setUsername(safeUsername);
+
             newUser.setLevel(1);
             newUser.setRole("USER");
             newUser.setFriendCode(FriendCodeGenerator.generateCode());
