@@ -12,7 +12,7 @@ export default function Store() {
     const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
     const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
     const [newItem, setNewItem] = useState({ name: "", price: 0, type: "AVATAR", image: null });
-    const ApiUrl = import.meta.env.VITE_API_URL
+    const ApiUrl = import.meta.env.VITE_API_URL;
     const navigate = useNavigate();
     const token = localStorage.getItem("token");
 
@@ -34,9 +34,6 @@ export default function Store() {
 
     useEffect(() => {
         fetchData();
-        if (token && refreshUser) {
-            refreshUser();
-        }
     }, [token]);
 
     const handleAction = async (id, type) => {
@@ -107,6 +104,28 @@ export default function Store() {
         setTimeout(() => setMessage(""), 3000);
     };
 
+    const handleDeleteCosmetic = async (id) => {
+        if (!window.confirm("¿Estás seguro de que deseas eliminar este cosmético?")) return;
+
+        try {
+            const response = await fetch(`${ApiUrl}/api/store/admin/items/${id}`, {
+                method: "DELETE",
+                headers: { "Authorization": `Bearer ${token}` }
+            });
+
+            if (response.ok) {
+                setMessage("Cosmético eliminado con éxito");
+                fetchData();
+            } else {
+                const errorData = await response.text();
+                setMessage(errorData || "Error al eliminar el cosmético");
+            }
+        } catch (error) {
+            setMessage("Error de conexión al servidor");
+        }
+        setTimeout(() => setMessage(""), 3000);
+    };
+
     const isOwned = (itemId) => inventory.some(item => item.id === itemId);
 
     return (
@@ -136,23 +155,34 @@ export default function Store() {
                 {message && <div className="store-alert">{message}</div>}
 
                 <div className="store-grid">
-                    {storeItems.map((item) => (
-                        <div key={item.id} className="store-card">
-                            <img src={item.imageUrl} alt={item.name} className="store-item-img" />
-                            <h3>{item.name}</h3>
-                            <p className="store-item-price">{item.price} Monedas</p>
+                    {storeItems.map((item) => {
+                        const imageUrl = item.imageUrl.startsWith('http') ? item.imageUrl : `${ApiUrl}${item.imageUrl}`;
+                        return (
+                            <div key={item.id} className="store-card">
+                                {user && user.role === 'ADMIN' && (
+                                    <button
+                                        className="btn-delete-cosmetic"
+                                        onClick={() => handleDeleteCosmetic(item.id)}
+                                    >
+                                        X
+                                    </button>
+                                )}
+                                <img src={imageUrl} alt={item.name} className="store-item-img" />
+                                <h3>{item.name}</h3>
+                                <p className="store-item-price">{item.price} Monedas</p>
 
-                            {isOwned(item.id) ? (
-                                <button className="btn-equip" onClick={() => handleAction(item.id, 'equip')}>
-                                    Equipar
-                                </button>
-                            ) : (
-                                <button className="btn-buy" onClick={() => handleAction(item.id, 'buy')}>
-                                    Comprar
-                                </button>
-                            )}
-                        </div>
-                    ))}
+                                {isOwned(item.id) ? (
+                                    <button className="btn-equip" onClick={() => handleAction(item.id, 'equip')}>
+                                        Equipar
+                                    </button>
+                                ) : (
+                                    <button className="btn-buy" onClick={() => handleAction(item.id, 'buy')}>
+                                        Comprar
+                                    </button>
+                                )}
+                            </div>
+                        );
+                    })}
                 </div>
             </div>
 

@@ -31,8 +31,6 @@ export default function Game() {
     const [levelUpData, setLevelUpData] = useState(null);
     const [gameSettings, setGameSettings] = useState(null);
 
-    const gameSettingsRef = useRef(null);
-
     const isLeftPlayerRef = useRef(true);
     const myPositionRef = useRef({ x: 0, y: 100 });
     const oppPositionRef = useRef({ x: 0, y: 100 });
@@ -81,14 +79,13 @@ export default function Game() {
 
         let myWins = false;
         let tie = false;
-        const currentSettings = gameSettingsRef.current;
 
         if (myForcedLoss) {
             myWins = false;
         } else if (oppForcedLoss) {
             myWins = true;
         } else {
-            if (currentSettings && currentSettings.lives > 0) {
+            if (gameSettings.lives > 0) {
                 if (myLivesRef.current > oppLivesRef.current) myWins = true;
                 else if (myLivesRef.current === oppLivesRef.current) tie = true;
             } else {
@@ -106,7 +103,7 @@ export default function Game() {
             isTie: tie
         });
 
-        if (currentSettings && currentSettings.mode === "normal") {
+        if (gameSettings && gameSettings.mode === "normal") {
             recordMatchInDatabase(myWins && !tie);
         }
     };
@@ -136,7 +133,6 @@ export default function Game() {
                     const maps = await mapsRes.json();
 
                     setGameSettings(settings);
-                    gameSettingsRef.current = settings;
                     myLivesRef.current = settings.lives;
                     oppLivesRef.current = settings.lives;
                     setTimeLeft(settings.timeLimit > 0 ? settings.timeLimit : null);
@@ -223,9 +219,10 @@ export default function Game() {
                         myPositionRef.current = { x: mySpawnX, y: 100 };
 
                         let isOver = false;
-                        if (gameSettingsRef.current && gameSettingsRef.current.lives > 0 && myLivesRef.current <= 0) {
-                            isOver = true;
-                        }
+                        setGameSettings(prev => {
+                            if (prev && prev.lives > 0 && myLivesRef.current <= 0) isOver = true;
+                            return prev;
+                        });
 
                         if (stompClientRef.current && stompClientRef.current.connected) {
                             stompClientRef.current.publish({
@@ -250,9 +247,10 @@ export default function Game() {
                     oppHealthRef.current = 100;
 
                     let checkIsOver = deathData.isGameOver;
-                    if (gameSettingsRef.current && gameSettingsRef.current.lives > 0 && oppLivesRef.current <= 0) {
-                        checkIsOver = true;
-                    }
+                    setGameSettings(prev => {
+                        if (prev && prev.lives > 0 && oppLivesRef.current <= 0) checkIsOver = true;
+                        return prev;
+                    });
 
                     if (checkIsOver) {
                         handleEndGame(false, true);
@@ -547,7 +545,7 @@ export default function Game() {
                 if (myPositionRef.current.y > canvas.height + 50) {
                     myHealthRef.current = 100;
 
-                    if (gameSettingsRef.current && gameSettingsRef.current.lives > 0) {
+                    if (gameSettings.lives > 0) {
                         myLivesRef.current = Math.max(0, myLivesRef.current - 1);
                     }
                     oppKillsRef.current += 1;
@@ -557,7 +555,7 @@ export default function Game() {
                     myPlayer.velocityY = 0;
 
                     let isOver = false;
-                    if (gameSettingsRef.current && gameSettingsRef.current.lives > 0 && myLivesRef.current <= 0) {
+                    if (gameSettings.lives > 0 && myLivesRef.current <= 0) {
                         isOver = true;
                     }
 
