@@ -99,7 +99,13 @@ public class UserService {
         if (existUser == null) {
             User newUser = new User();
             newUser.setEmail(email);
-            newUser.setUsername(nombre);
+
+            String safeUsername = nombre.replaceAll("\\s+", "").toLowerCase();
+            if (userRepo.findByUsername(safeUsername).isPresent()) {
+                safeUsername = safeUsername + (int)(Math.random() * 1000);
+            }
+            newUser.setUsername(safeUsername);
+
             newUser.setLevel(1);
             newUser.setRole("USER");
             newUser.setFriendCode(FriendCodeGenerator.generateCode());
@@ -109,9 +115,26 @@ public class UserService {
             newUser.setEquippedAvatarUrl(defaultAvatar.getImageUrl());
 
             return userRepo.save(newUser);
-        } else if (existUser.getFriendCode() == null || existUser.getFriendCode().trim().isEmpty()) {
-            existUser.setFriendCode(FriendCodeGenerator.generateCode());
-            return userRepo.save(existUser);
+        } else {
+            boolean needsUpdate = false;
+
+            if (existUser.getFriendCode() == null || existUser.getFriendCode().trim().isEmpty()) {
+                existUser.setFriendCode(FriendCodeGenerator.generateCode());
+                needsUpdate = true;
+            }
+
+            if (existUser.getUsername() != null && existUser.getUsername().contains(" ")) {
+                String safeUsername = existUser.getUsername().replaceAll("\\s+", "").toLowerCase();
+                if (userRepo.findByUsername(safeUsername).isPresent()) {
+                    safeUsername = safeUsername + (int)(Math.random() * 1000);
+                }
+                existUser.setUsername(safeUsername);
+                needsUpdate = true;
+            }
+
+            if (needsUpdate) {
+                return userRepo.save(existUser);
+            }
         }
 
         return existUser;
